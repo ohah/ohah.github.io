@@ -16,6 +16,11 @@
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
 
+    /* paths */
+    "paths": {
+      "@theme": ["./node_modules/@rspress/core/dist/theme/index.d.ts"]
+    },
+
     /* type checking */
     "strict": true,
     "noUnusedLocals": true,

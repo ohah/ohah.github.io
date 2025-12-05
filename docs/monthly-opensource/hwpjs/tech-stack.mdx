@@ -1,17 +1,71 @@
 ---
 title: 2. 기술 스택
-date: 2025-12-03
+date: 2025-12-06
 ---
+import { Badge } from '@theme';
 
 # 2. 기술 스택
 
-프로젝트를 시작할 때 선택한 개발 스택과 그 이유를 설명합니다.
+> "고민하기"
 
-## 선택한 기술
+글을 작성하는 시점이 거의 개발을 다시 시작한지 2주차이니 11월 3주차? 4주차쯤 시작한것 같다.  
+목표는 러스트로 <Badge type="tip">Web</Badge> <Badge type="info">Node</Badge> <Badge type="warning">React Native</Badge> 환경에 라이브러리를 제공 하는 것이다.
 
-여기에 사용한 기술 스택을 나열하고 각각의 선택 이유를 설명해주세요.
+아마 이걸 다 구현한 레포지토리를 찾는것보다는 내가 직접 개발하고 부딪히는게 더 빠를 것이란 생각이 들었다.  
+적절한 레퍼런스와 보편적인 가이드라인이 없으니 내가 하고 싶은것만 싹 다 고르면 될 것 같았다.
 
-## 기술 선택 이유
+## 홍대병 말기의 선택
 
-각 기술을 선택한 배경과 이유를 설명합니다.
+### Node
 
+napi-rs 대안이 없다
+Neon도 있지만 이젠 비 주류인것 같고..
+
+> [!NOTE]
+> **[napi-rs](https://napi.rs/)** - 러스트로 Node.js 네이티브 모듈을 만들 수 있게 해주는 프레임워크. 러스트 코드를 Node.js에서 직접 사용할 수 있게 해준다.
+
+### Craby
+
+나온지 얼마 안됐고 정식 버전도 안나왔지만 대안이 없다. 
+아니 Craby를 보고 이런 멀티 플랫폼 라이브러리 개발을 생각했다.
+
+> [!NOTE]
+> **[Craby](https://craby.rs/)** - React Native에서 러스트 코드를 사용할 수 있게 해주는 라이브러리. 크로스 플랫폼 모바일 앱에서 러스트의 성능을 활용할 수 있다.
+
+### Web
+
+사실 러스트로 한다고 하면 `wasm-pack` 또는 `wasm-bindgen` 인데 
+
+[NAPI-RS](https://napi.rs/docs/concepts/webassembly)에서 WebAssembly 빌드를 지원하고 있는걸 알았다.
+
+문서를 보면 안정적인것 같진 않지만,  
+뭐 애당초 이 프로젝트가 Experimental에 가깝다.  
+실험적 프로젝트인데 왜 그런걸 고려하겠는가?
+
+> [!NOTE]
+> **[WebAssembly](https://webassembly.org/)** - 웹 브라우저에서 네이티브에 가까운 성능으로 코드를 실행할 수 있게 해주는 기술. 러스트를 웹에서 사용할 수 있게 해준다.
+
+### 번들러  
+
+Node, pnpm, yarn, npm, deno 저리가라! Bun으로 간다
+
+> [!NOTE]
+> **[Bun](https://bun.sh/)** - 빠른 JavaScript 런타임, 번들러, 패키지 매니저를 하나로 통합한 도구. Node.js 대체제로 주목받고 있다.
+
+### 포매터
+
+eslint, biome 저리가라! oxlint, oxfmt로 간다
+
+> [!NOTE]
+> **[oxlint](https://oxc.rs/), [oxfmt](https://oxc.rs/docs/guide/usage/formatter.html/)** - Rust로 작성된 빠른 JavaScript/TypeScript 린터와 포매터. ESLint, Biome보다 훨씬 빠른 성능을 제공한다.
+
+### 문서
+
+rspress 2 rc로 간다
+
+> [!NOTE]
+> **[Rspress](https://v2.rspress.rs/)** - Rust 기반의 빠른 정적 사이트 생성기. Nextra, Docusaurus와 유사하지만 더 빠른 빌드 속도를 제공한다.
+
+## 결론
+
+<Badge type="danger">Rust</Badge> <Badge type="tip">napi-rs</Badge> <Badge type="warning">Craby</Badge> <Badge type="info">WebAssembly</Badge> <Badge type="tip">Bun</Badge> <Badge type="warning">oxlint</Badge> <Badge type="info">oxfmt</Badge> <Badge type="tip">Rspress</Badge>
