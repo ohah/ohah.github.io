@@ -1,0 +1,14 @@
+/* 사이드바 날짜 뱃지 스타일 */
+/* tag 필드를 사용한 뱃지 스타일링 */
+.rp-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rp-sidebar-item a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}

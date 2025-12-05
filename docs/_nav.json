@@ -1,0 +1,12 @@
+[
+  {
+    "text": "월간 오픈소스",
+    "link": "/monthly-opensource/",
+    "activeMatch": "/monthly-opensource/"
+  },
+  {
+    "text": "리뷰",
+    "link": "/reviews/",
+    "activeMatch": "/reviews/"
+  }
+]
