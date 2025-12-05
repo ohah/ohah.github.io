@@ -3,7 +3,7 @@
     "type": "file",
     "name": "index",
     "label": "월간 오픈소스"
-  },
+  },  
   {
     "type": "dir",
     "name": "hwpjs",

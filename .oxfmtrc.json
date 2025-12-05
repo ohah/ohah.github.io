@@ -1,5 +1,5 @@
 {
-  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/packages/oxc/main/packages/oxlint/schema.json",
   "printWidth": 100,
   "tabWidth": 2,
   "useTabs": false,
@@ -11,6 +11,3 @@
   "arrowParens": "always",
   "endOfLine": "lf"
 }
-
-
-

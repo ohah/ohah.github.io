@@ -3,18 +3,17 @@
     "type": "file",
     "name": "background",
     "label": "1. 개발 배경",
-    "tag": "<svg width=\"52\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"52\" height=\"18\" rx=\"4\" fill=\"#3b82f6\" opacity=\"0.15\"/><text x=\"26\" y=\"13\" font-size=\"10\" fill=\"#3b82f6\" text-anchor=\"middle\" font-family=\"system-ui, -apple-system, sans-serif\" font-weight=\"500\">25.12.02</text></svg>"
+    "tag": "25.12.05"
   },
   {
     "type": "file",
     "name": "tech-stack",
     "label": "2. 기술 스택",
-    "tag": "<svg width=\"52\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"52\" height=\"18\" rx=\"4\" fill=\"#3b82f6\" opacity=\"0.15\"/><text x=\"26\" y=\"13\" font-size=\"10\" fill=\"#3b82f6\" text-anchor=\"middle\" font-family=\"system-ui, -apple-system, sans-serif\" font-weight=\"500\">25.12.03</text></svg>"
+    "tag": "25.12.06"
   },
   {
     "type": "file",
     "name": "development",
-    "label": "3. 개발 과정",
-    "tag": "<svg width=\"52\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"52\" height=\"18\" rx=\"4\" fill=\"#3b82f6\" opacity=\"0.15\"/><text x=\"26\" y=\"13\" font-size=\"10\" fill=\"#3b82f6\" text-anchor=\"middle\" font-family=\"system-ui, -apple-system, sans-serif\" font-weight=\"500\">25.12.04</text></svg>"
+    "label": "3. 개발 과정"
   }
 ]
