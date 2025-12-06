@@ -15,5 +15,11 @@
     "type": "file",
     "name": "development",
     "label": "3. 개발 과정"
+  },
+  {
+    "type": "file",
+    "name": "development-1",
+    "label": "3-1. 구조 잡기",
+    "tag": "25.12.06"
   }
 ]
