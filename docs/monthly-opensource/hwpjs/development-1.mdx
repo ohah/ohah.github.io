@@ -1,0 +1,361 @@
+---
+title: 3-1. 구조 잡기
+date: 2025-12-06
+---
+
+import { CliLayout, FolderTree } from '../../components';
+
+# 3-1. 구조 잡기
+
+## 초기 폴더 구조 설계 (2025-11-22)
+
+처음 프로젝트를 시작할 때 설계한 폴더 구조는 다음과 같았다.
+
+<FolderTree
+  rootName="hwpjs"
+  items={[
+    {
+      name: 'crates',
+      type: 'folder',
+      children: [
+        {
+          name: 'hwp-core',
+          type: 'folder',
+          comment: '# 러스트 코어 라이브러리',
+          children: [
+            { name: 'Cargo.toml', type: 'file' },
+            { name: 'README.md', type: 'file' },
+            { name: 'src', type: 'folder', children: [{ name: 'lib.rs', type: 'file' }] },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'packages',
+      type: 'folder',
+      children: [
+        {
+          name: 'node',
+          type: 'folder',
+          comment: '# Node.js 바인딩',
+          children: [
+            { name: 'Cargo.toml', type: 'file' },
+            { name: 'package.json', type: 'file' },
+            { name: 'src', type: 'folder', children: [{ name: 'index.ts', type: 'file' }, { name: 'lib.rs', type: 'file' }] },
+            { name: 'tests', type: 'folder', children: [{ name: 'index.test.ts', type: 'file' }] },
+            { name: 'tsdown.config.ts', type: 'file' },
+            { name: 'vitest.config.ts', type: 'file' },
+          ],
+        },
+        {
+          name: 'react-native',
+          type: 'folder',
+          comment: '# React Native 바인딩',
+          children: [
+            { name: 'Cargo.toml', type: 'file' },
+            { name: 'package.json', type: 'file' },
+            { name: 'src', type: 'folder', children: [{ name: 'index.ts', type: 'file' }] },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'docs',
+      type: 'folder',
+      comment: '# 문서화 (RSPress)',
+      children: [
+        { name: 'docs', type: 'folder', children: [{ name: 'index.md', type: 'file' }] },
+        { name: 'package.json', type: 'file' },
+        { name: 'rspress.config.ts', type: 'file' },
+        { name: 'tsconfig.json', type: 'file' },
+      ],
+    },
+    {
+      name: 'examples',
+      type: 'folder',
+      comment: '# 예제 코드',
+      children: [
+        { name: 'fixtures', type: 'folder', comment: '# 테스트용 HWP 파일', children: [{ name: 'noori.hwp', type: 'file' }] },
+        { name: 'src', type: 'folder', children: [{ name: 'node-example.js', type: 'file' }] },
+        { name: 'package.json', type: 'file' },
+      ],
+    },
+    { 
+      name: 'legacy', 
+      type: 'folder', 
+      comment: '# 4년 전 시도했던 코드',
+      children: [
+        { name: 'LICENSE', type: 'file' },
+        { name: 'README.md', type: 'file' },
+        { name: 'cfb.js', type: 'file' },
+        { name: 'hwp.png', type: 'file' },
+        { name: 'hwpjs.css', type: 'file' },
+        { name: 'hwpjs.js', type: 'file' },
+        { name: 'index.html', type: 'file' },
+        { name: 'noori.hwp', type: 'file' },
+        { name: 'pako.js', type: 'file' },
+        { name: 'work', type: 'folder', children: [{ name: 'working.md', type: 'file' }] },
+      ],
+    },
+    { name: '.clippy.toml', type: 'file', comment: '# Rust 린터 설정' },
+    { name: '.gitignore', type: 'file' },
+    { name: '.mise.toml', type: 'file', comment: '# 개발 도구 버전 관리' },
+    { name: '.oxfmtrc.json', type: 'file', comment: '# JavaScript/TypeScript 포맷터 설정' },
+    { name: '.vscode', type: 'folder', children: [{ name: 'extensions.json', type: 'file' }, { name: 'settings.json', type: 'file' }] },
+    { name: 'Cargo.toml', type: 'file', comment: '# Rust 워크스페이스 설정' },
+    { name: 'README.md', type: 'file' },
+    { name: 'agent.md', type: 'file' },
+    { name: 'bun.lock', type: 'file', comment: '# Bun 락 파일' },
+    { name: 'oxlint.json', type: 'file', comment: '# JavaScript/TypeScript 린터 설정' },
+    { name: 'package.json', type: 'file', comment: '# Bun 워크스페이스 설정' },
+    { name: 'rustfmt.toml', type: 'file', comment: '# Rust 포맷팅 설정' },
+  ]}
+/>
+
+폴더 구조를 설계할 때는 아래와 같은 생각으로 만들었다.
+
+- **레거시**: 4년 전 코드를 지우기 아까워서 `legacy` 폴더로 옮겼다
+- **mise**: 최근 인기가 많아 보여서 써봤는데 좋아서 세팅했다
+- **crates**: 러스트 모노레포의 국룰에 따라 코어 라이브러리를 `crates` 폴더에 배치
+- **packages**: 배포 라이브러리는 `packages` 폴더에 배치 (역시 국룰)
+- **node/react-native**: 일단 되는지 확인하기 위해 분리했고, Craby와 NAPI-RS 모두 `create` 명령어로 폴더를 생성하지 않고 더미 폴더 구조만 만들어두었다
+
+더미를 만든 이유는 아래에서 자세히 후술하겠다.
+
+## 배포 환경의 복잡함
+
+프로젝트의 목적은 하나의 패키지 모듈로 `react-native`, `node`, `web`을 제공하는 것이다.
+
+### Package 구조
+
+<FolderTree
+  rootName="packages"
+  items={[
+    {
+      name: 'node',
+      type: 'folder',
+      comment: '# Node.js 바인딩',
+      children: [
+        { name: 'Cargo.toml', type: 'file' },
+        { name: 'package.json', type: 'file' },
+        { name: 'src', type: 'folder', children: [{ name: 'index.ts', type: 'file' }, { name: 'lib.rs', type: 'file' }] },
+        { name: 'tests', type: 'folder', children: [{ name: 'index.test.ts', type: 'file' }] },
+        { name: 'tsdown.config.ts', type: 'file' },
+        { name: 'vitest.config.ts', type: 'file' },
+      ],
+    },
+    {
+      name: 'react-native',
+      type: 'folder',
+      comment: '# React Native 바인딩',
+      children: [
+        { name: 'Cargo.toml', type: 'file' },
+        { name: 'package.json', type: 'file' },
+        { name: 'src', type: 'folder', children: [{ name: 'index.ts', type: 'file' }] },
+      ],
+    },
+  ]}
+/>  
+
+[NAPI-RS](https://napi.rs/)와 [Craby](https://craby.rs/)는 각각 기존 레포지토리나 모노레포 기준으로 합치는 것에 대한 세팅을 제공하지 않는다. (당연함) 
+
+그래서 우선 분리해두었다. 
+그리고 사용할 각각의 라이브러리에 대해 간단히 설명하면, 
+
+### NAPI-RS
+
+NAPI-RS는 러스트를 node 환경에서 실행하기 위해 해야하는 번거로운 세팅이나 자바스크립트와 러스트간의 타입 매치 등을 제공해주고, 개발에만 집중할 수 있게 해주는 라이브러리다.  
+후술할 Craby도 마찬가지. 구조는 약간 다르지만
+
+napi는 세팅이 복잡하기에 세팅을 도와주는 `codegen`이 있다.
+
+`napi new`를 실행하면 다음과 같은 인터랙티브 메뉴가 나타난다:
+
+<CliLayout
+  questions={[
+    { question: 'Target path to create the project, relative to cwd.' },
+    { question: 'Package name', comment: '(the name field in your package.json file)' },
+    { 
+      question: 'Choose target(s) your crate will be compiled to:',
+      options: [
+        { label: 'x86_64-unknown-linux-gnu' },
+        { label: 'x86_64-apple-darwin' },
+        { label: 'x86_64-pc-windows-msvc' },
+        { label: 'aarch64-unknown-linux-gnu' },
+        { label: 'aarch64-apple-darwin' },
+        { label: 'aarch64-pc-windows-msvc' },
+      ]
+    },
+    { question: 'Minimum node-api version', comment: '(with node version requirement)' },
+    { question: 'License for open-sourced project?', comment: '(Y/n)' },
+    { question: 'Enable type definition auto-generation', comment: '(Y/n)' },
+    { question: 'Enable Github Actions CI?', comment: '(Y/n)' },
+  ]}
+/>
+
+### 생성되는 구조
+
+`napi new`로 생성되는 프로젝트는 다음과 같은 특징이 있다:
+
+- **패키지 매니저**: yarn을 기본으로 사용
+- **테스트 도구**: ava가 기본 세팅
+- **빌드 결과물**: 루트에 생성되며, 운영체제별 빌드는 별도 패키지로 배포
+
+### 배포 패키지 구조
+
+예를 들어 윈도우와 맥 두 환경을 지원한다면, 배포 패키지는 총 3개가 된다:
+
+```
+@ohah/hwpjs                    # 메인 패키지
+@ohah/hwpjs-win32-arm64-msvc   # 윈도우용 바이너리
+@ohah/hwpjs-darwin-arm64       # 맥용 바이너리
+```
+
+덕분에 빌드 과정은 일반적인 자바스크립트 모듈에 비해 까다롭다.  
+napi-rs에서 artifacts 등으로 지원은 해주지만, 일반적인 배포 프로세스와는 다르다.
+
+### GitHub Actions 의존성
+
+가장 거슬리는 부분이자 핵심은 **Enable Github Actions CI?** 옵션이다.
+
+napi-rs는 기본적으로 배포를 로컬에서 돌리는 것을 가정하지 않고, GitHub Actions가 베이스이다.  
+러스트 바인딩 특성상 운영체제별로 별도의 빌드가 필요하고, 윈도우/맥/리눅스는 서로 크로스 플랫폼 빌드를 하기 어렵거나 지원하지 않기 때문이다.
+
+하지만 가난한 개발자는 GitHub Actions로 사치를 부릴 생각이 없으므로, 로컬 빌드가 당연한 선택이었다.  
+윈도우와 맥 환경이 있으니 일단 이 두 개만 지원하는 것으로 결정했다.
+
+### Craby
+
+[Craby](https://craby.rs/)는 TurboModule 통하여 rust 코드를 C(cxx)를 통해 바인딩하고, 그걸 각각의 네이티브 영역에서 실행시킬 수 있게 도와주는 React Native 라이브러리이다.  
+패키지 매니저에 종속적이지 않지만, 다음과 같은 특징이 있다:
+
+- **포매터**: biome가 기본 세팅
+- **네이티브 코드**: React Native 특성상 android, ios에 각각 네이티브 코드 생성 필요
+- **코드 생성 방식**: 러스트 코드 이전에 TypeScript를 먼저 생성하고, 코드젠을 통해 러스트 코드와 바인딩에 필요한 C, iOS, Android 코드를 생성
+- **폴더 구조**: 일반 React Native 앱처럼 제공
+
+### WebAssembly
+
+napi-rs에서 문서상으로 WebAssembly 지원이 가능하다고 하니, 초기 세팅에는 고려하지 않았다.  
+어떻게 빌드되는지 확인한 후 추가하려고 생각했다.
+
+## 퓨전이 필요하다
+
+관리를 위해서는 배포되는 패키지가 하나라면 마찬가지로 폴더도 하나인 게 좋다.  
+하지만, 괜히 합쳤다가 아예 둘 다 배포가 어려워지는 것보다는, 각각 일단 배포가 되는 것을 확인한 별도의 저장소를 합치는 게 더 편할 거라 생각했다.
+
+### 목표와 현실
+
+이 레포지토리의 목적은 하나의 패키지 모듈로 `react-native`, `node`, `web`을 제공하는 것이다.
+
+- **이상**: 빌드 파일 자체가 하나로 번들링되고 `@ohah/hwpjs`로 설치가 다 되어야 함
+- **현실**: 당장 두 개를 합치면서 Rust 워크스페이스와 Bun workspace를 한번에 세팅하기는 어려울 것 같음
+
+그래서 일단 관심사 분리와 구조부터 잡는 것을 순서로 정했다.  
+가능하면 합치지만, 역량 부족으로 불가능하면 빌드 결과물이라도 잘 합치자는 생각이었다.
+
+
+## 문서화 인프라 구축 (2025-11-23)
+
+이제 고민해야 할 건 최근 핫해진 AI를 위한 세팅, 그리고 문서화에 갑자기 병적인 습관이 생긴 나를 위한 RSPress 세팅이었다.
+
+사실 이 두 개는 어느 정도 겹치는 게 사실이다.  
+문서는 사람이 보는 자료긴 하지만, AI에게도 사전 컨텍스트를 공유할 수 있기 때문이다.
+
+RSPress를 세팅해서 문서화 인프라를 구축했다.  
+그리고 `agent.md`에 간단한 레포지토리 설명, 목적, 사용 툴들을 적었다.
+
+
+```markdown
+### 개발 룰
+
+프로젝트 초기에 `agent.md`에 정의한 개발 룰들:
+
+#### 커밋 메시지 형식
+
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+
+
+**Type (필수)**
+
+- `feat`: 새로운 기능 추가
+- `fix`: 버그 수정
+- `refactor`: 코드 리팩토링 (기능 변경 없음)
+- `test`: 테스트 추가/수정
+- `docs`: 문서 업데이트
+- `chore`: 빌드 설정, 의존성 업데이트 등
+- `style`: 코드 포맷팅, 세미콜론 누락 등 (기능 변경 없음)
+
+**Scope (선택)**
+
+- `core`: hwp-core 관련
+- `node`: Node.js 바인딩 관련
+- `react-native`: React Native 바인딩 관련
+- `docs`: 문서 관련
+
+**Subject (필수)**
+
+- 50자 이내로 간결하게 작성
+- 명령형으로 작성 (과거형 X)
+
+#### 코드 스타일
+
+- **Rust**: `rustfmt` 및 `clippy` 사용
+- **JavaScript/TypeScript**: `oxlint` 및 `oxfmt` 사용
+- 모든 코드는 저장 시 자동 포맷팅
+
+#### HWP 자료형 타입 정의 원칙
+
+`crates/hwp-core`에서 HWP 파일을 파싱할 때는 반드시 스펙 문서의 자료형을 별도 타입으로 정의해야 한다:
+
+- HWP 5.0 스펙 문서의 "표 1: 자료형"에 정의된 모든 자료형을 `crates/hwp-core/src/types.rs`에 명시적으로 정의
+- 스펙 문서와 코드의 1:1 매핑을 유지하여 유지보수성 향상
+- 스펙 문서의 용어를 그대로 사용 (예: `DWORD`, `HWPUNIT`, `COLORREF`)
+```
+
+## HWP 스펙 문서 작성 (2025-11-23)
+
+`docs`에는 스펙 문서를 따로 작성하여 한글과 컴퓨터 문서를 그대로 옮길 계획을 세웠다.  
+내가 읽기도 편해야 하지만, AI도 그 문서를 보는 게 코드 작업하기 편할 거란 생각이 들어서였다.
+
+그래서 한글과 컴퓨터에서 제공해주는 PDF 파일을 마크다운으로 옮기는 작업을 진행했다.
+
+이후 코어 개발 시 이 문서를 참고하면서 타입을 정의하고 파싱 로직을 만들 때 편해지지 않을까란 생각에서였다.
+
+
+## 세팅만하다 개발 못한다
+
+초기 설계는 매우 중요한 부분이지만, 설계하다가 개발 못하고, 예쁘게 설계한다고 코드 까뒤집거나 정작 코드를 개발하지 못하면 문제가 발생한다.
+
+위에 설명한 것처럼 각각의 멀티플랫폼 배포 세팅, 문서 세팅 등으로 이것저것 하다 보니 정작 실제 동작되어야 하는 코어 개발이 밀릴 수 있다.
+
+## 뭐부터 개발하지?
+
+대충 큰 그림은 저렇게 그렸는데, 어느 부분부터 개발해야 할지 고민됐다.
+
+- **러스트 코드가 의도한 대로 안 되면**: 세팅을 잘해봐야 의미가 없음
+- **러스트 코드가 잘 되어도**: 배포 세팅이나 라이브러리 의존성, 권한 이슈로 불가능하면 의미가 없음
+
+근데 이런 걸 다 검증하면서 개발하기엔 너무 귀찮다.  
+그리고 과거에 NAPI-RS 2.0 시절 개발해본 경험이 있었고, 개발에 들어가기 전 Craby에 이미 기여를 한 적이 있어서, 실제로 세팅은 해보진 않았지만 이 두 부분은 합치면서 생기는 트러블슈팅이 있으면 있었지, 빌드 자체나 배포가 불가능하진 않을 것 같았다.
+
+또, 러스트를 좋아하니 그냥 코어부터 개발하자는 생각에 코어부터 개발하기로 마음 먹었다.
+
+### 코어, 너로 정했다.
+
+각 환경별로 권한이나 파일 불러오는 네이티브 함수 등은 다를 수 있다.  
+결과적으로 3개의 플랫폼(Node, React-Native, web)만을 위한 함수는 들어가야 한다.
+
+공통점은 3개의 플랫폼 모두에서 `Uint8Array`(러스트에선 `u8`)로 데이터를 받을 수 있다는 것이다.  
+나중에 이쁘게 실행시키게 하려면 각각의 플랫폼에서 커스텀 함수 제공해줘야겠지만, 일단 코어부분은 u8로 받으면 될 것 같으니까 그냥 바로 진행하기로 했다.
+
+> 어차피 프로덕션 레벨에서 고민하고 설계하는게 아니다.  
+검증보단 행동이고 행동으로 검증하는거다.
+
+
+그냥 퇴근하면서, 출근하면서 가능할거 같다라는 상상 속의 결론을 짓고 불완전한 모노레포 상태에서 코어부터 냅다 개발하기 시작했다.
+
