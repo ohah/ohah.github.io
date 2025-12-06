@@ -1,0 +1,96 @@
+/* CLI 터미널 스타일 */
+.cli-terminal {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  border: 1px solid #3e3e3e;
+}
+
+@media (prefers-color-scheme: light) {
+  .cli-terminal {
+    background: #f5f5f5;
+    color: #333;
+    border: 1px solid #e0e0e0;
+  }
+}
+
+[data-theme="light"] .cli-terminal {
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #e0e0e0;
+}
+
+[data-theme="dark"] .cli-terminal {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border: 1px solid #3e3e3e;
+}
+
+.cli-terminal .cli-prompt {
+  color: #4ec9b0;
+}
+
+@media (prefers-color-scheme: light) {
+  .cli-terminal .cli-prompt {
+    color: #0d9488;
+  }
+}
+
+[data-theme="light"] .cli-terminal .cli-prompt {
+  color: #0d9488;
+}
+
+[data-theme="dark"] .cli-terminal .cli-prompt {
+  color: #4ec9b0;
+}
+
+.cli-terminal .cli-question {
+  color: #dcdcaa;
+}
+
+@media (prefers-color-scheme: light) {
+  .cli-terminal .cli-question {
+    color: #1a1a1a;
+  }
+}
+
+[data-theme="light"] .cli-terminal .cli-question {
+  color: #1a1a1a;
+}
+
+[data-theme="dark"] .cli-terminal .cli-question {
+  color: #dcdcaa;
+}
+
+.cli-terminal .cli-comment {
+  color: #808080;
+}
+
+.cli-terminal .cli-target {
+  color: #9cdcfe;
+}
+
+@media (prefers-color-scheme: light) {
+  .cli-terminal .cli-target {
+    color: #0369a1;
+  }
+}
+
+[data-theme="light"] .cli-terminal .cli-target {
+  color: #0369a1;
+}
+
+[data-theme="dark"] .cli-terminal .cli-target {
+  color: #9cdcfe;
+}
+
+.cli-terminal .cli-option {
+  margin-left: 2rem;
+}
+
+
