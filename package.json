@@ -15,6 +15,7 @@
   "devDependencies": {
     "@types/node": "^22.8.1",
     "oxfmt": "^0.14.0",
-    "oxlint": "^1.29.0"
+    "oxlint": "^1.29.0",
+    "rspress-plugin-mermaid": "^0.3.0"
   }
 }
