@@ -10,7 +10,9 @@
     "format": "oxfmt ."
   },
   "dependencies": {
-    "@rspress/core": "^2.0.0-rc.0"
+    "@rspress/core": "^2.0.0-rc.0",
+    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21"
   },
   "devDependencies": {
     "@types/node": "^22.8.1",

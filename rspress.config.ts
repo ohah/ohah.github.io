@@ -8,6 +8,13 @@ export default defineConfig({
   title: 'ohah',
   globalStyles: path.join(__dirname, 'docs/global.css'),
   plugins: [pluginMermaid() as any],
+  builderConfig: {
+    resolve: {
+      alias: {
+        'lodash-es': require.resolve('lodash'),
+      },
+    },
+  },
   themeConfig: {
     socialLinks: [
       {

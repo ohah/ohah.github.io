@@ -61,6 +61,11 @@ AI를 잘 고문하기 위해 세팅을 나름 힘들게 했다.
 
 ## 핵심 파싱 구현 <Badge type="info">2025-11-23 ~ 2025-11-27</Badge>
 
+:::warning 개발 통계
+약 5일 동안 **105개의 커밋**으로 핵심 기능을 구현했다.  
+총 **약 33만 라인**의 코드를 작성했다.
+:::
+
 HWPJS를 4년전에 하면서 hwp 포맷의 압축을 푸는법을 알고 있었기에, 이러한 압축 파일이과 포맷이니 u8 데이터 형태로 받고 해당 파일을 
 `flate2`, `cfb`를 통해 빠르게 문서를 열어냈고, 과거처럼 BodyText, DocInfo 등을 바이너리 데이터에서 손쉽게 읽어냈고, 문서에서 제공하는 대로 버퍼데이터를 읽어야 하는 환경까지는 정말 손쉽게 접근할 수 있었다.
 
@@ -206,12 +211,12 @@ AI와 함께 하기 전이라면 말이다. 하지만 여태까지는 다른 경
 
 ```mermaid
 graph TB
-    subgraph 과거["🔴 4년 전 개발 방식"]
+    subgraph 과거["4년 전 개발 방식"]
         direction LR
-        A1["📦 Buffer 데이터<br/>수동 읽기"] --> A2["🖨️ 콘솔 출력<br/>console.log"]
-        A2 --> A3["🔍 헥스코드 확인<br/>수동 디버깅"]
-        A3 --> A4["✅ 수동 검증<br/>문서 대조"]
-        A4 --> A5["😫 매우 지침<br/>"]
+        A1["Buffer 데이터<br/>수동 읽기"] --> A2["콘솔 출력<br/>console.log"]
+        A2 --> A3["헥스코드 확인<br/>수동 디버깅"]
+        A3 --> A4["수동 검증<br/>문서 대조"]
+        A4 --> A5["매우 지침<br/>2일 소요"]
         
         style A1 fill:#ffebee,stroke:#c62828,stroke-width:2px
         style A2 fill:#ffebee,stroke:#c62828,stroke-width:2px
@@ -220,15 +225,15 @@ graph TB
         style A5 fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px
     end
     
-    subgraph 현재["🟢 지금 개발 방식"]
+    subgraph 현재["지금 개발 방식"]
         direction LR
-        B1["💬 AI에게 요청<br/>명확한 지시"] --> B2["🤖 AI 구현<br/>자동 코드 생성"]
-        B2 --> B3["📸 스냅샷 테스트<br/>insta"]
-        B3 --> B4["👀 결과 확인<br/>시각적 검증"]
-        B4 --> B5{❓ 문제 있음?}
-        B5 -->|있음| B6["💡 피드백 제공<br/>수정 요청"]
+        B1["AI에게 요청<br/>명확한 지시"] --> B2["AI 구현<br/>자동 코드 생성"]
+        B2 --> B3["스냅샷 테스트<br/>insta"]
+        B3 --> B4["결과 확인<br/>시각적 검증"]
+        B4 --> B5{문제 있음?}
+        B5 -->|있음| B6["피드백 제공<br/>수정 요청"]
         B6 --> B2
-        B5 -->|없음| B7["✨ 완료<br/>빠른 개발"]
+        B5 -->|없음| B7["완료<br/>빠른 개발"]
         
         style B1 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
         style B2 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
