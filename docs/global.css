@@ -12,3 +12,8 @@
   gap: 0.5rem;
   flex: 1;
 }
+
+/* Mermaid edge label 패딩 */
+.mermaid .edgeLabel {
+  padding: 4px 8px !important;
+}

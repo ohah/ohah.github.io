@@ -210,6 +210,7 @@ AI와 함께 하기 전이라면 말이다. 하지만 여태까지는 다른 경
 ## 그림 요약
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#ffebee', 'primaryTextColor':'#000', 'primaryBorderColor':'#c62828', 'lineColor':'#000000', 'secondaryColor':'#e8f5e9', 'tertiaryColor':'#fff9c4', 'fontSize':'16px', 'clusterBkg':'#ffebee', 'clusterText':'#000', 'clusterFontSize':'18px', 'edgeLabelFontSize':'16px'}}}%%
 graph TB
     subgraph 과거["4년 전 개발 방식"]
         direction LR
@@ -218,11 +219,11 @@ graph TB
         A3 --> A4["수동 검증<br/>문서 대조"]
         A4 --> A5["매우 지침<br/>2일 소요"]
         
-        style A1 fill:#ffebee,stroke:#c62828,stroke-width:2px
-        style A2 fill:#ffebee,stroke:#c62828,stroke-width:2px
-        style A3 fill:#ffebee,stroke:#c62828,stroke-width:2px
-        style A4 fill:#ffebee,stroke:#c62828,stroke-width:2px
-        style A5 fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px
+        style A1 fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000000
+        style A2 fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000000
+        style A3 fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000000
+        style A4 fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000000
+        style A5 fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px,color:#000000
     end
     
     subgraph 현재["지금 개발 방식"]
@@ -235,18 +236,31 @@ graph TB
         B6 --> B2
         B5 -->|없음| B7["완료<br/>빠른 개발"]
         
-        style B1 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-        style B2 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-        style B3 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-        style B4 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-        style B5 fill:#fff9c4,stroke:#f57f17,stroke-width:2px
-        style B6 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-        style B7 fill:#c8e6c9,stroke:#388e3c,stroke-width:3px
+        style B1 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000000
+        style B2 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000000
+        style B3 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000000
+        style B4 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000000
+        style B5 fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000000
+        style B6 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000000
+        style B7 fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px,color:#000000
     end
     
     과거 -.->|개선| 현재
     
-    style 과거 fill:#ffebee,stroke:#c62828,stroke-width:3px,color:#000
-    style 현재 fill:#e8f5e9,stroke:#2e7d32,stroke-width:3px,color:#000
+    style 과거 fill:#ffebee,stroke:#c62828,stroke-width:3px,color:#000000,font-size:18px
+    style 현재 fill:#e8f5e9,stroke:#2e7d32,stroke-width:3px,color:#000000,font-size:18px
+    
+    linkStyle 0 stroke:#000000,stroke-width:2px
+    linkStyle 1 stroke:#000000,stroke-width:2px
+    linkStyle 2 stroke:#000000,stroke-width:2px
+    linkStyle 3 stroke:#000000,stroke-width:2px
+    linkStyle 4 stroke:#000000,stroke-width:2px
+    linkStyle 5 stroke:#000000,stroke-width:2px
+    linkStyle 6 stroke:#000000,stroke-width:2px
+    linkStyle 7 stroke:#000000,stroke-width:2px
+    linkStyle 8 stroke:#000000,stroke-width:2px
+    linkStyle 9 stroke:#000000,stroke-width:2px
+    linkStyle 10 stroke:#000000,stroke-width:2px
+    linkStyle 11 stroke:#2196F3,stroke-width:3px,color:#2196F3
 ```
 
