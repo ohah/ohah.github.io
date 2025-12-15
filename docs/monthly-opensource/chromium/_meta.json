@@ -2,6 +2,31 @@
   {
     "type": "file",
     "name": "background",
-    "label": "작성 예정중"
+    "label": "1. 개발 배경",
+    "tag": "25.12.15"
+  },
+  {
+    "type": "file",
+    "name": "setup",
+    "label": "2. 환경 설정",
+    "tag": "작성 예정"
+  },
+  {
+    "type": "file",
+    "name": "first-contribution",
+    "label": "3. 첫 번째 기여",
+    "tag": "작성 예정"
+  },
+  {
+    "type": "file",
+    "name": "code-review",
+    "label": "4. 코드 리뷰 과정",
+    "tag": "작성 예정"
+  },
+  {
+    "type": "file",
+    "name": "merge",
+    "label": "5. 머지 및 후기",
+    "tag": "작성 예정"
   }
 ]

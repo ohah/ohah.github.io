@@ -8,6 +8,12 @@ export default defineConfig({
   title: 'ohah',
   globalStyles: path.join(__dirname, 'docs/global.css'),
   plugins: [pluginMermaid() as any],
+  markdown: {
+    globalComponents: [
+      path.join(__dirname, 'src/components/Comment/index.tsx'),
+      path.join(__dirname, 'src/components/Comment/CommentFooter.tsx'),
+    ],
+  },
   builderConfig: {
     resolve: {
       alias: {

@@ -1,0 +1,227 @@
+.comment-container {
+  position: relative;
+  display: inline;
+  cursor: help;
+}
+
+.comment-text {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: #888;
+  text-underline-offset: 2px;
+  transition: text-decoration-color 0.2s;
+}
+
+.comment-container:hover .comment-text {
+  text-decoration-color: #4a9eff;
+}
+
+[data-theme="dark"] .comment-text {
+  text-decoration-color: #666;
+}
+
+[data-theme="dark"] .comment-container:hover .comment-text {
+  text-decoration-color: #5ba3ff;
+}
+
+.comment-number-badge {
+  display: inline-block;
+  margin-left: 2px;
+  font-size: 0.75em;
+  color: #4a9eff;
+  cursor: pointer;
+  font-weight: 500;
+  vertical-align: super;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.comment-number-badge:hover {
+  color: #0066cc;
+  text-decoration: underline;
+}
+
+[data-theme="dark"] .comment-number-badge {
+  color: #5ba3ff;
+}
+
+[data-theme="dark"] .comment-number-badge:hover {
+  color: #7bb3ff;
+}
+
+/* CSS 툴팁 */
+.comment-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  max-width: 300px;
+  min-width: 150px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #333;
+  white-space: normal;
+  word-wrap: break-word;
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease-out, visibility 0.15s ease-out, transform 0.15s ease-out;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+.comment-container:hover .comment-tooltip {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+[data-theme="dark"] .comment-tooltip {
+  background: #2d2d2d;
+  border-color: #444;
+  color: #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  .comment-tooltip {
+    background: #2d2d2d;
+    border-color: #444;
+    color: #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* 툴팁 화살표 */
+.comment-tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: #fff;
+}
+
+[data-theme="dark"] .comment-tooltip::before {
+  border-bottom-color: #2d2d2d;
+}
+
+@media (prefers-color-scheme: dark) {
+  .comment-tooltip::before {
+    border-bottom-color: #2d2d2d;
+  }
+}
+
+/* 주석 하단 목록 */
+.comment-footer {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+[data-theme="dark"] .comment-footer {
+  border-top-color: #444;
+}
+
+@media (prefers-color-scheme: dark) {
+  .comment-footer {
+    border-top-color: #444;
+  }
+}
+
+.comment-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: comment-counter;
+}
+
+.comment-item {
+  counter-increment: comment-counter;
+  margin-bottom: 0.75rem;
+  padding-left: 0;
+  line-height: 1.6;
+}
+
+.comment-number {
+  color: #4a9eff;
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+
+[data-theme="dark"] .comment-number {
+  color: #5ba3ff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .comment-number {
+    color: #5ba3ff;
+  }
+}
+
+.comment-link {
+  color: #0066cc;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.comment-link:hover {
+  color: #004499;
+  text-decoration: underline;
+}
+
+[data-theme="dark"] .comment-link {
+  color: #7bb3ff;
+}
+
+[data-theme="dark"] .comment-link:hover {
+  color: #9cc3ff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .comment-link {
+    color: #7bb3ff;
+  }
+
+  .comment-link:hover {
+    color: #9cc3ff;
+  }
+}
+
+/* 하이라이트 효과 */
+.comment-highlight {
+  background-color: rgba(74, 158, 255, 0.2);
+  transition: background-color 2s ease-out;
+}
+
+[data-theme="dark"] .comment-highlight {
+  background-color: rgba(91, 163, 255, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .comment-highlight {
+    background-color: rgba(91, 163, 255, 0.2);
+  }
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+  .comment-tooltip {
+    max-width: calc(100vw - 32px);
+    font-size: 0.8rem;
+  }
+
+  .comment-footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+  }
+}
