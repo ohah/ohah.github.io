@@ -1,3 +1,16 @@
+.index-page .profile-images {
+  display: flex;
+  gap: 20px;
+  margin: 24px 0;
+  justify-content: center;
+  align-items: center;
+}
+
+.index-page .profile-image {
+  max-width: 200px;
+  height: auto;
+  border-radius: 8px;
+}
 
 @media (min-width: 1280px) {
   body:has(.index-page) {
