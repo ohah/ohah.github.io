@@ -190,7 +190,7 @@ module.exports = withWorkspaceModule(config, modulePackagePath);
 
 Android는 Gradle을 사용하는데, `settings.gradle`에서 `autolinkLibrariesFromCommand`를 사용해서 자동으로 네이티브 모듈을 링크한다:
 
-```gradle
+```groovy
 pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
 plugins { id("com.facebook.react.settings") }
 extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> 
