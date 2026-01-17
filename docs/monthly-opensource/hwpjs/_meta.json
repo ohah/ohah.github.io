@@ -27,5 +27,11 @@
     "name": "development-2",
     "label": "3-2. 코어 개발하기",
     "tag": "25.12.10"
+  },
+  {
+    "type": "file",
+    "name": "development-3",
+    "label": "3-3. 배포(NAPI-RS)",
+    "tag": "26.01.17"
   }
 ]
