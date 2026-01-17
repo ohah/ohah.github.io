@@ -274,7 +274,7 @@ Metro 캐시를 날렸는데도 안 되면 Gradle 캐시를 날려보고, 그것
 ## 워크스페이스 모듈 연결 플로우차트
 
 ```mermaid
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#e3f2fd', 'primaryTextColor':'#000', 'primaryBorderColor':'#1976d2', 'lineColor':'#000000', 'secondaryColor':'#f3e5f5', 'tertiaryColor':'#fff9c4', 'fontSize':'16px', 'clusterBkg':'#e3f2fd', 'clusterText':'#000', 'clusterFontSize':'18px', 'edgeLabelFontSize':'16px'}}}%%
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#1e3a8a', 'primaryTextColor':'#fff', 'primaryBorderColor':'#3b82f6', 'lineColor':'#e5e7eb', 'secondaryColor':'#7c3aed', 'tertiaryColor':'#f59e0b', 'fontSize':'16px', 'clusterBkg':'#1e3a8a', 'clusterText':'#fff', 'clusterFontSize':'18px', 'edgeLabelFontSize':'16px'}}}%%
 graph TB
     Start["예제 앱 시작<br/>examples/react-native"] --> BunDep["Bun 워크스페이스<br/>의존성 해석"]
     
@@ -302,23 +302,23 @@ graph TB
     MetroBundle --> AndroidApp
     MetroBundle --> iOSApp
     
-    style Start fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000000
-    style BunDep fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000000
-    style PackageJson fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000000
-    style BunResolve fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000000
-    style MetroConfig fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
-    style MetroWatch fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
-    style RNConfig fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
-    style RNPath fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
-    style AndroidGradle fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000000
-    style AndroidLink fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000000
-    style AndroidBuild fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000000
-    style iOSPodfile fill:#ffecb3,stroke:#f57c00,stroke-width:2px,color:#000000
-    style iOSLink fill:#ffecb3,stroke:#f57c00,stroke-width:2px,color:#000000
-    style iOSBuild fill:#ffecb3,stroke:#f57c00,stroke-width:2px,color:#000000
-    style MetroBundle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px,color:#000000
-    style AndroidApp fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px,color:#000000
-    style iOSApp fill:#ffecb3,stroke:#f57c00,stroke-width:3px,color:#000000
+    style Start fill:#1e3a8a,stroke:#3b82f6,stroke-width:2px,color:#ffffff
+    style BunDep fill:#1e3a8a,stroke:#3b82f6,stroke-width:2px,color:#ffffff
+    style PackageJson fill:#f59e0b,stroke:#f97316,stroke-width:2px,color:#000000
+    style BunResolve fill:#1e3a8a,stroke:#3b82f6,stroke-width:2px,color:#ffffff
+    style MetroConfig fill:#7c3aed,stroke:#a78bfa,stroke-width:2px,color:#ffffff
+    style MetroWatch fill:#7c3aed,stroke:#a78bfa,stroke-width:2px,color:#ffffff
+    style RNConfig fill:#7c3aed,stroke:#a78bfa,stroke-width:2px,color:#ffffff
+    style RNPath fill:#7c3aed,stroke:#a78bfa,stroke-width:2px,color:#ffffff
+    style AndroidGradle fill:#059669,stroke:#10b981,stroke-width:2px,color:#ffffff
+    style AndroidLink fill:#059669,stroke:#10b981,stroke-width:2px,color:#ffffff
+    style AndroidBuild fill:#059669,stroke:#10b981,stroke-width:2px,color:#ffffff
+    style iOSPodfile fill:#ea580c,stroke:#f97316,stroke-width:2px,color:#ffffff
+    style iOSLink fill:#ea580c,stroke:#f97316,stroke-width:2px,color:#ffffff
+    style iOSBuild fill:#ea580c,stroke:#f97316,stroke-width:2px,color:#ffffff
+    style MetroBundle fill:#7c3aed,stroke:#a78bfa,stroke-width:3px,color:#ffffff
+    style AndroidApp fill:#059669,stroke:#10b981,stroke-width:3px,color:#ffffff
+    style iOSApp fill:#ea580c,stroke:#f97316,stroke-width:3px,color:#ffffff
     
     linkStyle 0 stroke:#000000,stroke-width:2px
     linkStyle 1 stroke:#000000,stroke-width:2px

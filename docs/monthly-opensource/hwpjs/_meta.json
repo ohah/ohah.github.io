@@ -39,5 +39,11 @@
     "name": "development-4",
     "label": "3-4. 배포(Craby)",
     "tag": "26.01.17"
+  },
+  {
+    "type": "file",
+    "name": "development-5",
+    "label": "3-5. 배포(WebAssembly)",
+    "tag": "26.01.18"
   }
 ]
