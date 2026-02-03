@@ -1,0 +1,73 @@
+[
+  {
+    "type": "file",
+    "name": "background",
+    "label": "1. 개발 배경",
+    "tag": "26.02.03"
+  },
+  {
+    "type": "file",
+    "name": "tech-stack",
+    "label": "2. 기술 스택",
+    "tag": "작성 예정"
+  },
+  {
+    "type": "file",
+    "name": "development",
+    "label": "3. 개발 과정"
+  },
+  {
+    "type": "file",
+    "name": "development-1",
+    "label": "3-1. 배민 구현 따라하기",
+    "tag": "작성 예정"
+  },
+  {
+    "type": "file",
+    "name": "development-2",
+    "label": "3-2. 배민 백로그까지 구현",
+    "tag": "작성 예정"
+  },
+  {
+    "type": "file",
+    "name": "development-3",
+    "label": "3-3. 욕심 부려보기",
+    "tag": "작성 예정"
+  },
+  {
+    "type": "file",
+    "name": "development-4",
+    "label": "3-4. React Native",
+    "tag": "작성 예정"
+  },
+  {
+    "type": "file",
+    "name": "development-5",
+    "label": "3-5. 터보모듈",
+    "tag": "작성 예정"
+  },
+  {
+    "type": "file",
+    "name": "development-6",
+    "label": "3-6. 번들러 학습",
+    "tag": "작성 예정"
+  },
+  {
+    "type": "file",
+    "name": "development-7",
+    "label": "3-7. 네이티브 걷어내기",
+    "tag": "작성 예정"
+  },
+  {
+    "type": "file",
+    "name": "development-8",
+    "label": "3-8. 커스텀 패널 구현",
+    "tag": "작성 예정"
+  },
+  {
+    "type": "file",
+    "name": "development-9",
+    "label": "3-9. 마무리",
+    "tag": "작성 예정"
+  }
+]

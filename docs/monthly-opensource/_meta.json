@@ -18,5 +18,10 @@
     "type": "dir",
     "name": "craby",
     "label": "Craby"
+  },
+  {
+    "type": "dir",
+    "name": "crd",
+    "label": "Chrome Remote Debugger"
   }
 ]
