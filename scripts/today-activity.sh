@@ -25,7 +25,11 @@ PR_LIMIT="${PR_LIMIT:-50}"
 OUT_DIR="${OUT_DIR:-$SCRIPT_DIR/../docs/today-commit}"
 OUT_FILE="${OUT_FILE:-$OUT_DIR/$DATE.md}"
 
-COMMITS=$(gh search commits --author="$AUTHOR" --committer-date="$DATE" --limit="$COMMIT_LIMIT" --json repository,commit,url 2>/dev/null || echo "[]")
+# 해당 날짜 하루만: 범위 지정. API가 다른 날짜를 섞을 수 있으므로 출력 단계에서 committer.date로 한 번 더 필터.
+# (긴 JSON을 변수에 넣으면 이스케이프 등으로 jq 파싱이 깨질 수 있어 임시 파일 사용)
+COMMITS_TMP=$(mktemp)
+trap 'rm -f "$COMMITS_TMP"' EXIT
+gh search commits --author="$AUTHOR" --committer-date="${DATE}..${DATE}" --limit="$COMMIT_LIMIT" --json repository,commit,url 2>/dev/null > "$COMMITS_TMP" || echo "[]" > "$COMMITS_TMP"
 PRS=$(gh search prs --author="$AUTHOR" --limit="$PR_LIMIT" --json repository,number,state,title,url,createdAt 2>/dev/null || echo "[]")
 
 # PR 중 해당일 생성된 것만 (createdAt이 DATE로 시작)
@@ -49,15 +53,16 @@ mkdir -p "$OUT_DIR"
   echo "## 커밋"
   echo ""
 
-  if [ "$COMMITS" = "[]" ] || [ -z "$COMMITS" ]; then
+  if [ ! -s "$COMMITS_TMP" ] || [ "$(cat "$COMMITS_TMP")" = "[]" ]; then
     echo "(없음)"
   else
-    # repo별로 그룹해 ### repo + 리스트 출력 (메시지 첫 줄만, | 이스케이프)
-    echo "$COMMITS" | jq -r '
+    # 해당 날짜(committer.date)만 남긴 뒤 repo별로 그룹해 ### repo + 리스트 출력 (메시지 첫 줄만, | 이스케이프)
+    jq -r --arg d "$DATE" '
+      [.[] | select(.commit.committer.date | startswith($d))] |
       group_by(.repository.fullName) | .[] |
       "### " + (.[0].repository.fullName) + "\n\n" +
       ([.[] | "- [" + (.commit.message | split("\n")[0] | gsub("\\|"; "&#124;") | gsub("]"; "&#93;")) + "](" + .url + ")\n"] | add)
-    '
+    ' "$COMMITS_TMP"
   fi
 
   echo ""
