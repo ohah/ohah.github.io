@@ -10,14 +10,14 @@
     "format": "oxfmt ."
   },
   "dependencies": {
-    "@rspress/core": "^2.0.0-rc.0",
+    "@rspress/core": "^2.0.3",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21"
   },
   "devDependencies": {
     "@types/node": "^22.8.1",
-    "oxfmt": "^0.14.0",
-    "oxlint": "^1.29.0",
-    "rspress-plugin-mermaid": "^0.3.0"
+    "oxfmt": "^0.31.0",
+    "oxlint": "^1.46.0",
+    "rspress-plugin-mermaid": "^1.0.1"
   }
 }

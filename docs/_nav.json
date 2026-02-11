@@ -8,5 +8,10 @@
     "text": "리뷰",
     "link": "/reviews/",
     "activeMatch": "/reviews/"
+  },
+  {
+    "text": "오늘의 커밋",
+    "link": "/today-commit/",
+    "activeMatch": "/today-commit/"
   }
 ]
