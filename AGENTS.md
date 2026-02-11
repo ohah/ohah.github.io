@@ -13,20 +13,13 @@
 
 이 워크스페이스에서 매일 한 번 돌 때:
 
-1. **일기**: 어제 하루 동안 이 워크스페이스에서 한 git 커밋을 확인하고 일기 형태로 정리해 줘.
-2. **오늘의 커밋**: 해당 날짜 `docs/today-commit/{date}.md`가 있으면 그 문서의 **「요약 (AI 작성)」** 섹션만 1~3문단으로 채워 줘. (아래 오늘의 커밋 규칙 참고.)
-
-둘 다 할 게 없으면 `HEARTBEAT_OK`만 반환.
-
----
-
-## 오늘의 커밋 (요약만 AI 담당)
-
-- **위치**: `docs/today-commit/{date}.md`. 상단 **`## 요약 (AI 작성)`** 섹션만 채운다.
-- **내용**: 같은 문서 안의 커밋·PR 목록을 보고 1~3문단으로 요약. 어떤 repo에서 무엇을 했는지, 머지된 PR·진행 중인 작업 있으면 짧게.
-- **금지**: 커밋 목록·PR 테이블·제목·frontmatter는 수정·삭제하지 않는다.
-- **스크립트**: `./scripts/today-activity.sh [date] [author]` — md 생성. 기본 어제 날짜, author=ohah. **메타만 갱신**: `./scripts/today-commit-meta.sh`.
-- **사이드바**: `docs/today-commit/_meta.json`에 해당 날짜 추가해야 노출됨.
+1. **`./scripts/today-activity.sh`** 실행 (전날 커밋 이력 md 생성. 인자 없으면 어제 날짜, author=ohah. 메타만 갱신: `./scripts/today-commit-meta.sh`).
+2. 생성된 **`docs/today-commit/{date}.md`**의 **`## 요약 (AI 작성)`** 섹션만 1~3문단으로 채운다.
+   - 같은 문서 안 커밋·PR 목록을 보고 요약. 어떤 repo에서 무엇을 했는지, 머지된 PR·진행 중인 작업 있으면 짧게.
+   - **금지**: 커밋 목록·PR 테이블·제목·frontmatter는 수정·삭제하지 않는다.
+   - 사이드바 노출: `docs/today-commit/_meta.json`에 해당 날짜 추가.
+3. 작성된 내용이 있으면 아래 **푸시 전** 절차대로 커밋·푸시.
+4. 다 진행하면 `HEARTBEAT_OK` 반환.
 
 ## 푸시 전
 
