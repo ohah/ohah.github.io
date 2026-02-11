@@ -30,4 +30,4 @@
 
 ## 푸시 전
 
-- 린트 후 커밋·푸시: `npm run lint` → `git add` · `git commit` · `git push`.
+- 린트 한 번 돌린 뒤 커밋·푸시: `bun run lint` → `git add` · `git commit` · `git push`.
