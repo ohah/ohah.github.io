@@ -35,6 +35,16 @@ PRS=$(gh search prs --author="$AUTHOR" --limit="$PR_LIMIT" --json repository,num
 # PR 중 해당일 생성된 것만 (createdAt이 DATE로 시작)
 PRS_TODAY=$(echo "$PRS" | jq --arg d "$DATE" '[.[] | select(.createdAt | startswith($d))]')
 
+# 해당일 커밋 수(committer.date 기준)
+COMMIT_COUNT=$(jq -r --arg d "$DATE" '[.[] | select(.commit.committer.date | startswith($d))] | length' "$COMMITS_TMP")
+PR_COUNT=$(echo "$PRS_TODAY" | jq 'length')
+
+# 커밋·PR 둘 다 없으면 파일·메타 생성 안 함 (섹션에 안 올림)
+if [ "$COMMIT_COUNT" = "0" ] && [ "$PR_COUNT" = "0" ]; then
+  echo "건너뜀: $DATE — 커밋·PR 없음 (파일 미생성)"
+  exit 0
+fi
+
 mkdir -p "$OUT_DIR"
 
 {
@@ -69,7 +79,6 @@ mkdir -p "$OUT_DIR"
   echo "## PR (해당일 생성/머지)"
   echo ""
 
-  PR_COUNT=$(echo "$PRS_TODAY" | jq 'length')
   if [ "$PR_COUNT" = "0" ]; then
     echo "(없음)"
   else
