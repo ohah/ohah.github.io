@@ -39,7 +39,7 @@ mkdir -p "$OUT_DIR"
 
 {
   echo "---"
-  echo "title: $DATE"
+  echo "title: \"$DATE\""
   echo "date: $DATE"
   echo "description: $AUTHOR $DATE 커밋·PR 요약"
   echo "---"
