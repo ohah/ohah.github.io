@@ -13,7 +13,16 @@
 
 이 워크스페이스에서 매일 한 번 돌 때:
 
-1. **`./scripts/today-activity.sh`** 실행 (전날 커밋 이력 md 생성. 인자 없으면 어제 날짜, author=ohah. 메타만 갱신: `./scripts/today-commit-meta.sh`).
+1. **`./scripts/today-activity.sh`** 실행 (전날 커밋 이력 md 생성).
+2. 아래 **오늘의 커밋** 규칙대로 해당 문서 요약만 채움.
+3. 작성된 내용이 있으면 아래 **푸시 전** 절차대로 커밋·푸시.
+4. 다 진행하면 `HEARTBEAT_OK` 반환.
+
+---
+
+## 매일 실행 시 상세 (오늘의 커밋)
+
+1. **`./scripts/today-activity.sh`** 실행 (인자 없으면 어제 날짜, author=ohah. 메타만 갱신: `./scripts/today-commit-meta.sh`).
 2. 생성된 **`docs/today-commit/{date}.md`**의 **`## 요약 (AI 작성)`** 섹션만 1~3문단으로 채운다.
    - 같은 문서 안 커밋·PR 목록을 보고 요약. 어떤 repo에서 무엇을 했는지, 머지된 PR·진행 중인 작업 있으면 짧게.
    - **금지**: 커밋 목록·PR 테이블·제목·frontmatter는 수정·삭제하지 않는다.
