@@ -1,8 +1,57 @@
 ---
 title: 2. 기술 스택
-description: CRD 프로젝트 기술 스택
+date: 2026-02-14
+description: CRD(Chrome Remote DevTools) 프로젝트 기술 스택
 ---
 
-# 2. 기술 스택
+# 2. 기술 스택 선정하기
 
-작성 예정
+배민과 카카오를 레퍼런스 삼아 사실상 클론 코딩에 가까웠기에 별다른 고민을 하지 않았다.
+
+그리고 과거에도 꾸준히 언젠가는 개발해야지 하면서 관심 있게 웹서핑을 몇 번 한 적이 있었고, 배민이나 카카오에서 공개한 영상에서도 내가 봤던 레포지토리들을 참고했다는 걸 보면 개발자라는 것은
+
+> `다 그 나물에 그 밥이구나`
+
+라는 생각도 건방지게 했다.
+
+그리고 바로 기술 스택을 선정했다.
+
+---
+
+## 타우리
+
+난 타우리 처돌이니까 즉시 타우리
+
+## Bun
+
+빠른 게 최고
+
+## chrome-devtools-frontend
+
+무조건 필수
+
+## rr-web
+
+## rspress(v2)
+
+문서는 나에게는 이것만 간다(러스트에 미친 놈 아님, 러스트 프리픽스 보고 하는 거 아니에요 쓸 만해서 하는 거지)
+
+---
+
+## 레퍼런스로 삼은 코드·프로젝트
+
+프로젝트 README의 [References](https://github.com/ohah/chrome-remote-devtools#references)에 적힌 대로, 다음 프로젝트를 참고·참조했다.
+
+- **[devtools-remote-debugger](https://github.com/Nice-PLQ/devtools-remote-debugger)** — 클라이언트 측 CDP 구현
+- **[chii](https://github.com/liriliri/chii)** — chobitsu를 써서 원격 디버깅하는 도구
+- **[chobitsu](https://github.com/liriliri/chobitsu)** — CDP 프로토콜 JavaScript 구현 라이브러리
+- **[devtools-protocol](https://github.com/ChromeDevTools/devtools-protocol)** — 공식 CDP 정의
+- **[redux-devtools](https://github.com/reduxjs/redux-devtools)** — Redux DevTools Extension 소스 코드
+
+---
+
+배민에서 했다니까 나도 일단 해본다.
+
+그리고 과거에 사내에 한 번 chii를 적용시켜 본 적이 있었는데, 적용시키니까 원격은 잘 되지만 그 chii 때문에 소스맵 라인이 방해받는 이슈가 있었다.
+
+이게 오히려 DX를 저해해서, 빌드 때만 배포하는 것도 번거롭고, 그래서 그냥 걷어낸 적이 있었는데 이 부분도 한 번 줄기차게 확인해 보기로 마음먹었다.
