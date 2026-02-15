@@ -33,3 +33,13 @@
 ## 푸시 전
 
 - 린트 한 번 돌린 뒤 커밋·푸시: `bun run lint` → `git add` · `git commit` · `git push`.
+
+---
+
+## 30분마다 실행 시 (CRD 작성 예정 순차 작성)
+
+- **크론**에서 이 워크스페이스를 30분마다 돌릴 때:
+  1. **`CRON_CRD_WRITE.md`** 를 읽고, 지시대로 월간 오픈소스 CRD "작성 예정" 문서 **한 편**만 순차 작성.
+  2. [chrome-remote-devtools](https://github.com/ohah/chrome-remote-devtools) 참고, 기존 CRD 글(background, tech-stack) 참고.
+  3. 린트 통과 후 커밋·푸시. 끝나면 요약만 반환.
+- 크론 등록·상세: 상위 워크스페이스 openclaw 설정 및 **`CRON_CRD_WRITE.md`** 참고.
