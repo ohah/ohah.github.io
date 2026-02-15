@@ -48,7 +48,7 @@ CDP 프로토콜을 이용해서 리덕스가 보내는 Action과 State 변화�
 
 리덕스 DevTools 패널이 리덕스 관점에서만 디버깅이 가능하고, 실제 저장소의 보드는 아니라서, React Native에서 MMKV·AsyncStorage로 쓰는 데이터도 보고 싶어졌다.
 
-MMKV은 카카오페이 기술 블로그에서도 소개된 것 치고는 아직 개선할 부분이 많다. AsyncStorage도 똑같. 그래서 이런 저런 스토리지를 DevTools에서 보고 바로 수정할 수 있는 패널을 만들기로.
+MMKV이나 AsyncStorage는 각자 장단점이 있고 성능도 비교할 수 있었는데, DevTools에서 이런 스토리지를 보고 바로 수정할 패널이 필요하다고 생각해서 만들게 됐다.
 
 ### 구현한 것
 
