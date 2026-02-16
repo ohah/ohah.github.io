@@ -16,7 +16,20 @@
 
 ## 2. 매 턴 할 일 (요약)
 
-1. **작성 예정 후보**에서 다음 한 편 선택: `docs/monthly-opensource/crd/_meta.json`에서 `"tag": "작성 예정"`인 항목 순서(development-1 → … → development-9 → development). 이미 본문이 채워진 파일은 건너뛰기.
+1. **작성 예정 후보**에서 다음 한 편 선택: `docs/monthly-opensource/crd/_meta.json`에서 `"tag": "작성 예정"`인 항목 순서(아래 표 참고). 이미 본문이 채워진 파일은 건너뛰기.
+
+   | 순서 | 파일 | 제목 | 기준일 |
+   |------|------|------|--------|
+   | 1 | development-1 | 3-1. 배민 구현 따라하기 | 2026-02-15 |
+   | 2 | development-2 | 3-2. 배민 백로그까지 구현 | 2026-02-15 |
+   | 3 | development-3 | 3-3. 욕심 부려보기 | 2026-02-15 |
+   | 4 | development-4 | 3-4. React Native | 2026-02-15 |
+   | 5 | development-5 | 3-5. 터보모듈 | 2026-02-15 |
+   | 6 | development-6 | 3-6. 번들러 학습 | 2026-02-15 |
+   | 7 | development-7 | 3-7. 네이티브 걷어내기 | 2026-02-15 |
+   | 8 | development-8 | 3-8. 커스텀 패널 구현 | 2026-02-15 |
+   | 9 | development-9 | 3-9. 마무리 | 2026-02-15 |
+   | 10 | development | 3. 개발 과정 | 2026-02-15 |
 2. `docs/monthly-opensource/crd/` 해당 `.mdx` 파일 **본문만** 작성 (frontmatter 수정 금지). **기존 CRD 글의 말투·문체를 유지**한다.
 3. [chrome-remote-devtools](https://github.com/ohah/chrome-remote-devtools)와 기존 CRD 글(background, tech-stack) 참고.
 4. `bun run lint` 실행 → 통과 시 `git add` · `git commit` · `git push`.
