@@ -62,13 +62,13 @@ CRD 입장에서는:
 
 ```json
 {"method": "Target.sendMessageToTarget", "params": {"targetId": "search-panel"}}
-```
+````
 
 이건 명령어가 아니라 **"메시지 전송"**입니다. 실제로는:
 
 ```json
 {"method": "Runtime.evaluate", "params": {"expression": "document.querySelector('#search-input').value = 'hello'" }}
-```
+````
 
 이런 식의 스크립트가 필요합니다.
 
@@ -106,7 +106,7 @@ CRD 입장에서는:
 
 ```
 #devtools-root #panel-search
-```
+````
 
 이런 CSS 셀렉터로 패널을 찾으면 됩니다.
 
