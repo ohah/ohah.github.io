@@ -73,7 +73,7 @@
 - [x] docs/monthly-opensource/crd/development-1.mdx
 - [x] docs/monthly-opensource/crd/development-2.mdx
 - [x] docs/monthly-opensource/crd/development-3.mdx
-- [ ] docs/monthly-opensource/crd/development-4.mdx
+- [x] docs/monthly-opensource/crd/development-4.mdx
 - [ ] docs/monthly-opensource/crd/development-5.mdx
 - [ ] docs/monthly-opensource/crd/development-6.mdx
 - [ ] docs/monthly-opensource/crd/development-7.mdx
