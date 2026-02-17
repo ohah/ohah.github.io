@@ -60,7 +60,7 @@
 
 아래 순서대로 한 턴에 하나씩 검사하고, **끝날 때마다** 해당 파일 행만 `[ ]` → `[x]`로 바꾼다.
 
-- [ ] docs/index.mdx
+- [x] docs/index.mdx
 - [ ] docs/monthly-opensource/index.mdx
 - [ ] docs/monthly-opensource/craby/background.mdx
 - [ ] docs/monthly-opensource/chromium/background.mdx
