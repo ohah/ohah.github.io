@@ -76,7 +76,7 @@
 - [x] docs/monthly-opensource/crd/development-4.mdx
 - [x] docs/monthly-opensource/crd/development-5.mdx
 - [x] docs/monthly-opensource/crd/development-6.mdx
-- [ ] docs/monthly-opensource/crd/development-7.mdx
+- [x] docs/monthly-opensource/crd/development-7.mdx
 - [ ] docs/monthly-opensource/crd/development-8.mdx
 - [ ] docs/monthly-opensource/crd/development-9.mdx
 - [ ] docs/monthly-opensource/crd/tech-stack.mdx
