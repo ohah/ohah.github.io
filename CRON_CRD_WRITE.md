@@ -86,5 +86,5 @@
 - [x] docs/monthly-opensource/hwpjs/development-2.mdx
 - [x] docs/monthly-opensource/hwpjs/development-3.mdx
 - [x] docs/monthly-opensource/hwpjs/development-4.mdx
-- [ ] docs/monthly-opensource/hwpjs/development-5.mdx
+- [x] docs/monthly-opensource/hwpjs/development-5.mdx
 - [x] docs/monthly-opensource/hwpjs/tech-stack.mdx

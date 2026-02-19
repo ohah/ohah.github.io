@@ -15,7 +15,7 @@ NAPI-RS와 Craby로 Node.js와 React Native 환경을 설정한 다음, 마지�
 초기에는 WebAssembly를 고려하지 않았다.  
 NAPI-RS 문서에서 WebAssembly 지원이 가능하다고 나와있긴 했지만, 안정적이지 않을 것 같아서 나중에 추가하려고 생각했다.
 
-그리고 Rust로 모든 플랫폼에 제공하자가 원래 목표였으므로, Rust Wasm 빌드는 이전에 Yew 블로그를 만들어본적도 있으니 가장 우선순위를 낮췄었다.
+그리고 Rust로 모든 플랫폼에 제공할 수 있다는 것이 원래 목표였으므로, Rust Wasm 빌드는 이전에 Yew 블로그를 만들어 본 적도 있으니 가장 우선순위를 낮췄었다.
 
 그래서 NAPI-RS의 WebAssembly 빌드를 확인해봤는데, 생각보다 간단했다.  
 NAPI-RS가 `wasm32-wasi` 타겟으로 빌드할 수 있다는게 실험적 기능으로 추가되어 있었기 때문이다.
