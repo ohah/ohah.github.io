@@ -93,14 +93,14 @@
 
 ## 8. 모든 파일 검사 완료 (✅ CRON_CRD_WRITE.md)
 
-**2026-02-28 3:40 AM (Asia/Seoul) 기준 모든 대상 mdx 파일에 대한 맞춤법 검사를 완료했습니다.**
+**2026-02-28 8:10 AM (Asia/Seoul) 기준 모든 대상 mdx 파일에 대한 맞춤법 검사를 완료했습니다.**
 
 - **대상 파일**: docs/index.mdx, docs/monthly-opensource/** (craby, chromium, crd, hwpjs의 모든 development, background, tech-stack, first-contribution, merge, setup)
 - **검사 범위**: 맞춤법, 띄어쓰기, 오타 (중복 띄어쓰기 제거 포함)
 - **수정 예외**: 내용 추가·삭제, 문장 바꾸기, 말투·문체 변경, frontmatter 필드 값 변경 금지.
 
-**현재 상태**: 다음 처리할 파일 없음 (전부 [x] 표시됨). 이 파일(CRON_CRD_WRITE.md)을 제외하고는 더 이상 검사할 mdx 파일이 없습니다.
+**현재 상태**: 모든 대상 mdx 파일 검사 완료. 이 파일(CRON_CRD_WRITE.md)을 제외하고는 더 이상 검사할 mdx 파일이 없습니다.
 
 ---
 
-**마지막 업데이트**: 2026-02-27 4:05 AM (Asia/Seoul) - 크론 호출 시점, 전체 작업 완료로 갱신.
+**마지막 업데이트**: 2026-02-28 8:10 AM (Asia/Seoul) - 크론 호출 시점, 전체 작업 완료로 갱신.
