@@ -69,7 +69,7 @@
 - [x] docs/monthly-opensource/chromium/merge.mdx
 - [x] docs/monthly-opensource/chromium/setup.mdx
 - [x] docs/monthly-opensource/crd/background.mdx
-- [x] docs/monthly-opensource/crd/development.mdx
+- [ ] docs/monthly-opensource/crd/development.mdx
 - [x] docs/monthly-opensource/crd/development-1.mdx
 - [x] docs/monthly-opensource/crd/development-2.mdx
 - [x] docs/monthly-opensource/crd/development-3.mdx
