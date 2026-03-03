@@ -89,6 +89,8 @@
 - [x] docs/monthly-opensource/hwpjs/development-5.mdx
 - [x] docs/monthly-opensource/hwpjs/tech-stack.mdx
 
+- [x] docs/index.mdx
+
 ---
 
 ## 8. 모든 파일 검사 완료 (✅ CRON_CRD_WRITE.md)
