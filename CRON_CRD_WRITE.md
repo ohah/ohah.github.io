@@ -68,6 +68,7 @@
 - [x] docs/monthly-opensource/chromium/first-contribution.mdx
 - [x] docs/monthly-opensource/chromium/merge.mdx
 - [x] docs/monthly-opensource/chromium/setup.mdx
+- [x] docs/monthly-opensource/chromium/code-review.mdx
 - [x] docs/monthly-opensource/crd/background.mdx
 - [x] docs/monthly-opensource/crd/development.mdx
 - [x] docs/monthly-opensource/crd/development-1.mdx
@@ -174,3 +175,5 @@
 **38차 업데이트**: 2026-03-05 11:00 PM (Asia/Seoul) - 크론 주기적 실행. 목록에 있는 모든 대상 .mdx 파일 이미 검사 완료 상태. 추가 맞춤법 작업 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 커밋.
 
 **39차 업데이트**: 2026-03-05 11:30 PM (Asia/Seoul) - 크론 주기적 실행. 목록에 있는 모든 대상 .mdx 파일 이미 검사 완료 상태. 추가 맞춤법 작업 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 커밋.
+
+**40차 업데이트**: 2026-03-06 12:00 AM (Asia/Seoul) - 크론 주기적 실행. 목록에 있는 mdx 파일 전체 체크 완료 후 code-review.mdx 파일을 검토(작성 예정). 추가 검사할 파일 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋.
