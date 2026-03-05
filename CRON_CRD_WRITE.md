@@ -63,9 +63,11 @@
 - [x] docs/index.mdx
 - [x] docs/monthly-opensource/index.mdx
 - [x] docs/monthly-opensource/craby/background.mdx
+- [ ] docs/monthly-opensource/chromium/code-review.mdx
 - [x] docs/monthly-opensource/chromium/background.mdx
 - [x] docs/monthly-opensource/chromium/code-review.mdx
 - [x] docs/monthly-opensource/chromium/first-contribution.mdx
+- [x] docs/monthly-opensource/chromium/code-review.mdx
 - [x] docs/monthly-opensource/chromium/merge.mdx
 - [x] docs/monthly-opensource/chromium/setup.mdx
 - [x] docs/monthly-opensource/chromium/code-review.mdx
