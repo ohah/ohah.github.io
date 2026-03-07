@@ -92,7 +92,7 @@
 - [x] docs/monthly-opensource/hwpjs/development-4.mdx
 - [x] docs/monthly-opensource/hwpjs/development-5.mdx
 - [x] docs/monthly-opensource/hwpjs/tech-stack.mdx
-- [ ] docs/monthly-opensource/index.mdx
+- [x] docs/monthly-opensource/index.mdx
 
 - [x] docs/index.mdx
 
