@@ -60,18 +60,15 @@
 
 아래 순서대로 한 턴에 하나씩 검사하고, **끝날 때마다** 해당 파일 행만 `[ ]` → `[x]`로 바꾼다.
 
-- [x] CRON_CRD_WRITE.md
+- [x] CRON_CRD_WRITE.md (본인)
 - [x] docs/index.mdx
 - [x] docs/monthly-opensource/index.mdx
 - [x] docs/monthly-opensource/craby/background.mdx
 - [x] docs/monthly-opensource/chromium/code-review.mdx
 - [x] docs/monthly-opensource/chromium/background.mdx
-- [x] docs/monthly-opensource/chromium/code-review.mdx
 - [x] docs/monthly-opensource/chromium/first-contribution.mdx
-- [x] docs/monthly-opensource/chromium/code-review.mdx
 - [x] docs/monthly-opensource/chromium/merge.mdx
 - [x] docs/monthly-opensource/chromium/setup.mdx
-- [x] docs/monthly-opensource/chromium/code-review.mdx
 - [x] docs/monthly-opensource/crd/background.mdx
 - [x] docs/monthly-opensource/crd/development.mdx
 - [x] docs/monthly-opensource/crd/development-1.mdx
@@ -92,11 +89,6 @@
 - [x] docs/monthly-opensource/hwpjs/development-4.mdx
 - [x] docs/monthly-opensource/hwpjs/development-5.mdx
 - [x] docs/monthly-opensource/hwpjs/tech-stack.mdx
-- [x] docs/monthly-opensource/index.mdx
-
-- [x] docs/index.mdx
-
-- [x] docs/index.mdx
 
 ---
 
