@@ -250,3 +250,5 @@
 **77차 업데이트**: 2026-03-08 10:00 AM (Asia/Seoul) - 크론 주기적 실행. 모든 대상 .mdx 파일이 이미 검사 완료된 상태로 추가 맞춤법 교정 작업 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋.
 
 **78차 업데이트**: 2026-03-08 10:30 AM (Asia/Seoul) - 크론 주기적 실행. 목록의 모든 대상 .mdx 파일이 이미 검사 완료된 상태로 추가 맞춤법 교정 작업 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋.
+
+**79차 업데이트**: 2026-03-08 11:00 AM (Asia/Seoul) - 크론 주기적 실행. docs/monthly-opensource/index.mdx 파일 검사. 맞춤법 교정 필요 없음. Lint 및 CRON_CRD_WRITE.md 상태만 갱신하여 커밋.
