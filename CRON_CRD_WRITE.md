@@ -270,3 +270,5 @@
 **88차 업데이트**: 2026-03-10 3:30 AM (Asia/Seoul) - 크론 재확인 실행. 모든 대상 .mdx 파일이 이미 검사 완료된 상태로 추가 맞춤법 교정 작업 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋.
 
 **90차 업데이트**: 2026-03-10 6:00 AM (Asia/Seoul) - 크론 재확인 실행. docs/monthly-opensource/hwpjs/development-5.mdx 검사 완료. 맞춤법 교정 필요 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋.
+
+**91차 업데이트**: 2026-03-10 7:00 AM (Asia/Seoul) - 크론 주기적 실행. 전체 대상 .mdx 파일 검사 완료 상태 재확인. 추가 검사할 파일 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋。
