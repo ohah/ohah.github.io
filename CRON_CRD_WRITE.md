@@ -359,3 +359,6 @@ docs/monthly-opensource/craby/background.mdx 파일 검사 완료. 맞춤법 교
 
 ## 137차 업데이트: 2026-03-13 4:30 PM (Asia/Seoul) - CRD 주기적 실행
 예약된 mdx 파일 검사 대상 없음. 전체 대상 파일 목록(26개) 모두 [x] 체크 완료 확인. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋．
+
+## 138차 업데이트: 2026-03-13 5:00 PM (Asia/Seoul) - CRD 주기적 실행
+전체 대상 .mdx 파일 목록(26개)의 맞춤법 교정 완료 상태 재확인. 추가 맞춤법 교정 작업 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋．
