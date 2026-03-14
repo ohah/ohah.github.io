@@ -65,7 +65,7 @@
 - [x] docs/index.mdx
 - [x] docs/monthly-opensource/index.mdx
 - [x] docs/monthly-opensource/chromium/first-contribution.mdx
-- [ ] docs/monthly-opensource/craby/background.mdx
+- [x] docs/monthly-opensource/craby/background.mdx
 - [x] docs/monthly-opensource/chromium/code-review.mdx
 - [x] docs/monthly-opensource/chromium/background.mdx
 - [x] docs/monthly-opensource/chromium/first-contribution.mdx
