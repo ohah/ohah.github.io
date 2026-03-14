@@ -64,7 +64,8 @@
 - [x] CRON_CRD_WRITE.md (본인)
 - [x] docs/index.mdx
 - [x] docs/monthly-opensource/index.mdx
-- [x] docs/monthly-opensource/craby/background.mdx
+- [x] docs/monthly-opensource/chromium/first-contribution.mdx
+- [ ] docs/monthly-opensource/craby/background.mdx
 - [x] docs/monthly-opensource/chromium/code-review.mdx
 - [x] docs/monthly-opensource/chromium/background.mdx
 - [x] docs/monthly-opensource/chromium/first-contribution.mdx
@@ -438,3 +439,6 @@ docs/index.mdx 검사 완료. 맞춤법 교정 필요 없음. Lint 통과, CRON_
 
 ## 171차 업데이트: 2026-03-14 17:30 PM (Asia/Seoul) - CRD 주기적 재확인 실행
 docs/monthly-opensource/chromium/first-contribution.mdx 파일 검사 완료. 맞춤법 교정 필요 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋。
+
+## 172차 업데이트: 2026-03-14 18:30 PM (Asia/Seoul) - CRD 주기적 실행
+docs/monthly-opensource/craby/background.mdx 파일 검사 완료. 맞춤법 교정 필요 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋。
