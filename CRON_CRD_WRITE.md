@@ -472,3 +472,6 @@ docs/monthly-opensource/chromium/code-review.mdx 검사 완료. 맞춤법 교정
 
 ## 184차 업데이트: 2026-03-15 5:00 AM (Asia/Seoul) - CRD 주기적 재확인 실행
 전체 대상 26개 .mdx 파일의 체크 상태 재확인. 추가 검사·수정할 파일 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋．
+
+## 185차 업데이트: 2026-03-15 5:30 AM (Asia/Seoul) - CRD 주기적 재확인 실행
+모든 대상 26개 .mdx 파일의 체크 상태 최종 확인. 추가 맞춤법 교정·검사할 파일 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋．
