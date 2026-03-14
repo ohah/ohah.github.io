@@ -422,5 +422,5 @@ CRON_CRD_WRITE.md 상태 최종 확인. 전체 대상 26개 mdx 파일에 대한
 ## 161차 업데이트: 2026-03-14 9:30 AM (Asia/Seoul) - CRD 주기적 재확인 실행
 전체 대상 26개 .mdx 파일의 맞춤법 교정 완료 상태 최종 확인. 추가 맞춤법 교정 작업 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋。
 
-## 162차 업데이트: 2026-03-14 10:00 AM (Asia/Seoul) - CRD 주기적 실행
-전체 대상 26개 .mdx 파일의 맞춤법 교정 완료 상태 최종 확인. 추가 맞춤법 교정 작업 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋。
+## 163차 업데이트: 2026-03-14 12:30 PM (Asia/Seoul) - CRD 주기적 실행
+docs/index.mdx 검사 완료. 맞춤법 교정 필요 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋。
