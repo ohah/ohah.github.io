@@ -491,5 +491,5 @@ docs/monthly-opensource/chromium/code-review.mdx 검사 완료. 맞춤법 교정
 ## 189차 업데이트: 2026-03-15 9:00 AM (Asia/Seoul) - CRD 주기적 실행
 docs/monthly-opensource/craby/background.mdx 파일 검사 완료. 맞춤법 교정 필요 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋．
 
-## 191차 업데이트: 2026-03-15 11:00 AM (Asia/Seoul) - CRD 주기적 실행 요청
-docs/monthly-opensource/craby/background.mdx 검사 완료. 맞춤법 교정 필요 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋．
+## 192차 업데이트: 2026-03-15 12:00 PM (Asia/Seoul) - CRD 주기적 실행 요청
+다음 대상 mdx 파일 검사 완료. 맞춤법 교정 필요 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋．
