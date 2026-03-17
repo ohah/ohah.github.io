@@ -4,5 +4,29 @@
     "name": "background",
     "label": "1. 개발 배경",
     "tag": "26.01.18"
+  },
+  {
+    "type": "file",
+    "name": "development",
+    "label": "2. 기여 과정",
+    "tag": "25.11.15"
+  },
+  {
+    "type": "file",
+    "name": "development-1",
+    "label": "2-1. EventEmitter 기여",
+    "tag": "25.11.15"
+  },
+  {
+    "type": "file",
+    "name": "development-2",
+    "label": "2-2. codegen 페이로드 수정",
+    "tag": "25.11.24"
+  },
+  {
+    "type": "file",
+    "name": "development-3",
+    "label": "2-3. ArrayBuffer Vec 변환 버그 수정",
+    "tag": "25.12.21"
   }
 ]

@@ -1,0 +1,272 @@
+---
+title: 3-7. 테이블 렌더링 완성도 높이기
+date: 2026-03-14
+---
+
+import { Badge } from '@theme';
+
+# 3-7. 테이블 렌더링 완성도 높이기
+
+## 끝나지 않는 테이블과의 전쟁
+
+rc.5에서 테이블 테두리를 SVG로 그리고, 캡션도 처리하고, 스냅샷 테스트도 도입했다.
+"이제 테이블은 어느 정도 됐겠지"라고 생각했는데, 실제 HWP 문서를 더 테스트해보니 아직 멀었다.
+
+rc.6부터 rc.8까지의 작업은 대부분 **테이블 렌더링의 완성도를 높이는** 데 집중했다.
+
+한컴 원본 뷰어의 HTML과 내 출력을 비교하면서 차이가 나는 부분을 하나하나 잡아나갔는데, 이게 정말 끝이 없었다.
+
+## rc.6: 기반 다지기 <Badge type="tip">2026-03-01</Badge>
+
+rc.6은 주로 테스트 인프라를 강화하고, 기존 코드를 안정화하는 릴리스였다.
+
+70개가 넘는 테스트 PR이 머지됐고, 모듈별로 단위 테스트를 촘촘하게 작성했다.
+`viewer/html`, `viewer/markdown`, `ctrl_header`, `document` 등 거의 모든 모듈에 기본 구조 테스트를 추가했다.
+
+솔직히 이 테스트들 대부분은 AI한테 "이 모듈의 기본 구조 테스트 작성해줘"라고 시킨 것들이다.
+AI가 만든 테스트가 완벽하진 않았지만, 최소한 "이 모듈이 컴파일되고 기본적인 동작을 하는가?"를 검증하는 데는 충분했다.
+
+그리고 `COLORREF` JSON 직렬화를 `{r, g, b}` 형태로 복원하는 수정도 있었다.
+이전에 어떤 리팩토링 과정에서 COLORREF가 hex string으로 직렬화되도록 바뀌었는데, 이러면 프론트엔드에서 파싱하기 불편했다.
+
+```rust
+// 변경 전: "color": "#FF0000"
+// 변경 후: "color": { "r": 255, "g": 0, "b": 0 }
+
+impl Serialize for COLORREF {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut state = serializer.serialize_struct("COLORREF", 3)?;
+        state.serialize_field("r", &self.r)?;
+        state.serialize_field("g", &self.g)?;
+        state.serialize_field("b", &self.b)?;
+        state.end()
+    }
+}
+```
+
+작은 변경이지만, 이런 것들이 쌓여서 사용성에 영향을 준다.
+
+### table border priority 수정
+
+rc.6에서 테이블 테두리 우선순위 로직을 처음으로 수정했다.
+한컴 원본과 비교해보니, 내 구현에서 테두리가 누락되거나 잘못된 스타일이 적용되는 경우가 있었다.
+
+특히 이미지 크기 계산도 함께 수정했는데, `crop_rectangle`이 있는 이미지에서 높이가 잘못 계산되는 문제가 있었다.
+
+## rc.7: 본격적인 기능 추가 <Badge type="warning">2026-03-04</Badge>
+
+rc.7은 꽤 많은 기능이 추가된 릴리스였다.
+
+### 다단(multicolumn) 렌더링
+
+HWP 문서에서 다단은 생각보다 자주 쓰인다. 신문 스타일의 레이아웃이나, 학술 논문에서 두 단으로 나누는 경우가 많다.
+
+다단 렌더링은 페이지 레벨뿐 아니라 텍스트 박스와 테이블 셀 안에서도 지원해야 했다.
+이게 꽤 복잡한데, 다단 안에 테이블이 있고, 그 테이블 셀 안에 또 다단이 있는 경우도 있기 때문이다.
+
+다단 구분선(column separator)도 렌더링해야 했는데, CSS의 `column-rule`로는 HWP의 다양한 구분선 스타일을 정확하게 표현하기 어려워서 직접 CSS로 그렸다.
+
+### 문단 마커(bullet/numbering) 렌더링
+
+번호 매기기와 글머리표 렌더링도 추가했다.
+
+HWP의 번호 매기기는 꽤 복잡한데, `NumberType`에 따라 아라비아 숫자, 로마 숫자, 한글 가나다, 영문 등 다양한 형식이 있다.
+그리고 `format_string`으로 커스텀 포맷도 지원한다.
+
+문단 마커 중에 PUA(Private Use Area) 문자를 사용하는 경우도 있었다.
+한컴에서 자체 정의한 유니코드 영역의 문자를 글머리표로 사용하는 건데, 이걸 웹에서 그대로 렌더링하면 깨진 문자가 표시된다.
+
+그래서 PUA 문자를 적절한 유니코드 문자로 매핑하는 테이블을 만들어야 했다:
+
+```rust
+fn map_pua_to_unicode(ch: char) -> char {
+    match ch as u32 {
+        // 한컴 PUA 영역의 특수 기호들
+        0xE000 => '\u{25CF}', // ●
+        0xE001 => '\u{25CB}', // ○
+        0xE002 => '\u{25A0}', // ■
+        0xE003 => '\u{25A1}', // □
+        0xE004 => '\u{25C6}', // ◆
+        0xE005 => '\u{25C7}', // ◇
+        0xE006 => '\u{2605}', // ★
+        0xE007 => '\u{2606}', // ☆
+        _ => ch,
+    }
+}
+```
+
+### 각주/미주 렌더링 개선
+
+각주와 미주의 HTML 렌더링을 한컴 원본 fixture와 일치시키는 작업도 했다.
+
+한컴 원본에서는 각주를 페이지 하단에 `<div class="hfN">` 형태로 렌더링하는데, 여기서 `N`은 각주 번호이다.
+각주 번호의 스타일(위첨자, 괄호 포함 등)도 `char_shape`에 따라 달라져야 했다.
+
+### 머리말/꼬리말 렌더링 개선
+
+머리말(header)과 꼬리말(footer) 렌더링도 개선했다.
+
+특히 꼬리말은 페이지 하단에 정렬해야 하는데, CSS `position: absolute; bottom: 0`으로 처리했다.
+그리고 `haN` 형태의 페이지 번호를 꼬리말 안에서 렌더링하는 것도 추가했다.
+
+빈 줄 처리도 수정했는데, 한컴에서는 빈 줄을 `&nbsp;`가 들어간 span으로 렌더링하더라.
+이렇게 안 하면 빈 줄의 높이가 0이 되어서 레이아웃이 어긋나기 때문이다.
+
+### 하이퍼링크 렌더링
+
+`%hlk` 컨트롤을 사용하는 하이퍼링크도 구현했다.
+한컴에서는 하이퍼링크를 `onclick` 이벤트로 처리하더라.
+`<a href>` 대신 `<span onclick="window.open('...')">`를 사용하는 건 좀 의아했지만, 원본을 따르기로 했다.
+
+### 도형 렌더링
+
+`DrawingObjectCommon` 파싱과 도형의 `Fill`/`Stroke` 렌더링도 추가했다.
+사각형, 타원, 선 같은 기본 도형을 SVG로 렌더링하고, 채우기 색상과 테두리 스타일을 적용했다.
+
+### CharShape 음영 색
+
+`shading_color`를 CSS `background-color`로 렌더링하는 것도 추가했다.
+텍스트에 형광펜 효과를 주는 건데, 간단한 CSS 한 줄이지만 없으면 눈에 확 띈다.
+
+## rc.8: 테이블 완성도의 정점 <Badge type="danger">2026-03-14</Badge>
+
+rc.8은 테이블 렌더링에 올인한 릴리스였다.
+하루 만에 12개의 PR을 머지했는데, 거의 다 테이블 관련이었다.
+
+### 중첩 테이블 지원
+
+HWP에서는 테이블 안에 테이블을 넣을 수 있다.
+
+이전에는 중첩 테이블을 파싱하지 못했는데, `CtrlHeader`의 자식 문단을 재귀적으로 탐색하면서 중첩 테이블을 찾도록 수정했다.
+
+```rust
+fn render_cell_content(
+    &mut self,
+    cell: &CellInfo,
+    paragraphs: &[Paragraph],
+) -> String {
+    let mut html = String::new();
+
+    for para in paragraphs {
+        // 문단 텍스트 렌더링
+        html.push_str(&self.render_paragraph(para));
+
+        // 컨트롤 헤더 처리 (중첩 테이블 포함)
+        for ctrl in &para.ctrl_headers {
+            match &ctrl.data {
+                CtrlHeaderData::Table(table) => {
+                    // 재귀적으로 테이블 렌더링
+                    html.push_str(&self.render_table(ctrl, table));
+                }
+                CtrlHeaderData::ShapeObject(shape) => {
+                    html.push_str(&self.render_shape(ctrl, shape));
+                }
+                _ => {}
+            }
+        }
+    }
+
+    html
+}
+```
+
+중첩 테이블이 무한히 깊어질 수 있어서 재귀 깊이 제한을 걸까 고민했는데, 실제 HWP 문서에서 3단 이상 중첩은 본 적이 없어서 일단 넘어갔다.
+
+### border fallback 로직 전면 재수정
+
+rc.8에서 가장 큰 작업은 테이블 border 선택 로직을 전면 재수정한 것이다.
+
+한컴 원본과 비교하면서 발견한 규칙들:
+
+1. **인접 셀의 `line_type=0`일 때**: 반대쪽 셀의 border를 fallback으로 사용
+2. **내부 행 경계**: 아래 셀의 top border를 우선 사용
+3. **외곽 border**: 테이블 기본 border와 셀 border 중 적절한 것 선택
+4. **가로 외곽선**: 열별로 border를 확인하여 `line_type=0` 구간은 건너뜀
+
+특히 4번이 어려웠다. 외곽 가로선이 모든 열에 걸쳐 동일하지 않을 수 있다는 것.
+예를 들어 3열 테이블에서 첫 번째 열만 상단 테두리가 있고 나머지는 없는 경우, 해당 구간만 선을 그려야 한다.
+
+```rust
+fn resolve_border_for_edge(
+    &self,
+    table: &TableInfo,
+    cells: &[CellInfo],
+    edge: BorderEdge,
+    row: usize,
+    col: usize,
+) -> BorderStyle {
+    let cell_border = self.get_cell_border(cells, row, col, edge);
+    let table_border = self.get_table_default_border(table, edge);
+
+    // 셀 border의 line_type이 0이면 table default 사용
+    if cell_border.line_type == 0 {
+        // 반대쪽 셀도 확인
+        if let Some(adjacent) = self.get_adjacent_cell_border(cells, row, col, edge) {
+            if adjacent.line_type != 0 {
+                return adjacent;
+            }
+        }
+        return table_border;
+    }
+
+    cell_border
+}
+```
+
+이 로직을 맞추는 데만 꼬박 반나절이 걸렸다.
+한컴 원본의 SVG를 한 줄 한 줄 비교하면서 "왜 이 선은 있고 저 선은 없지?"를 추적하는 과정이었다.
+
+### CtrlHeader paragraphs 렌더링
+
+캡션이 없는 테이블에서도 `CtrlHeader`의 paragraphs를 렌더링해야 하는 경우가 있었다.
+
+이전에는 캡션이 있는 경우에만 `CtrlHeader` paragraphs를 처리했는데, 캡션 없이도 `CtrlHeader`에 paragraphs가 있는 경우가 있더라.
+이건 테이블 위나 아래에 추가 텍스트를 넣는 용도로 사용되는 것 같았다.
+
+### like_letters 인라인 렌더링
+
+`like_letters=true`인 글상자(`ShapeRect`)를 인라인으로 렌더링하는 것도 추가했다.
+
+`like_letters`는 "글자처럼 취급"이라는 의미인데, 이 속성이 true이면 글상자가 텍스트 흐름 안에 인라인으로 배치되어야 한다.
+이전에는 모든 글상자를 절대 위치로 배치했는데, `like_letters`인 경우에는 인라인 블록으로 처리하도록 수정했다.
+
+### ParaShape 오프셋 수정
+
+`ParaShape`의 들여쓰기/내어쓰기 파싱에서 오프셋이 잘못되어 있었다.
+
+HWP 스펙에서 `ParaShape`는 여러 속성을 바이트 단위로 순서대로 읽는데, 중간에 필드 크기를 잘못 계산해서 들여쓰기 값이 엉뚱한 값이 나왔다.
+
+이런 종류의 버그가 가장 찾기 어렵다.
+결과만 보면 "들여쓰기가 이상하네" 정도인데, 원인은 바이너리 파싱의 오프셋이 4바이트 밀린 것이었다.
+
+### PDF 모듈 제거
+
+rc.8에서 `printpdf`, `image`, `rusttype` 의존성과 `viewer/pdf` 코드를 완전히 제거했다.
+
+원래 PDF 변환 기능도 구현하려고 했는데, WebAssembly 타겟과 호환이 안 되는 의존성이 너무 많았다.
+`image` 크레이트가 `wasm32` 타겟에서 빌드가 안 되는 건 좀 치명적이었고, 이걸 우회하려면 feature flag를 복잡하게 관리해야 했다.
+
+그래서 과감하게 PDF 모듈을 통째로 제거하고, WASM 빌드의 호환성을 확보했다.
+PDF 변환은 나중에 별도 크레이트로 분리해서 다시 구현하기로 했다.
+
+## 돌아보며
+
+rc.6부터 rc.8까지를 돌아보면, 대부분의 시간을 **한컴 원본과 내 출력의 차이를 좁히는 데** 사용했다.
+
+화려한 새 기능보다는 "이 테두리 왜 1픽셀 차이나지?", "이 셀 높이가 왜 2mm 다르지?" 같은 미세한 차이를 잡는 작업이었다.
+
+솔직히 이런 작업은 재미없다.
+눈에 잘 보이지도 않고, 코드 변경량도 적고, 결과물을 보여줘도 "뭐가 달라진 거야?" 소리를 듣기 십상이다.
+
+하지만 이런 디테일이 쌓여야 "와 진짜 원본이랑 똑같다"라는 반응이 나온다.
+그리고 그 반응이 나올 때의 뿌듯함은 꽤 크다.
+
+아직 완벽하진 않지만, rc.8 시점에서는 대부분의 일반적인 HWP 문서가 한컴 원본과 거의 동일하게 렌더링되었다.
+
+:::info 1줄 요약
+rc.6~rc.8에서는 중첩 테이블, border fallback 로직, CtrlHeader 렌더링 등을 구현하며 한컴 원본과의 차이를 최소화했다.
+:::

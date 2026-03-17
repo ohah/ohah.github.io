@@ -1,0 +1,90 @@
+---
+title: 2-3. ArrayBuffer Vec 변환 버그 수정 (PR #78)
+date: 2025-12-21
+---
+
+import { Badge } from '@theme';
+
+# 2-3. ArrayBuffer Vec 변환 버그 수정 (PR #78) <Badge type="tip">25.12.21 ~ 25.12.22</Badge>
+
+## hwpjs에서 발견된 버그
+
+시간이 좀 흘러서 12월이 되었다.
+
+이때 나는 [hwpjs](../hwpjs/background) 프로젝트를 진행하고 있었는데, hwpjs의 Rust 코어를 React Native에서 사용하기 위해 Craby를 도입하고 있었다.
+
+hwpjs에서 HWP 파일을 파싱하려면 파일의 바이너리 데이터를 자바스크립트에서 Rust로 넘겨야 한다. 자바스크립트의 `ArrayBuffer`를 Rust의 `Vec<u8>`로 변환하는 건데, 여기서 문제가 발생했다.
+
+파일 데이터를 넘겼는데 Rust 쪽에서 받은 `Vec`의 길이가 0이었다.
+
+## 원인 분석
+
+처음에는 hwpjs 쪽 코드 문제인 줄 알고 한참을 삽질했다. 바이트 배열 변환 코드를 이리저리 뒤져보고, 직렬화 과정을 확인하고... 그런데 아무리 봐도 hwpjs 쪽은 문제가 없었다.
+
+그래서 Craby의 코드 제너레이터가 생성한 C++ 브릿징 코드를 열어봤다.
+
+`Bridging<rust::Vec<uint8_t>>::fromJs`라는 함수가 있었는데, 이 함수에서 `ArrayBuffer`의 데이터를 `Vec<uint8_t>`로 복사하는 로직이 문제였다.
+
+```cpp
+// 문제의 코드
+vec.reserve(size);          // capacity만 설정, length는 0
+std::memcpy(vec.data(), data, size);  // 메모리 복사만, length는 여전히 0
+```
+
+`reserve(size)`는 벡터의 **용량(capacity)**만 확보하는 거지, **길이(length)**를 변경하지 않는다. 그리고 `std::memcpy`도 메모리에 데이터를 복사할 뿐, 벡터의 내부 길이 카운터를 건드리지 않는다.
+
+결과적으로 데이터는 메모리에 복사되어 있지만, 벡터 입장에서는 자기 길이가 0이라고 생각하고 있는 거다. Rust 쪽에서 이 Vec을 받으면 `len()`이 0이니까 데이터가 없다고 판단하게 된다.
+
+이건 사실 C++의 벡터를 잘 이해하고 있으면 바로 알 수 있는 문제인데, 나처럼 C++에 익숙하지 않은 사람은 한참을 헤맬 수 있는 부분이다. 그리고 이 코드는 사람이 직접 작성한 게 아니라 코드 제너레이터가 생성한 코드라서, 제너레이터의 템플릿을 수정해야 했다.
+
+## 수정
+
+수정 방법은 `std::memcpy` 대신 `std::copy`와 `std::back_inserter`를 사용하는 것이었다.
+
+```cpp
+// 수정된 코드
+vec.reserve(size);  // 효율을 위해 미리 capacity 확보
+std::copy(data, data + size, std::back_inserter(vec));  // push_back으로 하나씩 추가
+```
+
+`std::back_inserter`는 내부적으로 `push_back`을 호출하기 때문에 원소가 추가될 때마다 벡터의 길이가 자동으로 증가한다. `reserve`는 재할당을 방지하기 위해 그대로 유지했다.
+
+추가로 `<iterator>`와 `<algorithm>` 헤더를 include해야 했다.
+
+변경 자체는 `cxx_generator.rs`에서 코드 생성 템플릿을 한 줄 바꾸는 수준이었다. 파일 5개, 변경 라인 수도 아주 적었다.
+
+## PR 제출
+
+12월 21일 토요일에 PR을 올렸다. [이슈 #76](https://github.com/leegeunhyeok/craby/issues/76)에 먼저 버그 리포트를 올리고, 바로 수정 PR을 제출했다.
+
+PR 설명에 문제의 원인과 해결 방법을 스크린샷과 함께 상세하게 적었다. 기존 코드의 문제점과 수정 후 코드를 비교해서 보여줬는데, 이렇게 하면 리뷰어가 이해하기 쉬울 거라 생각했다.
+
+## 리뷰와 머지 <Badge type="info">2025-12-22</Badge>
+
+다음 날인 12월 22일에 바로 리뷰가 왔다.
+
+> "Thank you! I now understand that `reserve()` only allocates capacity without changing the vector's size, which causes UB."
+
+메인테이너도 `reserve()`의 동작을 이번에 확인했다고 하면서, 다음 릴리스에 포함하겠다고 했다.
+
+하루 만에 머지가 되었다. PR #67의 8일, PR #70의 2일에 이어 점점 빨라지는 머지 속도가 재밌었다. 아마 신뢰가 쌓인 것도 있고, 변경 범위가 명확해서 리뷰가 빨랐던 것 같다.
+
+## hwpjs와의 연결고리
+
+이 버그가 재미있는 점은, hwpjs를 개발하다가 발견했다는 것이다.
+
+hwpjs에서 HWP 파일의 바이너리 데이터를 React Native의 자바스크립트에서 Craby를 통해 Rust 코어로 넘기는 과정에서 발견된 건데, 만약 hwpjs를 개발하지 않았으면 이 버그를 발견하지 못했을 수도 있다.
+
+결국 자기가 실제로 사용하면서 발견하는 버그가 가장 확실한 거라는 걸 다시 한번 느꼈다.
+
+## Craby 기여를 마치며
+
+PR #67, #70, #78 세 개의 PR을 통해 Craby에 기여했다. 첫 번째는 새로운 기능 구현, 두 번째는 자기가 만든 버그 수정, 세 번째는 실사용 중 발견한 버그 수정이었다.
+
+C, C++, Rust, TypeScript를 넘나들며 코드를 분석하고 수정하는 과정이 쉽지는 않았지만, 확실히 성장한 느낌이 있다. 특히 코드 제너레이터라는 영역은 처음 접해봤는데, 코드가 코드를 만드는 구조를 이해하는 게 꽤 흥미로웠다.
+
+오픈소스 기여는 단순히 코드를 올리는 게 아니라, 프로젝트의 맥락을 이해하고 메인테이너와 소통하는 과정이라는 걸 배웠다. 뭐 당연한 말이지만, 직접 해보니까 와닿는다.
+
+:::info 1줄 요약
+hwpjs 개발 중 발견한 ArrayBuffer에서 Vec으로의 변환 버그를 수정해서 Craby 기여를 마무리했다.
+:::

@@ -45,5 +45,23 @@
     "name": "development-5",
     "label": "3-5. 배포(WebAssembly)",
     "tag": "26.01.18"
+  },
+  {
+    "type": "file",
+    "name": "development-6",
+    "label": "3-6. HTML 뷰어 고도화",
+    "tag": "26.02.23"
+  },
+  {
+    "type": "file",
+    "name": "development-7",
+    "label": "3-7. 테이블 렌더링 완성도 높이기",
+    "tag": "26.03.14"
+  },
+  {
+    "type": "file",
+    "name": "development-8",
+    "label": "3-8. LineSeg 합성과 페이지네이션",
+    "tag": "26.03.15"
   }
 ]
