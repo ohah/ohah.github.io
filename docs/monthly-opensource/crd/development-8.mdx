@@ -1,143 +1,71 @@
 ---
-title: 3-8. 커스텀 패널 구현
+title: 3-8. React Native Inspector
 date: 2026-02-15
-description: DevTools 커스텀 패널 구현
 ---
 
-# 3-8. 커스텀 패널 구현
+import { Badge } from '@theme';
 
-"기본적으로 다 만들어놓고 나서야 나중에 내가 쓸 데 있을 것 같은 걸 하나씩 찾는다"는, 그리고 근성이 부족해서 미리 미리 만들지 않고 뒤늦게 만드는 패턴에 갇혀 있는데, 그럴 때마다 아차 하는 순간이 온다.
+# 3-8. React Native Inspector <Badge type="tip">26.01.03 ~ 26.02.09</Badge>
 
-CRD도 마찬가지다. 기본 기능부터 다 쌓아 올리느라 "이거 나중에 커스텀 패널이라도 만들어야지" 하고 잠깐 생각했지만, 실제로 만들고 나서야 "야 이거 왜 이제 만들지" 하는 게 많더라.
+## 웹 다음은 React Native
 
----
+12월의 10일 스프린트로 웹 쪽은 어느 정도 완성됐다. 그런데 처음 배민 블로그를 보고 시작한 이유가 "웹뷰 원격 디버깅"이었으니, 진짜 모바일 환경에서 돌아가야 의미가 있다.
 
-## DevTools 커스텀 패널이 뭐길래
+1월 3일부터 React Native Inspector 개발을 시작했다(PR #49). React Native 앱에 삽입되는 CDP 클라이언트를 별도 패키지(`react-native-inspector`)로 만드는 작업이다.
 
-개발할 때 귀찮은 걸 다 외워서 직접 만들어 쓰는 걸 좋아한다. 표준기능으로는 안 되는 걸 만들어서 쓰는데, 그게 너무 재밌어서 계속 만들고 있더라.
+## 웹 클라이언트와의 차이
 
-커스텀 패널이란, 브라우저 DevTools 기본 UI를 확장해서 내가 원하는 걸 보여주는 패널을 만드는 거다.
+웹에서는 `console.log`를 후킹하고 `fetch`를 래핑하면 되지만, React Native는 상황이 다르다.
 
-- 기본 패널이 없는데, 내가 직접 UI를 그리고 기능을 붙이는 거
-- Chrome extension이나 WebView처럼 확장 환경이 필요하다
-- DevTools Protocol 내의 Domain에 접근해서 원하는 정보만 뽑아서 보여줌
+React Native의 console은 이미 LogBox 같은 것들이 후킹하고 있어서, 후킹 순서가 꼬이면 무한 루프에 빠지거나 로그가 안 뜨는 문제가 생긴다. 네트워크도 React Native의 fetch는 웹 표준 fetch와 미묘하게 다른 부분이 있어서, XHR 응답 헤더 수집이나 blob 응답 처리에서 삽질을 했다(PR #54, #57).
 
-사실 배민 기술 블로그의 이야기를 보면, 근본에 대해서는 매우 치밀하고, 핵심만 빠르게 파고들었다고 한다. 나는 그와 달라서, 기초부터 차근차근 쌓다가 나중에 "이걸 안 하면 정말 편한데" 하는 걸 따로 만드는 패턴이 고정됐다.
+## 콘솔과 네트워크 후킹
 
----
+웹 클라이언트에서 만든 ConsoleHook, NetworkHook을 React Native에 맞게 포팅했다. 파일이 너무 커져서 작은 파일로 분리하는 리팩토링도 했다(PR #50).
 
-## 레퍼런스부터 모아보기
+콘솔 객체를 DevTools에서 펼쳐볼 수 있게 하려면 `Runtime.getProperties`를 구현해야 했다(PR #67). 웹에서는 브라우저가 자동으로 해주는 건데, React Native에서는 직접 객체를 Map에 저장하고, objectId로 참조해서, getProperties 요청이 오면 해당 객체의 프로퍼티를 순회해서 응답하는 걸 수동으로 구현해야 했다.
 
-커스텀 패널 구현을 시작하기 전에, 기본적인 것부터 뒤져봤다.
+## Redux DevTools 통합
 
-### Chrome Extension Custom Panels
+React Native 앱에서 Redux 디버깅을 하려면 별도 작업이 필요했다(PR #58, #61). `__REDUX_DEVTOOLS_EXTENSION__`을 폴리필로 제공해서, Redux 스토어가 CRD를 통해 디버깅되게 했다.
 
-처음에는 Chrome Extension 개발 관련 문서부터 읽었다.
+devtools-frontend에서도 Redux DevTools Extension UI를 임베드하는 작업을 했다(devtools-frontend PR #7, #8). Redux 액션/상태를 시간순으로 보고, 타임 트래블 디버깅까지 가능하게 만들었다.
 
-- Custom Panels Extension API를 사용하면 devtools의 새로운 탭을 만들 수 있다
-- devtools.html 파일을 만들고, manifest.json에 devtools_page를 등록하면 됨
-- 개발자 도구의 Extensions 페이지에서 활성화 가능
+MMKV와 AsyncStorage도 DevTools 패널에서 볼 수 있게 했다(PR #66). key-value 쌍을 보고 수정/삭제까지 되는 보드 UI를 만들었다.
 
-### devtools-frontend
+## 서버를 Rust로 포팅
 
-배민에서 CDP를 활용한 구현 방식을 보면, DevTools 프론트엔드 코드를 개조해서 사용한다는 점에서 인상적이다.
+1월 13일, 큰 결정을 했다. WebSocket 릴레이 서버를 Bun(TypeScript)에서 **Rust**로 포팅한 거다(PR #70).
 
-devtools-protocol 정의된 Domain을 기준으로, 필요한 부분만 직접 구현해서 패널을 만드는 게 핵심이다.
+이유는 Tauri 통합 때문이었다. Tauri 앱 안에서 서버를 같이 돌리려면, Rust로 되어 있는 게 훨씬 자연스럽다. Tauri 자체가 Rust 기반이니까, 서버도 Rust면 하나의 바이너리에 다 넣을 수 있다.
 
-### Redux DevTools Extension 소스 코드
+서버 코드를 Rust로 재작성하고(PR #70), 모듈 구조로 분리하고(PR #71), e2e 테스트도 마이그레이션했다(PR #74). Rust 서버의 유닛/통합 테스트도 추가하고(PR #79), 커버리지 PR 코멘트도 Rust용으로 만들었다(PR #78).
 
-Redux DevTools Extension이 실제로 어떻게 구현되어 있는지를 보면, DevTools를 확장해서 다양한 컨텍스트에서 디버깅을 지원한다는 걸 알게 된다.
+## JSI에서 JavaScript로
 
----
+처음에는 React Native Inspector에서 일부 기능을 C++ JSI(JavaScript Interface)로 구현하려고 했다. 네이티브 레벨에서 성능이 좋으니까.
 
-## 패널 구현의 복잡한 순서
+그런데 JSI 모듈은 iOS/Android 양쪽 빌드 설정이 복잡하고, CMake 경로 길이 제한(PR #68) 같은 플랫폼 이슈도 겪었다. iOS 빌드 에러(PR #76), Objective-C++ 컴파일 에러(PR #83) 같은 것들을 잡다 보니 "이거 네이티브까지 갈 필요가 있나?" 하는 생각이 들었다.
 
-커스텀 패널은 단순히 "UI를 그린다"가 아니라, 여러 가지를 알아야 한다.
+결국 JSI를 걷어내고 순수 JavaScript로 전환했다(PR #90, #92). 콘솔과 네트워크 후킹은 JS 레벨에서 충분히 가능하고, 네이티브 C++ 코드를 유지보수하는 비용이 JS보다 훨씬 크다는 판단이었다. 이 결정으로 패키지가 훨씬 가벼워졌고, 빌드 문제도 사라졌다.
 
-### 1. 패널 기본 구조
+## RN Inspector v0.1.0-rc.1 릴리스
 
-패널을 만들 때 가장 먼저 생각해야 할 건, 어떤 종류의 패널이 필요한가이다.
+2월 9일, `chrome-remote-devtools-rn-inspector` v0.1.0-rc.1을 릴리스했다.
 
-- 개별 패널: Console, Network, Redux 같은 단일 기능 패널
-- 멀티 뷰 패널: Tab 구조로 여러 기능을 보여주는 패널
-- 싱글 뷰 패널: 탭이 하나뿐인 패널
+이 시점에서 React Native Inspector가 지원하는 기능:
 
-CRD에서는 멀티 뷰 패널 구조를 택했다.
+- Console 로그 (객체 펼쳐보기 포함)
+- Network 요청/응답 (responseBody 포함)
+- Redux DevTools (타임 트래블)
+- MMKV / AsyncStorage 보드
+- React DevTools Components / Profiler 패널(PR #102)
+- deviceId 기반 클라이언트 식별(PR #110)
+- WebSocket 재연결 / graceful shutdown(PR #83)
+- Metro 프록시 연동(PR #115, #118)
 
-- Console, Network, Redux, MMKV/AsyncStorage, Component Tree 등을 각각의 Tab으로 보여주는 방식
-- Tab 전환을 통해서 해당 기능만 집중해서 보기 좋게 만듦
-
-### 2. 패널 렌더링 로직
-
-패널을 어떻게 렌더링할지 결정해야 한다.
-
-- DevTools Extension을 쓰는 방식이지만, 실제로는 React를 사용해서 구현
-- React 컴포넌트를 만들고, 상태 관리는 useState, useEffect로 처리
-- 필요한 데이터는 CDP 메시지를 통해 받아옴
-
-이 부분이 복잡한 이유는, DevTools 내에서 React 라이프사이클을 제대로 관리하지 못하면 렌더링이 꼬이는 문제가 생긴다는 점이다.
-
-### 3. 데이터 흐름 설계
-
-패널의 데이터 출처와 흐름을 설계해야 한다.
-
-- CDP 소스 데이터를 패널로 넘겨주는 것만으로는 부족
-- CDP 메시지를 받아서 렌더링할 때 발생하는 문제가 많다
-- 특히 React Component Tree 같은 경우, VirtualDOM을 직접 참조해야 해서 구현이 까다롭다
-
----
-
-## 어려웠던 과정
-
-커스텀 패널을 만들면서 가장 어려웠던 점은 이랬다.
-
-### React 라이프사이클 문제
-
-DevTools 내에서 React를 사용할 때, 라이프사이클이 의도대로 동작하지 않는 문제가 있었다.
-
-- useEffect 실행 순서가 예상치 못하게 꼬이는 경우가 많았다
-- Component 재렌더링 시에도 이전 상태가 남아있는 경우가 있었다
-- DevTools 내의 특정 이벤트 핸들러와 충돌하는 문제도 있었다
-
-이걸 해결하려고 별도의 Context를 만들어서 상태를 관리하다가, 결국엔 직접 떼어낸 로직을 Component 외부로 빼는 방식으로 해결했다.
-
-### CDP 메시지 처리 복잡도
-
-패널마다 CDP 메시지를 처리하는 방식이 다르다.
-
-- Network 패널은 HTTP 요청/응답 데이터를 받아서 시각화
-- Redux 패널은 Action/State 스냅샷을 받아서 비교
-- MMKV/AsyncStorage 패널은 키-값 데이터를 받아서 보여줌
-
-이걸 하나의 CDP 메시지 핸들러 안에서 관리하려니 코드가 너무 복잡해진다.
-
-결국엔 각 패널마다 별도의 메시지 핸들러를 만들고, CDP 서버에서는 해당 패널로만 메시지를 보내도록 구성을 변경했다.
-
-### 탭 간 통신
-
-멀티 뷰 패널에서 탭 전환 시에 상태를 유지하는 문제가 있었다.
-
-- 탭을 전환할 때마다 Component가 다시 렌더링되면서 상태가 날아가는 경우가 있었다
-- 특히 Redux 패널에서 탭을 전환한 후 다시 돌아오면, 이전 상태가 사라지는 문제가 있었다
-
-이걸 해결하려고 상태를 전역으로 관리하는 Context를 만들었고, Component는 오직 렌더링을 담당하도록 분리했다.
-
----
-
-## 최종 결과
-
-결국 커스텀 패널은 다음과 같이 완성됐다.
-
-- 콘솔, 네트워크, 리덕스, MMKV/AsyncStorage, 컴포넌트 트리까지 5가지 탭을 가진 멀티 뷰 패널
-- CDP 메시지를 받아서 각 패널별로 렌더링
-- 탭 전환 시에도 상태를 유지하는 Context 기반 상태 관리
-
-이걸 만든 뒤부터 CRD의 UX가 완전히 달라졌다.
-
-- 개발할 때 DevTools의 기능을 그대로 사용하지만, React Native·웹 환경에서도 동일한 경험을 제공
-- 필요한 기능만 집중해서 볼 수 있어서 디버깅 시간이 획기적으로 줄어듦
-- UI/UX를 개선하는 것이 아니라, 기능적으로 더 치밀해졌다
+웹에서 시작한 프로젝트가 React Native까지 확장되는 데 약 한 달 반이 걸렸다. 그 과정에서 JSI를 넣었다가 뺐고, 서버를 Rust로 바꿨고, 네이티브 빌드 이슈를 수없이 겪었다. 삽질의 연속이었지만, 결과적으로는 웹과 React Native 모두에서 같은 DevTools 경험을 제공하는 도구가 됐다.
 
 :::info 1줄 요약
-기본 기능 다 쌓아 올리고 나서 커스텀 패널을 따로 만들었다. DevTools의 확장과 React 라이프사이클, CDP 메시지 처리 복잡도를 모두 겪고 나서야 패널의 진정한 의미를 알게 됐다.
+React Native Inspector를 별도 패키지로 개발하고, 서버를 Rust로 포팅하고, JSI를 걷어내고 JS-only로 전환해서, 2월 9일에 v0.1.0-rc.1을 릴리스했다.
 :::

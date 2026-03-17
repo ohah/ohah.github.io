@@ -19,55 +19,55 @@
   {
     "type": "file",
     "name": "development-1",
-    "label": "3-1. 배민 구현 따라하기",
-    "tag": "작성 예정"
+    "label": "3-1. CDP 클라이언트와 서버 구현",
+    "tag": "25.12.20"
   },
   {
     "type": "file",
     "name": "development-2",
-    "label": "3-2. 배민 백로그까지 구현",
-    "tag": "작성 예정"
+    "label": "3-2. DevTools 프론트엔드 연동",
+    "tag": "25.12.21"
   },
   {
     "type": "file",
     "name": "development-3",
-    "label": "3-3. 욕심 부려보기",
-    "tag": "작성 예정"
+    "label": "3-3. 세션 리플레이 (rrweb)",
+    "tag": "25.12.23"
   },
   {
     "type": "file",
     "name": "development-4",
-    "label": "3-4. React Native",
-    "tag": "작성 예정"
+    "label": "3-4. PostMessage와 iframe 모드",
+    "tag": "25.12.25"
   },
   {
     "type": "file",
     "name": "development-5",
-    "label": "3-5. 터보모듈",
-    "tag": "작성 예정"
+    "label": "3-5. NPM 배포와 init() API",
+    "tag": "25.12.27"
   },
   {
     "type": "file",
     "name": "development-6",
-    "label": "3-6. 번들러 학습",
-    "tag": "작성 예정"
+    "label": "3-6. CSS 도메인과 Styles 탭",
+    "tag": "25.12.29"
   },
   {
     "type": "file",
     "name": "development-7",
-    "label": "3-7. 네이티브 걷어내기",
-    "tag": "작성 예정"
+    "label": "3-7. 테스트와 코드 품질",
+    "tag": "25.12.30"
   },
   {
     "type": "file",
     "name": "development-8",
-    "label": "3-8. 커스텀 패널 구현",
-    "tag": "작성 예정"
+    "label": "3-8. React Native Inspector",
+    "tag": "26.02.09"
   },
   {
     "type": "file",
     "name": "development-9",
-    "label": "3-9. 마무리",
-    "tag": "작성 예정"
+    "label": "3-9. 마무리와 회고",
+    "tag": "26.02.15"
   }
 ]

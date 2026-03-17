@@ -1,110 +1,58 @@
 ---
-title: 3-6. 번들러 학습
+title: 3-6. CSS 도메인과 Styles 탭
 date: 2026-02-15
-description: 번들러 학습
 ---
 
-# 3-6. 번들러 학습
+import { Badge } from '@theme';
 
-개발 과정을 이어가면서 가장 큰 깨달음 중 하나는, "이거 다 뒤지고 맞물려 있는데 나는 아예 모르겠네"였다. 그중에서도 번들러는 웹·React Native 모두에서 중요한 역할을 하면서 정작 이야기할 사람이 잘 안 있었던 도메인이라, 이걸 열심히 공부해보기로 했다.
+# 3-6. CSS 도메인과 Styles 탭 <Badge type="tip">25.12.29</Badge>
 
----
+## Elements 탭의 절반만 동작하던 상태
 
-## 웹 프로젝트 기준으로 배우는 번들러
+여기까지 만들면서 콘솔, 네트워크, DOM, 스토리지, 세션 리플레이까지는 잘 돌아갔다. Elements 탭에서 DOM 트리를 보는 것도 됐다. 그런데 Elements 탭의 오른쪽, 그러니까 **Styles 패널**이 비어 있었다.
 
-처음에는 웹 프로젝트에서 쓰는 번들러부터 익혔다. 웹은 환경이 통일돼 있어서 접근하기 쉬웠고, 대표적인 선택지가 보기 좋았다.
+Chrome DevTools에서 Elements 탭을 열면 왼쪽에 DOM 트리, 오른쪽에 선택한 요소의 CSS 스타일이 나온다. 이 오른쪽 패널이 동작하려면 **CSS 도메인**을 구현해야 하는데, 지금까지 미뤄두고 있었다.
 
-### Webpack
+## CSS 도메인이 까다로운 이유
 
-가장 무겁지만 제일 오래되고 친숙한 대장.
+CDP의 CSS 도메인은 다른 도메인에 비해 구현이 복잡하다. 단순히 `element.style`을 읽어서 보내주는 수준이 아니다.
 
-CRD는 이미 웹에서 CDP 클라이언트를 불러오기 위해 자바스크립트 파일을 쓰고 있었다. 그런데 Webpack으로 번들링을 하면서 이게 아주 큰 장벽이 되더라.
+`CSS.getMatchedStylesForNode`라는 명령 하나만 봐도, 해당 노드에 적용된 모든 CSS 규칙을 찾아야 한다. 인라인 스타일, 스타일시트의 셀렉터 매칭, 상속된 스타일, UA(User Agent) 기본 스타일까지 전부 포함해서 응답해야 한다. 각 규칙의 소스 파일 위치(파일명, 라인 번호)까지 알려줘야 DevTools에서 "어떤 CSS 파일의 몇 번째 줄에서 이 스타일이 적용됐는지" 표시할 수 있다.
 
-- Source Map 생성 규칙을 이해 안 하면 디버깅할 때 한참 헤맨다
-- Webpack dev server와 Inspector의 WebSocket 연결이 꼬이는 경우가 잦아서, 구성을 다시 공부해야 했다
-- CDP를 사용하는 코드가 번들링 될 때 어떻게 배포되는지 감을 잡기가 힘들었다
+게다가 `CSS.setStyleTexts`(스타일 수정), `CSS.getComputedStyleForNode`(계산된 스타일), `CSS.getInlineStylesForNode`(인라인 스타일) 같은 명령도 구현해야 한다.
 
-### Vite
+## 구현 과정
 
-Webpack 대신 Vite를 써보려고 했는데, 개발 서버의 설정이 생각보다 많이 달랐다.
+12월 29일, CSS 도메인 구현에 착수했다(PR #43).
 
-- HMR(Hot Module Replacement) 동작方式이 webpack(HMR over WebSocket)과 다르다
-- Vite는 dev server가 별도로 띄우는 거라 Inspector가 클라이언트에 접속하는 접근 경로가 달라진다
-- ES modules 기본 사용이라 module type을 구분하는게 익숙하지 않은 환경에서는 헤깔린다
+먼저 `document.styleSheets`에서 모든 스타일시트를 읽어서 CDP 형식으로 변환하는 작업부터 했다. `CSSStyleSheet` 객체에서 `cssRules`를 순회하면서, 각 규칙의 셀렉터, 속성, 값, 소스 위치를 추출한다.
 
-### 나중에 써보니
+그 다음 `CSS.getMatchedStylesForNode`를 구현했다. 특정 DOM 노드에 대해 `window.getMatchedCSSRules()`... 는 비표준이라 못 쓰고, 직접 모든 스타일시트의 셀렉터를 순회하면서 `element.matches(selector)`로 매칭 여부를 확인하는 방식으로 구현했다.
 
-결국에는 Vite가 개발 경험에 훨씬 좋았다. 빠르고, HMR도 빠르고, 설정도 간결해서. 근데 Vite에 맞춰 Inspector 클라이언트를 다시 짜야 해서 복잡도는 같더라.
+인라인 스타일은 `element.style`에서 직접 읽고, 상속된 스타일은 부모 노드를 타고 올라가면서 수집했다. 계산된 스타일은 `window.getComputedStyle()`로 한 방에 가져올 수 있어서 그나마 편했다.
 
-배민 기술 블로그에서 그땐 Webpack을 썼다 하고, 이번엔 Vite를 쓰는 걸로 바꾸는 과정에서 진짜 번들러가 어떻게 개발 환경에 연결되는지 완전히 이해하게 됐다.
+## FSD 구조 정리
 
----
+같은 날 Inspector 쪽의 리플레이 유틸리티도 FSD(Feature-Sliced Design) 구조로 재정리했다(PR #42). 기존에 이것저것 섞여 있던 리플레이 관련 코드를 features/replay 아래로 모았다. 빌드 스크립트도 개선해서, devtools-frontend 빌드와 Inspector 빌드가 더 깔끔하게 연결되게 했다.
 
-## React Native와 Metro Bundler
+## devtools-frontend rebase
 
-웹에서 익힌 걸 가지고 React Native로 옮겨왔지만, 역시나 여기도 다르더라.
+CSS 도메인을 구현하면서 devtools-frontend 코드도 상당히 수정해야 했다. 그런데 upstream의 devtools-frontend가 계속 업데이트되고 있어서, 내 커스텀 패치와 충돌이 나기 시작했다.
 
-### Metro bundler 문서부터 공부
+그래서 devtools-frontend rebase 작업을 했다(PR #44). 기존에 적용한 패치들(Welcome 패널, Session Replay 패널, 지원하지 않는 패널 숨기기)을 최신 코드 위에 다시 올리는 작업인데, 이게 생각보다 노동이었다. 자동 머지가 안 되는 부분을 일일이 수동으로 해결해야 했다.
 
-React Native가 Metro로 모든 걸 묶고, React Native 웹으로 변환하면 webpack으로 다시 묶는 식인데, 이 과정의 세탁기를 잘 몰라서 곤란했다.
+다만 이 rebase 덕분에 최신 DevTools 프론트엔드의 개선사항(성능, 버그 수정)을 가져올 수 있었고, CSS 도메인도 더 잘 동작했다.
 
-### Inspector와 Metro의 연결 공부
+## PR 리뷰 피드백 반영
 
-Metro는 WebSocket과 같은 네트워크 메커니즘도 있는데, CDP Inspector와 이걸 어떻게 연결할지 고민했다.
+CSS 도메인 PR(#43)을 올리고 나서 코드를 다시 보니 구조가 좀 지저분했다. 그래서 PR 리뷰 피드백을 스스로 반영하는 리팩토링을 했다(PR #45). CSS 도메인의 파일 구조를 정리하고, 중복 코드를 제거했다.
 
-- Metro bundler에서 어떻게 CDP 메시지를 인지할 수 있을까?
-- 실시간 에러·경고 콘솔 로그를 Metro가 Inspector로 보낼 수 있을까?
+## 결과: Styles 탭이 살아나다
 
-결과적으로는 Metro의 devtoolServerUrl 옵션을 쓰면, 웹 개발할 때처럼 Inspector가 Metro와 WebSocket 통신할 수 있는 구성을 만들 수 있었다.
+CSS 도메인 구현이 끝나니, Elements 탭 오른쪽의 Styles 패널이 드디어 동작하기 시작했다. 요소를 선택하면 적용된 CSS 규칙이 보이고, 인라인 스타일, 상속 스타일, 계산된 스타일까지 전부 표시된다.
 
-### 실제 적용
-
-Inspector 패널에 "Metro Bundle"라는 항목을 추가해서 실제 Metro bundler 빌드 로그를 볼 수 있게 했다.
-
-- Metro 서버가 빌드 완료 후 Inspector에게 이벤트를 보낸다
-- Inspector에서 이걸 받아서 콘솔·에러·경고로 표시
-- 빌드 에러가 있으면 빨간 박스로 강조해서 확 줄여줌
-
-이 부분이 React Native 개발자들에게 정말 필요한 기능이라 기획했지만, 실제로 써보고 개발하면서 역시나 "이걸 몰랐으면 빌드 시간 동안 헤매기 그지없겠네" 하더라.
-
----
-
-## 번들러별로 최적화 점
-
-번들러 공부하면서 각각 최적화할 수 있는 부분도 정리했다.
-
-### Webpack
-
-- Code Splitting 설정을 엄청 조정해서 bundle 크기를 줄였다
-- Lazy loading 구조를 기존 대로 두지 않고, 필요한 만큼만 잘게 쪼갰다
-- Source Maps의 tokenization 레벨을 조절해서 크기를 줄이면서도 디버깅은 유지
-
-### Vite
-
-- Esbuild를 사용해서 빌드 속도를 급격히 개선했다
-- HMR latency를 줄여서 에디터에서 저장하니까 거의 즉시 반영되게 했다
-- Build output의 chunk naming을 명확하게 바꿔서 불필요한 캐싱을 방지
-
-### Metro
-
-- Hermes 관련 옵션을 다 조정해서 빌드 속도를 올렸다
-- HMR에서의 메모리 leak을 수정해서 long-running 빌드에서 이슈가 안 나도록 했다
-- devtoolServerUrl 설정을 개선해서 Metro 웹 개발과 Inspector가 더 유연하게 연동되게 했다
-
----
-
-## 결론: 번들러는 DX의 중심
-
-결국 번들러 하나로 완전히 다른 개발 환경을 만들 수 있다.
-
-- Webpack은 장점이 많지만 설정이 무거우고, DX는 워낙 크기 때문에 학습 비용이 크다.
-- Vite는 빠르고 직관적이지만, 그만큼 안쪽 동작을 바꾸면 영향이 크다.
-- Metro는 React Native 고유의 특성을 가졌기 때문에 기존 웹 개발자들 입장에서는 낯설다.
-
-이걸 깊게 공부하면서 느낀 건, 번들러는 "이걸 쓰고 싶어" 하는 선택이 아니라 "이걸 쓰면 이런 환경이 되고, 그게 나의 개발 철학과 얼마나 잘 어울리는가"를 따져 결정해야 한다.
-
-CRD도 결국 개발 환경의 일부니까, 내가 쓸 번들러에 맞춰 CRD 자체를 설계·구현하면 DX가 급상승하는 것을 확인했고, 그게 번들러 학습의 결정적인 이유였다.
+DevTools에서 스타일을 수정하면 실시간으로 타깃 페이지에 반영되는 것까지 확인했다. 원격 디버깅에서 CSS를 실시간으로 수정할 수 있다는 건, 모바일 웹뷰 디버깅할 때 특히 유용하다. "이 버튼 왼쪽으로 10px만 옮겨봐" 같은 걸 Inspector에서 바로 해볼 수 있으니까.
 
 :::info 1줄 요약
-Webpack, Vite, Metro 번들러의 동작 방식과 최적화 포인트를 파헤쳤다. 웹과 React Native 간 환경 차이를 이해하고, 번들러 선택이 DX에 미치는 영향을 깊게 공부했다. 결국 번들러는 자의적인 선택이 아니라 개발 스타일과 완전히 맞물려 있다는 걸 배웠다.
+CDP CSS 도메인을 구현해서 Elements 탭의 Styles 패널을 살려냈고, devtools-frontend rebase를 통해 최신 DevTools와 동기화했다.
 :::

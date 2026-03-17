@@ -1,64 +1,59 @@
 ---
-title: 3-4. React Native
+title: 3-4. PostMessage와 iframe 모드
 date: 2026-02-15
-description: React Native 연동 개발
 ---
 
-# 3-4. React Native
+import { Badge } from '@theme';
 
-React Native의 DevTools 통합은 다른 플랫폼보다도 더 복잡한 도전 과제였지만, 동시에 가장 큰 기회를 제공하는 작업이었다. 기존의 CDP 기반 구조를 활용하면서도 React Native 특유의 환경에 맞는 최적화를 병행해야 했다.
+# 3-4. PostMessage와 iframe 모드 <Badge type="tip">25.12.24 ~ 25.12.25</Badge>
 
-## DevTools 구조 확장
+## 문서 사이트에 데모를 넣고 싶다
 
-React Native는 웹이 아니기 때문에, 기존 웹 브라우저 기반 구조를 바로 사용할 수 없었다. 이를 위해 기존 DevTools의 구조를 다음과 같이 수정했다:
+세션 리플레이까지 만들고 나니, 이걸 남한테 보여주고 싶어졌다. 문서 사이트에 "여기 눌러보세요, 바로 재생됩니다" 같은 데모를 넣으면 설명이 한결 쉬워진다.
 
-1. **플랫폼 간 추상화 계층 추가:**
-   - React Native는 브라우저 대신 JS 엔진(예: Hermes, JSC) 위에서 실행된다.
-   - 이로 인해 CDP를 호출하기 위한 브리지 계층이 필요했다.
-2. **네트워크 모듈 재작성:**
-   - React Native의 네트워크 계층은 웹 브라우저와 다르기 때문에, WebSocket 연결을 관리하는 네이티브 모듈을 별도로 구현했다.
-3. **UI 커스터마이징:**
-   - 터치 기반 디버깅과 같은 모바일 특화 기능을 추가하여 사용자 경험을 개선했다.
+그런데 문제가 있었다. CRD 아키텍처는 클라이언트와 Inspector 사이에 WebSocket 릴레이 서버가 있다. 문서 사이트는 GitHub Pages 같은 정적 호스팅이라 서버가 없다. 데모용으로 WebSocket 서버를 하나 파서 24시간 돌리자니 비용이 부담됐고, "문서만 보여주는 사이트에 서버까지 둘까?" 하는 생각에 망설여졌다.
 
-결과적으로, 기존 DevTools를 크게 재구성하지 않으면서 React Native에서도 동일한 DX(개발자 경험)를 제공할 수 있게 되었다.
+## PostMessage로 서버 없이 통신하기
 
-## React Native 전용 기능
+그래서 **PostMessage** 트랜스포트를 만들었다(PR #16, devtools-frontend PR #5). WebSocket 대신 iframe의 `postMessage`로 CDP 메시지를 주고받는 방식이다.
 
-React Native 환경에 맞는 특화된 기능도 추가했다:
+문서 사이트 페이지 안에 데모용 iframe을 하나 띄우고, 그 iframe 안에는 CDP 클라이언트 스크립트가 붙은 미니 페이지가 로드된다. Inspector UI는 문서 사이트(부모) 쪽에 두고, iframe(자식)과 부모 창이 postMessage로 CDP 메시지를 주고받게 했다.
 
-### Hermes 디버깅 통합
+```
+[문서 사이트 (부모)]
+  ├── Inspector UI
+  └── <iframe>
+        └── CDP 클라이언트 + 데모 페이지
+```
 
-Hermes는 React Native의 디폴트 JS 엔진으로, 이를 위한 디버깅 지원을 추가했다:
-- 실행 성능 분석
-- 메모리 사용량 시각화
-- Hermes 전용 런타임 내부 상태 확인
+같은 오리진이 아니어도 postMessage만 열어두면 되니까, 별도 WebSocket 서버 없이도 "문서 사이트만 열면 데모 재생이 된다"는 걸 맞출 수 있었다.
 
-Hermes Engine과의 통신은 CDP 프로토콜 확장을 활용하여 구현되었으며, 이를 통해 최신 React Native 앱에서도 효과적으로 디버그할 수 있었다.
+## CDP 도메인 리팩토링
 
-### 네이티브 모듈 탐색 및 디버깅
+PostMessage 트랜스포트를 만들면서, 기존 CDP 도메인 코드가 WebSocket에 하드코딩되어 있다는 걸 깨달았다. 트랜스포트 레이어를 추상화해서, WebSocket이든 PostMessage든 같은 CDP 도메인 코드가 동작하도록 리팩토링했다(PR #17).
 
-React Native 앱은 네이티브 모듈과 연동되는 경우가 많다. 이를 위해:
-- 네이티브 모듈의 호출 트래킹
-- 자바스크립트 ↔ 네이티브 데이터 흐름 시각화
-- 네이티브 코드의 퍼포먼스 메트릭 수집
-등의 기능을 DevTools에 포함했다.
+이건 좀 귀찮은 작업이었지만, 나중에 다른 트랜스포트(예: React Native의 네이티브 브릿지)를 추가할 때 편해지는 투자였다.
 
-### AsyncStorage 및 MMKV 지원 강화
+## Popup Console과 문서 개선
 
-React Native에서 자주 사용되는 스토리지인 AsyncStorage와 MMKV를 DevTools에서 직접 디버깅할 수 있도록 보드 UI를 개선했다. 이러한 개선은 특히 복잡한 상태 관리 로직을 디버깅하는 데 유용했다.
+12월 25일, 크리스마스에도 코딩을 계속했다. Popup Console 관련 문서를 정리하고(PR #20), DevTools Playground를 문서 사이트에 임베드하는 작업을 했다(PR #21).
 
-## 남은 과제
+DevTools Playground는 문서 사이트 방문자가 직접 CDP 메시지를 보내보고 결과를 확인할 수 있는 인터랙티브 데모다. PostMessage 트랜스포트 덕분에 서버 없이도 동작한다.
 
-React Native 통합 작업은 대부분의 주요 목표를 달성했지만, 다음과 같은 기술적 부채가 남아 있다:
-1. **iOS 네이티브 모듈의 제한적 지원:**
-   - macOS 환경에서 풀 디버깅을 지원하지 못한다는 점.
-2. **Hermes 외 엔진 지원:**
-   - JSC(JavaScriptCore)에 대한 지원이 제한적이다.
-3. **UI 성능 최적화:**
-   - 대규모 데이터를 다룰 때 UI가 느려지는 문제가 있다.
+CSS도 좀 손봤다(PR #18). Inspector UI가 기본 상태로는 좀 투박했는데, Tailwind로 정리하니까 제법 볼만해졌다. 그리고 서버 코드도 리팩토링했다(PR #19). 초반에 급하게 짠 서버 코드를 정리하는 작업인데, 이때쯤 되니까 "처음부터 좀 깔끔하게 짤걸" 하는 후회가 슬슬 올라왔다.
 
-이러한 과제들을 해결하기 위해 지속적으로 업데이트를 계획 중이다.
+## 문서 사이트 빌드 이슈
+
+문서 사이트는 rspress(v2)로 만들고 있었는데, devtools-frontend 파일과 rspress 빌드가 충돌하는 문제가 있었다(PR #22). rspress 빌드 과정에서 devtools-frontend의 일부 파일이 빈 파일로 덮어써지는 현상이 발생했다.
+
+`devtools_app.js` 같은 파일이 0바이트가 되면서 DevTools가 `Common2 is not defined` 에러를 뿜었다. 빌드 스크립트를 수정해서 devtools-frontend 파일은 rspress 빌드 파이프라인에서 제외하도록 했다. 문서 사이트 빌드 시스템과 DevTools 빌드 시스템이 같은 디렉토리에서 충돌하는 건, 이런 구조에서 흔히 겪는 문제인 것 같다.
+
+## 12월 25일 요약
+
+크리스마스를 코딩으로 보내면서 PostMessage 트랜스포트, Playground 데모, 문서 개선까지 해치웠다. 이제 문서 사이트만 열면 서버 없이도 CRD 데모를 돌려볼 수 있게 됐다.
+
+이 시점에서 CRD는 "원격 디버깅 도구"를 넘어서 "개발자 경험 플랫폼" 같은 느낌이 되기 시작했다. WebSocket으로도 되고, PostMessage로도 되고, 오프라인에서도 리플레이가 된다. 처음에 배민 따라하기로 시작했는데, 어느새 배민이 안 한 것까지 하고 있더라.
 
 :::info 1줄 요약
-React Native DevTools의 통합 작업을 통해 Hermes 디버깅, 네이티브 모듈 트래킹, 스토리지 관리 도구를 추가 구현하였다. 남은 과제는 JSC 지원, iOS 개발 환경 개선 등이 있다.
+WebSocket 없이 문서 사이트에서 데모를 돌리기 위해 PostMessage 트랜스포트를 구현했고, DevTools Playground를 만들어서 방문자가 직접 CRD를 체험할 수 있게 했다.
 :::
