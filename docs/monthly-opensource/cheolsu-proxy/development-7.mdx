@@ -1,0 +1,135 @@
+---
+title: 3-7. 기능 폭탄의 날
+date: 2026-03-09
+---
+
+import { Badge } from '@theme';
+
+# 3-7. 기능 폭탄의 날 <Badge type="tip">2026-03-09</Badge>
+
+이 날 하루에 추가된 기능 수가 비정상적이다.
+
+## 브레이크포인트
+
+```
+feat: Breakpoint(실시간 요청/응답 편집) 기능 구현
+test: breakpoint.rs 및 protocol.rs 테스트 보강
+feat(ui): Breakpoint GUI/TUI 추가
+fix: Breakpoint GUI 좌우 분할 레이아웃 + 한국어 번역 완료
+```
+
+요청이나 응답을 실시간으로 **일시 정지**하고, 내용을 편집한 후 전달할 수 있다. Charles Proxy의 Breakpoints 기능에 해당. 백엔드에서 와일드카드 매칭으로 브레이크포인트 조건을 설정하고, 매칭되면 데몬이 클라이언트에 편집 요청을 보낸다.
+
+## 세션 저장/복원
+
+```
+feat: 세션 저장/불러오기 및 HAR 가져오기 기능 구현
+fix(session): SessionTransaction 응답 데이터 손실 버그 수정 및 테스트 보강
+feat(ui): 세션 저장/불러오기 GUI 커맨드 추가
+feat(tui): 세션 저장/불러오기 기능 추가
+```
+
+캡처된 트래픽을 파일로 저장하고 나중에 불러올 수 있다. HAR 파일 가져오기도 지원. 응답 데이터가 세션 저장 시 손실되는 버그를 발견하고 테스트와 함께 수정.
+
+## DNS Host Mapping
+
+```
+feat: DNS Spoofing / Remote Host Mapping 기능 구현
+test: host_mapping 및 protocol 테스트 보강
+feat(ui): DNS Host Mapping GUI/TUI 추가
+```
+
+도메인을 다른 IP로 리다이렉트. hosts 파일을 수정하지 않고도 특정 도메인의 트래픽을 다른 서버로 보낼 수 있다. IPv6 bracket 처리 버그도 수정.
+
+## 네트워크 스로틀링
+
+```
+feat(proxyapi_v2): 네트워크 쓰로틀링(속도 제한/지연) 코어 모듈 구현
+feat(proxy_daemon): 데몬에 쓰로틀링 설정 전파 채널 추가
+feat(desktop): 데스크톱 앱에 네트워크 쓰로틀링 설정 UI 추가
+feat(tui): TUI Settings에 쓰로틀링 섹션 추가
+test: 쓰로틀링 테스트 보강 — copy_bidirectional_throttled, 프리셋 일관성, TUI 폼
+```
+
+토큰 버킷 알고리즘 기반 대역폭 제한. 3G/4G 네트워크 시뮬레이션 가능. 프리셋도 제공.
+
+### 트러블슈팅: 이중 제한 <Badge type="danger">버그</Badge>
+
+```
+refactor: 쓰로틀링 리뷰 반영 — 이중 제한 수정, 중복 제거, 도움말 수정
+```
+
+업로드/다운로드 양쪽에 스로틀을 걸었더니 양방향 중계 시 이중으로 제한이 걸렸다. `copy_bidirectional_throttled`에서 한쪽만 제한하도록 수정.
+
+## QR 코드
+
+```
+feat(proxy_daemon): 프록시 내장 CA 인증서 다운로드 엔드포인트 추가
+feat(desktop): QR 코드 기반 외부 기기 인증서 다운로드 정보 제공
+feat(desktop): 설정 페이지에 외부 기기 인증서 설치 섹션 추가
+feat(tui): 설정 화면에 QR 코드 렌더링 추가 (CP 로고 오버레이)
+feat: QR 코드 중앙에 로고 이미지 오버레이
+```
+
+모바일 기기에서 QR 코드를 스캔하면 프록시 설정 + CA 인증서 설치 안내로 연결. QR 코드 중앙에 로고를 넣으려다가 삽질:
+
+```
+style: QR 코드 로고 스타일 개선
+style: QR 코드 로고 도트 색상을 블랙으로 통일
+refactor(desktop): QR 코드 중앙 로고 제거
+```
+
+로고를 넣었다가... 결국 제거. QR 코드 인식률이 떨어졌나 보다.
+
+## Protobuf 뷰어
+
+```
+feat(proxy_v2_models): Protobuf/gRPC DataType 및 Content-Type 감지 추가
+feat(desktop): Protobuf raw wire format 디코더 및 트리 뷰어 추가
+test(desktop): Protobuf 디코더 유닛 테스트 추가
+```
+
+Proto 파일 없이 raw wire format을 디코딩해서 트리 뷰로 보여준다. gRPC 트래픽 디버깅에 유용.
+
+## 트래픽 Diff
+
+```
+feat: 트래픽 비교(Diff) 기능 구현
+test: diff.rs 및 mcp_server 테스트 보강 (11개 추가)
+feat(ui): 트래픽 비교 GUI 커맨드 추가
+```
+
+두 트랜잭션의 요청/응답을 나란히 비교. 변경 전/후를 확인할 때 유용.
+
+## 글로벌 단축키
+
+```
+feat(desktop): 프록시 토글 글로벌 단축키 기능 추가
+```
+
+`tauri-plugin-global-shortcut`으로 앱이 포커스가 아닐 때도 단축키로 프록시를 켜고 끌 수 있다.
+
+## 대규모 리팩토링 (Phase 1~3)
+
+```
+refactor: unwrap/expect 정리 및 parking_lot 도입 (Phase 1)
+test: proxy_daemon 및 scripting 통합 테스트 추가 (Phase 2)
+refactor(proxy_daemon): 거대 함수 분해 (Phase 3)
+test(proxy_daemon): Phase 3 분해 함수 단위 테스트 추가
+```
+
+`unwrap()`/`expect()`를 안전한 에러 처리로 교체하고, `parking_lot`의 빠른 뮤텍스로 전환. 거대 함수를 작은 함수들로 분해하고 테스트 추가.
+
+## OpenSSL 번들링 <Badge type="danger">삽질</Badge>
+
+```
+fix(desktop): macOS 앱 번들에 OpenSSL dylib 포함하여 코드 서명 충돌 해결
+fix(desktop): OPENSSL_DIR로 빌드 시점에 @rpath 참조 해결
+ci: OpenSSL dylib 번들링 검증 워크플로우 추가
+```
+
+macOS 앱 번들에 OpenSSL dylib를 포함시켜야 하는데 코드 서명과 충돌. `@rpath` 참조 문제를 빌드 시점에 해결하고, CI에 번들링 검증 추가.
+
+:::info 1줄 요약
+하루에 브레이크포인트, 세션 저장, DNS 매핑, 스로틀링, QR 코드, Protobuf 뷰어, 트래픽 Diff, 글로벌 단축키를 전부 구현했다. 대규모 리팩토링도 동시에.
+:::

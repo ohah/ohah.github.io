@@ -1,0 +1,150 @@
+---
+title: 3-5. TUI와 스크립팅 엔진
+date: 2026-03-07
+---
+
+import { Badge } from '@theme';
+
+# 3-5. TUI와 스크립팅 엔진 <Badge type="tip">2026-03-07</Badge>
+
+하루에 두 개의 크레이트가 태어났다. 이 날 커밋 수만 80개 이상.
+
+## TUI 크레이트 (cheolsu-proxy-tui)
+
+```
+feat(tui): ratatui 기반 TUI crate 기본 구조 추가
+feat(tui): App 상태 관리 및 데몬 연결 구현
+feat(tui): Network/WebSocket/Rules/Settings 탭 UI 렌더링 구현
+```
+
+Ratatui + Crossterm으로 터미널 UI를 만들었다. SSH나 서버 환경에서도 프록시를 쓸 수 있다.
+
+### 트러블슈팅: TUI 화면 깨짐 연쇄 <Badge type="danger">삽질</Badge>
+
+데몬 통합에서 버그가 연쇄적으로 터졌다:
+
+```
+fix(tui): --daemon 플래그 추가로 TUI 단독 실행 시 데몬 자동 시작 지원
+fix(tui): 데몬 모드를 tokio 런타임 생성 전에 분기하여 단독 실행 수정
+fix(tui): 데몬 프로세스에 tracing-subscriber 추가로 에러 로그 출력
+fix(tui): 데몬 로그를 파일에만 출력하여 TUI 화면 깨짐 방지
+fix: tracing subscriber init → try_init으로 변경하여 중복 초기화 패닉 방지
+```
+
+1. 데몬 로그가 stdout으로 나와서 TUI 화면이 깨짐 → 파일로만 출력
+2. tracing subscriber를 두 번 초기화하면 패닉 → `try_init` 사용
+3. 데몬 모드 분기가 tokio 런타임 후에 있어서 문제 → 런타임 전에 분기
+
+### TUI 기능 빠르게 채우기
+
+```
+feat(tui): TableState 기반 자동 스크롤 구현
+feat(tui): 네트워크 디테일을 전체 화면으로 표시
+feat(tui): 네트워크 탭에 cURL 복사(C), 리플레이(r) 기능
+feat(tui): 선택 항목 색상 강화 및 탭별 키 힌트 표시 개선
+feat(tui): 웹소켓 탭에 클립보드 복사 기능 추가
+feat(tui): 인터셉트 규칙 추가 폼 및 클립보드 복사 기능 구현
+```
+
+j/k 스크롤, cURL 복사, 디테일 전체 화면, 탭별 키 힌트까지. 하루 만에 쓸 수 있는 수준으로.
+
+## 스크립팅 엔진 크레이트 (scripting)
+
+```
+feat(scripting): deno_core 기반 TypeScript/JavaScript 스크립팅 엔진 추가
+feat(proxy_daemon): 스크립팅 엔진을 프록시 파이프라인에 통합
+feat(scripting): console.log 캡처 및 로그 브로드캐스트 기능 추가
+feat(proxy_daemon): 스크립트 파일 감시(hot reload) 및 로그/상태 전달 추가
+```
+
+Deno Core(V8)를 Rust에 임베드. oxc로 TypeScript→JavaScript 변환 후 V8에서 실행.
+
+```typescript
+cheolsu.onRequest((request) => {
+  if (request.url.includes("/api/debug")) {
+    return { action: "respond", response: { status: 200, headers: {}, body: '{"mock": true}' } };
+  }
+  return { action: "forward" };
+});
+```
+
+세 가지 훅: `onRequest`, `onResponse`, `onWebSocketMessage`. 파일 감시(500ms 디바운스)로 hot reload 지원.
+
+### 데스크톱 스크립트 UI
+
+```
+feat(desktop): Script 페이지 및 스크립트 관리 기능 추가
+feat(desktop): Script 페이지에 Monaco 에디터 통합
+feat(desktop): Script 에디터/콘솔 드래그 리사이즈 및 i18n 번역 추가
+feat(desktop): Script API Reference 탭 및 i18n 업데이트
+feat(tui): Script 탭 추가 (스크립트 로드/언로드/로그 뷰어)
+feat(mcp): load_script, unload_script 도구 추가
+docs: cheolsu.d.ts 타입 정의 파일 추가
+```
+
+Monaco Editor로 스크립트 편집, 콘솔 로그 뷰어, API 레퍼런스, MCP 도구까지 한 세트.
+
+## 서버 리플레이
+
+```
+feat(proxy_daemon): 서버 리플레이(Server Replay) 데몬 레벨 구현
+feat(tauri-ui): 서버 리플레이 Tauri 커맨드 추가
+feat(tauri-ui): 서버 리플레이 UI 페이지 및 스토어 추가
+```
+
+캡처된 응답을 저장해뒀다가 같은 요청이 오면 자동으로 반환. 사내에서 가장 많이 쓰는 기능.
+
+## i18n (Lingui)
+
+```
+feat(tauri-ui): Lingui 기반 다국어(i18n) 지원 추가 — 영어/한국어
+ci: i18n 카탈로그 누락 검증 추가 — lingui extract 후 diff 체크
+```
+
+Lingui로 영어/한국어 전환. CI에서 번역 누락을 자동 검증.
+
+## 업스트림 프록시
+
+```
+feat(proxyapi_v2): upstream proxy 모듈 추가 및 CONNECT 터널 경유 지원
+feat(proxy_daemon): upstream proxy 설정 수신 및 하이브리드 클라이언트 적용
+feat(tauri-ui): upstream proxy 설정 UI 및 Settings 페이지 추가
+feat(tui): Settings 탭에 Upstream Proxy 설정 UI 추가
+test(proxyapi_v2): upstream proxy 통합 테스트 추가
+```
+
+회사 VPN/프록시 뒤에서도 동작하도록 HTTP/HTTPS 업스트림 프록시 지원. 사내에서 필수.
+
+## 릴리스 파이프라인
+
+```
+chore: GitHub Actions 릴리스 워크플로우 추가
+feat(desktop): Tauri Updater 플러그인 설치 및 설정
+feat(desktop): 싱글 인스턴스 적용
+```
+
+릴리스 자동화, 자동 업데이트, 다중 실행 방지까지. 배포 준비.
+
+## HAR Export
+
+```
+feat(desktop): HAR Export 기능 추가
+feat(tui): HAR Export 기능 추가
+test(proxy_v2_models): HAR 변환 모듈 유닛 테스트 추가
+```
+
+HTTP Archive 포맷으로 트래픽 내보내기. 버그 리포트에 첨부하면 재현 없이 분석 가능.
+
+## 기타 UI 개선
+
+```
+refactor: tauri-ui 디렉토리를 desktop으로 이름 변경
+refactor(tauri-ui): AppSidebar를 공유 레이아웃으로 이동
+fix(tui): KeyEventKind::Press 필터링으로 키 입력 중복 방지
+fix(tui): UI 색상 가시성 개선 — DarkGray를 밝은 색으로 변경
+feat(tauri): CLI 설치/제거 커맨드 추가 (install_cli, uninstall_cli)
+```
+
+:::info 1줄 요약
+03-07 하루에 TUI(Ratatui)와 스크립팅 엔진(Deno Core+V8)을 만들고, 서버 리플레이, HAR Export, i18n, 업스트림 프록시, 릴리스 파이프라인까지 구현했다. 커밋 80개+.
+:::

@@ -1,0 +1,166 @@
+---
+title: 3-10. 릴리스 이후와 사내 활용
+date: 2026-03-14
+---
+
+import { Badge } from '@theme';
+
+# 3-10. 릴리스 이후와 사내 활용 <Badge type="tip">2026-03-14 ~ 03-18</Badge>
+
+v0.1.0 릴리스 후에도 속도가 줄지 않았다.
+
+## 03-14: OpenAPI와 gRPC
+
+```
+feat(proxy_v2_models): OpenAPI 3.0 스펙 자동 생성 기능 추가
+feat(desktop): OpenAPI 스펙 내보내기 UI 추가
+feat(proxy_daemon): gRPC 디코딩 강화를 위한 ProtoRegistry 추가
+feat(desktop): gRPC Proto 파일 관리 UI 추가
+feat(proxy_v2_models): 성능 Waterfall 타이밍 측정 및 시각화 추가
+feat(proxy_daemon): 조건부 Throttle 인터셉트 액션 추가
+```
+
+캡처된 트래픽에서 **OpenAPI 3.0 스펙을 자동 생성**. API 문서화가 안 된 서비스의 스펙을 프록시로 추출할 수 있다.
+
+gRPC는 Proto 파일을 등록하면 더 정확한 디코딩이 가능. ProtoRegistry로 관리.
+
+Waterfall 타이밍은 Chrome DevTools의 Timing 탭처럼 DNS, TCP, TLS, 요청, 응답 각 단계의 소요 시간을 시각화.
+
+### 트러블슈팅: Waterfall 로그 스케일 <Badge type="warning">UX</Badge>
+
+```
+fix(desktop): Waterfall 바 차트를 로그 스케일 상대 비율로 개선
+```
+
+선형 스케일로 그리면 느린 요청 하나가 나머지를 다 납작하게 만든다. 로그 스케일로 변경.
+
+## 03-16: TLS 세부 튜닝
+
+```
+fix: SSL Proxying 명시적 인터셉트 시 자동 TLS 바이패스 무시
+fix: TLS 인터셉트 성공 시 이전 실패 기록 클리어
+refactor: upgrade 로직 중복 제거 및 handle_tls_passthrough 데드 코드 삭제
+fix: MapRemote 규칙의 대상 포트에 대한 자동 SSL 인터셉트
+fix: MapRemote 자동 SSL 인터셉트 개선 및 UI 태그 표시
+```
+
+SSL Proxying 화이트리스트에 명시적으로 등록된 도메인은 자동 바이패스를 무시하도록. MapRemote 규칙의 대상 포트도 자동으로 SSL 인터셉트.
+
+## 03-17: GraphQL + AI 분석
+
+### GraphQL 전용 뷰어
+
+```
+feat: GraphQL 전용 뷰어/대시보드 기능 구현
+fix: GraphQL 쿼리 주석 파싱 개선 및 테스트 코드 추가
+```
+
+GraphQL 요청의 쿼리, 변수, 응답을 구조화해서 보여주는 전용 대시보드.
+
+### AI 트래픽 분석
+
+```
+feat: AI 트래픽 분석 기능 구현
+feat(desktop): AI 트래픽 분석 대시보드 구현
+feat(tui): AI 트래픽 분석 탭 구현
+```
+
+캡처된 트래픽을 AI로 분석하는 기능. 데스크톱과 TUI 모두 지원.
+
+### 브레이크포인트 수정 후 전달
+
+```
+feat(desktop): 브레이크포인트 수정 후 전달(modify_and_forward) UI 구현
+feat(tui): 브레이크포인트 수정 후 전달(modify_and_forward) TUI 구현
+```
+
+기존 브레이크포인트는 통과/차단만 가능했는데, 이제 **수정 후 전달**도 가능.
+
+### TLS 학습 기반 폴백
+
+```
+feat: TLS 학습 기반 폴백 및 설정 동적 관리 추가
+refactor: SharedTlsConfig을 Arc<RwLock>으로 변경하여 런타임 규칙 수정 가능하게
+```
+
+TLS 설정을 런타임에 동적으로 변경할 수 있게. 학습 기반 폴백으로 TLS 호환성 자동 최적화.
+
+### 코드 내보내기 확장
+
+```
+feat(desktop): k6, Playwright, Vitest 코드 내보내기 추가
+feat(desktop): PowerShell, Node.js Fetch 코드 내보내기 추가
+```
+
+기존 cURL, fetch, HTTPie, Python에 더해 k6(부하 테스트), Playwright(E2E), Vitest(단위 테스트), PowerShell, Node.js Fetch까지. 총 8가지 포맷.
+
+### 서버 TLS 인증서 뷰
+
+```
+feat: 서버 TLS 인증서 상세 뷰 추가 (백엔드 + 프론트엔드)
+```
+
+서버의 TLS 인증서 정보를 상세히 보여준다. 만료일, 발급자, SAN 등.
+
+## 03-18: UI 폴리싱
+
+```
+feat(desktop): 필터 프리셋 저장/불러오기 기능 구현
+feat(desktop): 다크 테마 5종 완성
+feat(desktop): 캐시 용량 제한 설정 추가
+refactor(desktop): formatBytes/TYPE_COLORS/HTTP_METHODS 중복 제거
+refactor(desktop): 대규모 파일 분할 및 타입 안전성 강화
+```
+
+마무리 작업들. 필터 프리셋을 저장/불러오기, 다크 테마 변형 5종, 캐시 관리 개선.
+
+## 사내 활용: MCP + Skill 자동화
+
+이 모든 게 사내에서 실사용되고 있다. Claude Code에 Skill을 만들어서 프록시를 자동화했다:
+
+### 개발 서버 우회 Skill
+
+```
+"개발 서버 API를 로컬 목업으로 전환해줘"
+→ Skill이 MCP를 통해 map_remote 규칙 추가
+→ 개발 서버의 API 경로를 로컬 목업 서버로 리다이렉트
+```
+
+### 트래픽 분석 Skill
+
+```
+"최근 5분간 5xx 에러 분석해줘"
+→ Skill이 search_traffic으로 에러 트래픽 조회
+→ get_transaction으로 상세 요청/응답 확인
+→ 패턴 분석 결과 보고
+```
+
+### 환경 설정 Skill
+
+```
+"테스트 환경 세팅해줘"
+→ 미리 정의된 인터셉트 규칙 세트를 한 번에 적용
+→ 특정 API는 목업, 특정 도메인은 차단, 인증 헤더 자동 주입
+```
+
+Skill을 한번 만들어두면 "테스트 환경 세팅해줘" 한 마디로 프록시 설정이 한방에 적용된다. 이전에는 Charles Proxy에서 수동으로 규칙을 하나하나 설정했는데, 그 삽질이 사라졌다.
+
+## 숫자로 보는 폭풍 개발
+
+| 지표 | 수치 |
+|------|------|
+| 기간 | 02-28 ~ 03-18 (19일) |
+| 총 커밋 | 700+ |
+| 새 크레이트 | 3개 (scripting, mcp_server, tui) |
+| MCP 도구 | 14개+ |
+| 지원 프로토콜 | HTTP, HTTPS, WebSocket, gRPC, GraphQL, SSE, MQTT, Socket.IO |
+| 코드 내보내기 | 8가지 포맷 |
+| 다크 테마 | 5종 |
+| 안정성 수정 | 크리티컬 4 + HIGH 6 + MEDIUM 10건 |
+| 릴리스 | v0.1.0 |
+
+2년간 방치된 포크에서, 4개월 공백을 거쳐, 19일간의 폭풍 개발로 완전히 다른 프로젝트가 됐다.
+
+:::info 1줄 요약
+릴리스 후에도 OpenAPI 자동 생성, GraphQL 뷰어, AI 트래픽 분석, 코드 내보내기 8종을 추가하며 진화 중이다. Claude Code Skill로 프록시를 자동화하며 사내에서 실사용 중.
+:::

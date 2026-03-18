@@ -1,0 +1,117 @@
+---
+title: 3-6. 다크 테마와 시스템 트레이
+date: 2026-03-08
+---
+
+import { Badge } from '@theme';
+
+# 3-6. 다크 테마와 시스템 트레이 <Badge type="tip">2026-03-08</Badge>
+
+## 다크 테마 <Badge type="warning">커밋 12개</Badge>
+
+```
+feat(desktop): 다크 테마 지원 추가
+style(desktop): 다크 테마를 순수 검은색 계열로 변경
+fix(desktop): 다크 테마 Monaco 에디터 검색 하이라이트 색상 수정
+style(desktop): 다크 테마 흰색(#ffffff) 글씨를 부드러운 톤(#e4e4e7)으로 변경
+fix(desktop): 다크 테마 하드코딩 색상을 테마 인식 클래스로 변경
+style(desktop): 다크 테마 텍스트 색상을 더 부드럽게 조정 (#e4e4e7 → #b4b4b9)
+style(desktop): 다크 테마 액센트/호버 색상을 어두운 청록색으로 변경
+fix(desktop): 누락된 Monaco 에디터 4곳에 다크 테마 적용
+fix(desktop): Monaco 커스텀 테마를 앱 시작 시 미리 등록
+```
+
+다크 테마 하나에 12커밋. 처음에 순수 검은색으로 시작 → 텍스트가 너무 밝아서 부드러운 톤으로 조정 → 하드코딩된 색상을 테마 인식으로 변경 → Monaco 에디터가 다크 테마를 안 따라서 커스텀 테마 등록. 디테일의 지옥.
+
+## 시스템 트레이 <Badge type="danger">삽질의 극치</Badge>
+
+macOS 시스템 트레이 구현. 좌클릭 시 패널 UI, 우클릭 시 컨텍스트 메뉴.
+
+### 트러블슈팅 타임라인
+
+커밋 순서대로 따라가면 삽질의 깊이가 보인다:
+
+```
+feat(desktop): 시스템 트레이 기능 추가
+feat(desktop): 트레이 패널 UI 및 라우트 구현
+fix(desktop): 트레이 패널 플리커 해결 및 전용 아이콘 추가
+refactor(desktop): 트레이 패널을 별도 엔트리포인트로 분리 및 개선
+fix(desktop): 트레이 패널 lazy 생성 및 Store 동기화 안전 처리
+fix(desktop): 트레이 Store 동기화로 인한 앱 프리징 수정
+style(desktop): 트레이 패널 높이를 콘텐츠에 맞게 조정 (380→334)
+style(desktop): 트레이 패널 높이 재조정 (334→320)
+style(desktop): 트레이 패널 높이 재조정 (320→328) — 스크롤 방지
+style(desktop): 트레이 패널 높이 미세 조정 (328→326)
+fix(desktop): 트레이 패널에서 우클릭 컨텍스트 메뉴 및 텍스트 선택 비활성화
+fix(desktop): 트레이 패널 좌표 계산 수정 및 아이콘 크기 확대
+fix(desktop): 트레이에서 프록시 토글 시 메인 윈도우 상태 동기화 및 아이콘 확대
+refactor(desktop): 트레이 ↔ 메인 윈도우 동기화를 Tauri Store로 통일
+fix(desktop): 트레이 트래픽 기록 토글 무한루프 수정
+fix(desktop): 트레이 패널에서 트래픽 기록·시스템 프록시 토글 제거
+```
+
+1. **플리커** — 트레이 패널이 깜빡이며 나타남 → 전용 아이콘 + 별도 엔트리포인트로 해결
+2. **앱 프리징** — Store 동기화가 메인 스레드를 블로킹 → lazy 생성으로 해결
+3. **높이 전쟁** — 380→334→320→328→326. **5번** 미세 조정. 스크롤바가 나오면 안 되는데 콘텐츠에 딱 맞아야 하니까
+4. **무한루프** — 트레이에서 토글 → 메인 윈도우 업데이트 → 이벤트 발생 → 트레이 업데이트 → 무한반복. Tauri Store로 통일해서 해결
+5. **최종 정리** — 문제를 일으키는 토글들을 아예 트레이에서 제거
+
+## SOCKS5 프록시
+
+```
+feat(proxyapi_v2): SOCKS5 프록시 서버 구현
+test(proxyapi_v2): SOCKS5 프록시 통합 테스트 추가
+```
+
+업스트림 프록시에 SOCKS5 지원 추가. `socks5/` 모듈에서 SOCKS5 핸드셰이크를 구현.
+
+## 스크립팅 async/await
+
+```
+feat(scripting): async/await 및 타이머 API 지원 추가
+fix(scripting): 스크립트 재로드 시 이전 엔진 타이머 미정리로 인한 V8 crash 수정
+```
+
+`setTimeout`, `setInterval`, `async/await` 지원. 근데 스크립트를 재로드할 때 이전 엔진의 타이머가 정리되지 않아서 V8이 crash. `clearAllTimers`를 엔진 교체 시 호출하도록 수정.
+
+## CA 인증서 UI
+
+```
+feat(desktop): Settings에서 CA 인증서 설치/제거 기능 추가
+feat(tui): Settings 탭에 CA 인증서 설치/제거 기능 추가
+fix(desktop): CA 인증서 설치 시 관리자 권한 불필요하도록 수정
+fix(desktop): 키체인에 이미 존재하는 인증서 추가 시 에러 무시 개선
+```
+
+Settings에서 CA 인증서를 설치/제거할 수 있게 됐다. macOS에서는 Keychain에 추가. 관리자 권한 없이도 동작하도록 수정.
+
+## macOS 네이티브 메뉴
+
+```
+feat(desktop): macOS 네이티브 메뉴바 및 Cmd+R 새로고침 추가
+```
+
+Cmd+R 새로고침인데 이것도 삽질이 있었다:
+
+```
+fix(desktop): Cmd+R 연타 시 앱 과부하 방지 — 500ms debounce 추가
+fix(desktop): Cmd+R debounce를 2초로 증가 — 초기화 완료 전 재리로드 방지
+refactor(desktop): Cmd+R 디바운스 제거 — 프론트엔드에서 재연결 방지 처리됨
+fix(desktop): 페이지 리로드 시 프록시 재연결 방지 — isConnected 상태 활용
+```
+
+500ms → 2초 → 디바운스 자체를 제거하고 프론트엔드에서 `isConnected` 상태로 처리. 세 번의 방향 전환.
+
+## CLI/MCP 바이너리 배포
+
+```
+fix(desktop): CLI/MCP 바이너리 외부 실행 시 Gatekeeper 차단 문제 수정
+fix(desktop): sidecar 바이너리 경로를 Contents/MacOS/에서 찾도록 수정
+fix(desktop): sidecar 파일명에서 target triple 접미사 제거
+```
+
+macOS에서 MCP 바이너리를 외부에서 실행하면 Gatekeeper가 차단. sidecar 경로 문제도 있었고. macOS 앱 배포의 어두운 면.
+
+:::info 1줄 요약
+다크 테마에 12커밋, 시스템 트레이에 16커밋(높이 5번 조정). SOCKS5, 스크립팅 async/await, CA 인증서 UI, macOS 네이티브 메뉴까지. 디테일에 집착한 하루.
+:::

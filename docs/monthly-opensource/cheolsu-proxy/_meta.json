@@ -3,13 +3,13 @@
     "type": "file",
     "name": "background",
     "label": "1. 개발 배경",
-    "tag": "26.03.19"
+    "tag": "25.08.14"
   },
   {
     "type": "file",
     "name": "tech-stack",
     "label": "2. 기술 스택",
-    "tag": "26.03.19"
+    "tag": "25.10.14"
   },
   {
     "type": "file",
@@ -19,19 +19,61 @@
   {
     "type": "file",
     "name": "development-1",
-    "label": "3-1. MITM 프록시 코어",
-    "tag": "26.03.19"
+    "label": "3-1. TLS와의 전쟁",
+    "tag": "25.10.14"
   },
   {
     "type": "file",
     "name": "development-2",
-    "label": "3-2. 스크립팅 엔진과 트래픽 조작",
-    "tag": "26.03.19"
+    "label": "3-2. 첫 기능들과 1차 위기",
+    "tag": "25.10.19"
   },
   {
     "type": "file",
     "name": "development-3",
-    "label": "3-3. UI와 MCP 통합",
-    "tag": "26.03.19"
+    "label": "3-3. 부활: 환경 교체와 데몬",
+    "tag": "26.02.28"
+  },
+  {
+    "type": "file",
+    "name": "development-4",
+    "label": "3-4. MCP 서버와 인터셉트 규칙",
+    "tag": "26.03.05"
+  },
+  {
+    "type": "file",
+    "name": "development-5",
+    "label": "3-5. TUI와 스크립팅 엔진",
+    "tag": "26.03.07"
+  },
+  {
+    "type": "file",
+    "name": "development-6",
+    "label": "3-6. 다크 테마와 시스템 트레이",
+    "tag": "26.03.08"
+  },
+  {
+    "type": "file",
+    "name": "development-7",
+    "label": "3-7. 기능 폭탄의 날",
+    "tag": "26.03.09"
+  },
+  {
+    "type": "file",
+    "name": "development-8",
+    "label": "3-8. 보안과 프로토콜 확장",
+    "tag": "26.03.10"
+  },
+  {
+    "type": "file",
+    "name": "development-9",
+    "label": "3-9. 리팩토링과 v0.1.0",
+    "tag": "26.03.12"
+  },
+  {
+    "type": "file",
+    "name": "development-10",
+    "label": "3-10. 릴리스 이후와 사내 활용",
+    "tag": "26.03.14"
   }
 ]

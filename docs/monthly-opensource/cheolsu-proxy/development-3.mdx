@@ -1,194 +1,136 @@
 ---
-title: 3-3. UI와 MCP 통합
-date: 2026-03-19
+title: 3-3. 부활: 환경 교체와 데몬
+date: 2026-02-28
 ---
 
 import { Badge } from '@theme';
 
-# 3-3. UI와 MCP 통합
+# 3-3. 부활: 환경 교체와 데몬 <Badge type="tip">2026-02-28 ~ 03-04</Badge>
 
-## 데스크톱 앱: Tauri + React
+## 02-28: 의욕이 돌아왔다
 
-### 왜 Tauri인가?
+4개월 만에 갑자기 의욕이 불타올랐다. 혼자지만 상관없다.
 
-프록시를 만드는 데 Electron을 쓰면 아이러니다. 프록시는 가벼워야 하는데 Electron은 크롬을 통째로 들고 다닌다.
-
-Tauri는:
-- 시스템 WebView 사용 (별도 브라우저 번들 없음)
-- Rust 백엔드와 자연스럽게 통합
-- 메모리 사용량이 Electron의 1/5 수준
-
-프록시 코어가 이미 Rust니까 Tauri는 자연스러운 선택이었다.
-
-### 프론트엔드 아키텍처
+첫 번째로 한 일: **개발 환경 전면 교체**
 
 ```
-React 19 + Zustand (상태관리) + React Hook Form (폼)
-├── Monaco Editor (스크립트/쿼리 에디터)
-├── @tanstack/react-virtual (가상 스크롤)
-├── react-resizable-panels (리사이즈 가능한 패널)
-├── cmdk (커맨드 팔레트)
-├── Tailwind CSS 4 (스타일링)
-└── Lingui (i18n - 영어/한국어)
+chore: pnpm→bun, prettier→oxfmt/oxlint, mise.toml·AGENTS.md
 ```
 
-### 트러블슈팅: 대량 트래픽과 가상 스크롤 <Badge type="danger">성능</Badge>
+한 커밋에 다 때려넣었다.
 
-프록시를 켜놓으면 트래픽이 쏟아진다. 웹페이지 하나 열면 수십~수백 개의 요청이 발생한다. 이걸 전부 리스트로 렌더링하면 브라우저가 죽는다.
+| Before | After |
+|--------|-------|
+| pnpm | **Bun** |
+| Prettier | **oxfmt** |
+| ESLint | **oxlint** |
+| .cursor/ | **.claude/** |
 
-`@tanstack/react-virtual`로 가상 스크롤을 적용했다. 화면에 보이는 행만 DOM에 렌더링하고, 나머지는 높이만 계산해서 스크롤바를 만든다.
+Bun으로 바꾸면서 패키지 설치 속도가 체감될 정도로 빨라졌다. oxfmt/oxlint는 Rust 기반이라 포맷팅/린팅이 순식간이다. `.cursor/`를 `.claude/`로 바꾼 건 작업 환경이 Claude Code로 넘어왔다는 신호.
 
-근데 문제가 있었다. 트래픽이 실시간으로 들어오면서 리스트가 계속 업데이트되는데, 가상 스크롤의 아이템 수가 변하면 스크롤 위치가 점프하는 현상이 발생했다.
+같은 날 docs 배포 워크플로우도 정리했다. rspress 설정을 `@rspress/core`로 업데이트하고 SSG 빌드를 수정.
 
-해결:
-1. 새 트래픽은 배치로 모아서 추가 (매 요청마다 렌더링하면 안 됨)
-2. 사용자가 스크롤을 올려서 과거 트래픽을 보고 있을 때는 자동 스크롤 비활성화
-3. 맨 아래에 있을 때만 새 트래픽이 들어오면 자동 스크롤
-
-### 트러블슈팅: 캐시 메모리 폭발 <Badge type="danger">버그</Badge>
-
-프록시를 오래 켜놓으면 메모리가 계속 증가했다. 모든 트래픽 데이터(요청/응답 바디 포함)를 메모리에 저장하고 있었기 때문이다.
-
-해결:
-- HTTP 트랜잭션 최대 1,000개 유지
-- WebSocket 메시지 최대 5,000개 유지
-- 오래된 데이터는 자동 폐기(FIFO)
-- 캐시 용량 제한 설정 가능
-- 수동 `clear_traffic` 기능 제공
-
-### 테마: 다크 모드 5종
-
-다크 테마를 5가지 변형으로 제공한다. `next-themes`로 테마 전환을 관리하고, Tailwind CSS의 dark mode와 연동했다.
-
-### i18n: 영어/한국어
-
-`@lingui/core` + `@lingui/react`로 국제화를 구현했다. 원래 ohah가 영어로 먼저 만들었고, 한국어 번역을 추가했다.
-
-Lingui를 선택한 이유:
-- ICU MessageFormat 지원 (복수형, 성별 등)
-- 컴파일 타임 카탈로그 생성 (런타임 파싱 없음)
-- React와 자연스러운 통합
-
-## TUI: Ratatui 인터페이스
-
-SSH 접속이나 서버 환경에서는 GUI를 못 쓴다. TUI(Terminal UI)가 있으면 어디서든 프록시를 쓸 수 있다.
-
-Ratatui + Crossterm 조합으로 만들었다:
-- 트래픽 리스트 (실시간 업데이트)
-- 요청/응답 상세 보기
-- 설정 변경
-- 브레이크포인트 설정
-- 스크립트 편집
-- 인터셉트 규칙 관리
-- WebSocket 메시지 뷰어
-
-### 트러블슈팅: TUI에서의 유니코드 처리 <Badge type="warning">버그</Badge>
-
-한국어 URL이나 헤더값이 들어오면 터미널에서 폭 계산이 깨졌다. 한글은 영문 대비 2배 폭을 차지하는데, 바이트 수로 폭을 계산하면 레이아웃이 어긋난다.
-
-`unicode-width` 크레이트로 각 문자의 실제 표시 폭을 계산해서 해결했다.
-
-## MCP 서버: AI와 프록시의 만남
-
-### 아키텍처
+## 03-01: 대청소
 
 ```
-Claude Code / Cursor
-    ↓ MCP Protocol (stdio)
-cheolsu-proxy-mcp
-    ↓ Unix Domain Socket
-proxy_daemon
-    ↓
-프록시 코어 (proxyapi_v2)
+refactor: v1 크레이트 제거 및 코드 모듈 분할
 ```
 
-MCP 서버(`rmcp` 크레이트)가 stdio로 AI 어시스턴트와 통신하고, Unix Domain Socket으로 프록시 데몬과 통신한다. 두 개의 프로세스가 소켓으로 연결되는 구조다.
+proxelar 원본의 코드 구조를 유지하고 있던 v1 크레이트를 완전히 삭제했다. `.claude/` 디렉토리에 에이전트 커맨드도 정리. 새 출발.
 
-### 14개 MCP 도구
+## 03-02: 데몬 아키텍처 <Badge type="warning">핵심 설계</Badge>
 
-**트래픽 검사**
-- `search_traffic` — 호스트, 메서드, 상태 코드, 경로로 검색
-- `get_transaction` — 특정 트랜잭션의 전체 요청/응답 상세
-- `get_websocket_messages` — WebSocket 메시지 조회 (필터 가능)
+프록시의 근본 구조를 바꿨다. 이 날의 커밋:
 
-**요청 전송**
-- `replay_request` — HTTP 요청 직접 전송 (프록시 우회)
-
-**규칙 관리**
-- `list_rules` — 현재 활성 인터셉트 규칙 목록
-- `add_rule` — 새 규칙 추가 (block, modify, map_local, map_remote)
-- `remove_rule` — 규칙 제거
-
-**프록시 상태**
-- `proxy_status` — 프록시 실행 상태 및 통계
-- `clear_traffic` — 트래픽 데이터 초기화
-
-### 사내 활용: MCP + Skill 자동화
-
-사내에서 가장 강력하게 쓰고 있는 기능이다. Claude Code에 Skill을 만들어서 프록시 제어를 자동화했다.
-
-예를 들어:
-
-**개발 서버 우회 Skill**
 ```
-"개발 서버 API를 로컬 목업으로 전환해줘"
-→ Skill이 MCP를 통해 map_remote 규칙 추가
-→ 개발 서버의 API 경로를 로컬 목업 서버로 리다이렉트
+feat(cli): tauri.conf.json에 --daemon (-D) 인자 등록
+feat(daemon): proxy_daemon.rs 모듈 생성
+feat(client): proxy_client.rs 모듈 생성
+feat(main): --daemon 플래그로 Tauri 없이 daemon 모드 실행
+refactor(proxy): GUI/CLI 모두 daemon 클라이언트로 전환
+test(daemon): UDS 서버-클라이언트 통합 테스트 추가
 ```
 
-**트래픽 분석 Skill**
-```
-"최근 5분간 5xx 에러 분석해줘"
-→ Skill이 search_traffic으로 에러 트래픽 조회
-→ get_transaction으로 상세 요청/응답 확인
-→ 패턴 분석 결과 보고
-```
+기존에는 Tauri 앱 안에 프록시가 직접 들어 있었다. 문제:
+1. Tauri 앱을 끄면 프록시도 꺼진다
+2. TUI나 MCP 같은 다른 인터페이스에서 프록시를 쓸 수 없다
+3. 프록시 코어 테스트가 Tauri 의존성에 묶인다
 
-**규칙 일괄 설정 Skill**
+**해결: 프록시 데몬 분리**
+
 ```
-"테스트 환경 세팅해줘"
-→ 미리 정의된 인터셉트 규칙 세트를 한 번에 적용
-→ 특정 API는 목업, 특정 도메인은 차단, 인증 헤더 자동 주입
+[Tauri 앱] ─┐
+[TUI]       ├── Unix Domain Socket ──→ [proxy_daemon] ──→ [proxyapi_v2]
+[MCP 서버]  ─┘
 ```
 
-Skill을 한번 만들어두면 "테스트 환경 세팅해줘" 한 마디로 프록시 설정이 한방에 적용된다. 이전에는 Charles Proxy에서 수동으로 규칙을 하나하나 설정했는데, 그 삽질이 사라졌다.
+`proxy_daemon` 크레이트를 만들어서 프록시를 독립 프로세스로 돌리고, 클라이언트(GUI/TUI/MCP)는 UDS(Unix Domain Socket)로 통신. `--daemon` 플래그로 Tauri 없이 실행 가능.
 
-### 트러블슈팅: Unix Domain Socket 연결 안정성 <Badge type="danger">버그</Badge>
+### 트러블슈팅: UDS race condition <Badge type="danger">버그</Badge>
 
-MCP 서버와 프록시 데몬 사이의 Unix Domain Socket 연결이 간헐적으로 끊어졌다. 프록시 데몬이 재시작되면 소켓 파일이 새로 생성되는데, MCP 서버가 기존 소켓에 연결을 시도하면서 실패했다.
+```
+fix: 데몬 UDS 소켓 준비 전 연결 시도하는 race condition 수정
+```
 
-해결:
-- 연결 실패 시 자동 재연결 (exponential backoff)
-- 소켓 파일 경로를 고정하고, 기존 소켓이 있으면 먼저 삭제 후 재생성
-- MCP 서버에서 연결 상태를 주기적으로 헬스체크
+데몬이 소켓 파일을 만들기 전에 클라이언트가 연결을 시도. 데몬 시작 → 소켓 바인드 사이 시간차가 원인.
 
-### 트러블슈팅: MCP 응답 크기와 토큰 <Badge type="warning">최적화</Badge>
+## 03-04: UI 프레임워크 전면 교체
 
-`search_traffic`이 수백 개의 트랜잭션을 반환하면 AI에게 보내는 토큰이 폭발한다. `get_transaction`도 응답 바디가 크면 마찬가지.
+하루에 엄청난 양의 커밋이 들어갔다.
 
-해결:
-- `search_traffic`은 기본 20개로 제한 (페이지네이션)
-- `get_transaction`은 바디를 truncate (기본 1KB, 설정 가능)
-- 헤더는 주요 헤더만 반환 (Content-Type, Status 등)
-- WebSocket 메시지도 최근 N개로 제한
+### proxy_daemon 크레이트 독립
 
-## QR 코드: 모바일 프록시 설정
+```
+feat(proxy_daemon): 프록시/데몬 핵심 로직을 독립 crate로 분리
+refactor(tauri): proxy_daemon crate 사용으로 Tauri 래퍼 축소
+test: 통합 테스트 import를 proxy_daemon crate로 업데이트
+```
 
-프록시를 쓰려면 디바이스의 네트워크 설정에서 프록시 주소를 입력해야 한다. 데스크톱에서는 괜찮지만, 모바일에서 `127.0.0.1:8100`을 수동 입력하는 건 불편하다.
+Tauri 앱의 거대한 코드를 `proxy_daemon` 크레이트로 빼내고, Tauri는 얇은 래퍼만 남겼다.
 
-QR 코드를 생성해서 모바일에서 스캔하면 프록시 설정과 CA 인증서 설치 가이드로 연결된다. `qrcode` 크레이트로 TUI/데스크톱 모두에서 QR 코드를 표시한다.
+### Radix UI → Base UI 마이그레이션
 
-## 첫 릴리스: v0.1.0
+커밋 10개 이상이 이 작업에 들어갔다. 하나하나 컴포넌트를 교체:
 
-2026-03-13에 v0.1.0을 릴리스했다. 기능적으로는 이미 사내에서 실사용하고 있었지만, 공식 릴리스로 정리한 건 이때가 처음이다.
+```
+refactor(ui): tooltip을 Base UI로 마이그레이션
+refactor(ui): separator를 Base UI로 마이그레이션
+refactor(ui): popover를 Base UI로 마이그레이션
+refactor(ui): tabs를 Base UI로 마이그레이션
+refactor(ui): dialog를 Base UI로 마이그레이션
+refactor(ui): scroll-area를 Base UI로 마이그레이션
+refactor(ui): select를 Base UI로 마이그레이션
+refactor(ui): context-menu를 Base UI로 마이그레이션
+refactor(ui): command Dialog 래퍼 타입 수정 및 asChild → render prop
+```
 
-릴리스 이후에도 활발하게 개발 중이다. 3월 18일 하루에만 수십 개의 커밋이 들어갔다:
-- Desktop UI 개선 (Alert/Progress 컴포넌트, 다크 테마 5종)
-- 대규모 리팩토링 (파일 분할, 타입 안전성 강화)
-- 필터 프리셋 저장/불러오기
-- 테스트 추가 (Rust + 프론트엔드)
-- i18n 카탈로그 업데이트
+Radix UI의 `@radix-ui/*` 패키지 9개를 제거하고 `@base-ui/react` 하나로 통합. headless 컴포넌트라 스타일링 자유도가 높고 번들 크기도 작다.
+
+### Rspack → Vite 전환
+
+```
+refactor: rspack → Vite 7 (Rolldown) 번들러 전환
+```
+
+번들러도 교체. Vite 7은 내부적으로 Rolldown(Rust 기반)을 사용해서 빌드가 빠르다.
+
+### 트러블슈팅: resizable-panels v4 <Badge type="danger">삽질</Badge>
+
+`react-resizable-panels`를 v4로 업그레이드했더니 API가 완전히 바뀌어 있었다:
+
+```
+fix: resizable 컴포넌트 v4 CSS 호환성 수정
+fix: resizable 패널 레이아웃을 v4 defaultLayout으로 수정
+fix: resizable panels v4 size 값을 퍼센트 문자열로 변경
+fix: react-resizable-panels v4 API 호환성 수정
+```
+
+size 값이 숫자에서 퍼센트 문자열로 변경, defaultLayout API 변경, CSS 호환성 문제. 같은 날 4커밋.
+
+### 프론트엔드 의존성 최신화
+
+React 19, react-resizable-panels v4, 기타 패키지 전면 업데이트. `react-scan`도 제거.
 
 :::info 1줄 요약
-Tauri+React 데스크톱과 Ratatui TUI 두 가지 인터페이스를 만들고, MCP 서버로 AI 어시스턴트 연동까지 완성했다. Claude Code Skill로 프록시를 자동화하며 실제 업무에 활용 중이다.
+4개월 공백 후 혼자 부활. 개발 환경을 Bun+oxfmt으로 교체하고, 데몬 아키텍처로 프록시를 독립 프로세스로 분리하고, UI 프레임워크를 Base UI+Vite로 전면 교체했다.
 :::

@@ -1,0 +1,154 @@
+---
+title: 3-4. MCP 서버와 인터셉트 규칙
+date: 2026-03-05
+---
+
+import { Badge } from '@theme';
+
+# 3-4. MCP 서버와 인터셉트 규칙 <Badge type="tip">2026-03-05 ~ 03-06</Badge>
+
+## 03-05: 프록시 코어 강화
+
+### TLS 자동 학습 바이패스
+
+TLS 핸드셰이크가 실패하는 도메인을 **자동으로 학습**해서 다음부터는 터널 모드로 처리하는 기능. 수동으로 도메인 리스트를 관리할 필요가 없어졌다.
+
+```
+feat: TLS 자동 학습 바이패스 구현
+refactor: 하드코딩 터널 모드 코드 제거 (TLS 자동 바이패스로 대체)
+```
+
+기존에 Apple 도메인 등을 하드코딩으로 터널 처리하던 코드를 전부 제거하고, 학습 기반으로 전환.
+
+### WebSocket 메시지 주입
+
+양방향으로 가짜 WebSocket 메시지를 주입할 수 있게 됐다.
+
+```
+feat: WebSocket 메시지 주입 기능 구현 및 테스트 보강
+```
+
+### 트러블슈팅 연발 <Badge type="danger">삽질</Badge>
+
+이 날 수정한 버그들:
+
+```
+fix: OpenSSL 3.0+에서 레거시 TLS 1.0/1.1 지원을 위한 SECLEVEL=0 설정 추가
+fix: blocking_read를 try_read로 변경하여 tokio 런타임 패닉 해결
+fix: WebSocket Close 후 전송 에러 방지
+fix: headless 모드에서 윈도우를 close 대신 hide 처리
+fix: SIGTERM 시그널 처리 추가로 daemon 종료 시 프록시 설정 복원 보장
+fix: HTTP 이벤트 채널을 std sync_channel에서 tokio mpsc로 교체
+```
+
+- **OpenSSL SECLEVEL** — OpenSSL 3.0+에서는 기본적으로 TLS 1.0/1.1이 비활성화. `SECLEVEL=0`을 명시해야 함
+- **tokio 패닉** — 비동기 컨텍스트에서 `blocking_read` 호출하면 런타임이 죽음. `try_read`로 교체
+- **데몬 종료** — SIGTERM 처리 없이 데몬이 죽으면 시스템 프록시 설정이 복원 안 됨
+
+### 스트리밍 응답 리팩토링
+
+```
+refactor: 스트리밍 응답 처리를 Tower Layer 미들웨어로 분리
+refactor: InternalProxy에 hyper::service::Service trait 구현
+refactor: ProxyContext 구조체로 선택적 필드 통합
+refactor: 데드코드 전면 제거
+```
+
+프록시 내부 구조를 Tower 미들웨어 패턴으로 정리. 코드가 훨씬 깔끔해졌다.
+
+## 03-06: 기능 대폭발 <Badge type="warning">이 날 커밋 50+</Badge>
+
+이 날 하루에 들어간 기능이 엄청나다.
+
+### MCP 서버 크레이트
+
+```
+feat: MCP 서버 크레이트 추가 (cheolsu-proxy-mcp)
+docs(document): MCP 서버 문서 추가 및 Features 네비게이션 구성
+feat(tauri-ui): MCP 서버 설정 UI 및 externalBin 통합
+feat(tauri-ui): build.rs에서 MCP 바이너리 자동 빌드 및 복사
+```
+
+`rmcp` 크레이트로 MCP 프로토콜을 구현하고, Tauri에서는 MCP 바이너리를 sidecar로 번들. 처음에 build.rs에서 빌드했다가 `beforeDevCommand`로 변경하는 삽질도 있었다.
+
+### 인터셉트 규칙 시스템
+
+이 기능의 커밋 흐름이 재미있다. 처음에 mitmproxy 스타일 Flow Filter를 만들었다가, **같은 날** 와일드카드 패턴으로 전면 변경:
+
+```
+feat: mitmproxy 스타일 Flow Filter 파서 및 평가기 구현
+feat: FlowFilter 기반 인터셉트 매칭 로직 구현
+feat: daemon에 인터셉트 규칙 watch 채널 및 테스트 추가
+  ↓ 같은 날 ↓
+refactor: InterceptRule을 와일드카드 패턴 기반으로 변경
+refactor: handler 인터셉트 매칭을 와일드카드 방식으로 변경
+refactor: flow_filter 모듈 제거
+```
+
+mitmproxy의 `~d google.com & ~m GET` 문법보다 `*google.com*` 와일드카드가 직관적이라 판단했다. 5가지 작업: Block, Modify Request, Modify Response, Map Local, Map Remote.
+
+### WebSocket 전용 뷰
+
+```
+feat(proxy_daemon): WebSocket 메시지 캡처 및 UI 전달 파이프라인 구현
+feat(tauri-ui): Chrome DevTools 스타일 WebSocket 뷰 UI 구현
+feat(tauri-ui): WebSocket Inject Tauri 커맨드 및 API 레이어 추가
+feat(tauri-ui): WebSocket Replay 다이얼로그 UI 구현
+```
+
+Chrome DevTools 스타일 메시지 뷰어 + 메시지 주입 다이얼로그.
+
+### 프로토콜 자동 감지
+
+```
+feat(proxy_v2_models): WebSocket 콘텐츠 타입 감지 추가 (Socket.IO, MQTT)
+feat(proxy_v2_models): DataType::GraphQL 추가 및 감지 로직 구현
+feat(tauri-ui): Content View 확장 UI 구현 (GraphQL, Socket.IO, MQTT)
+```
+
+WebSocket 메시지를 보고 Socket.IO, MQTT, GraphQL을 자동 감지. MQTT v5.0의 SUBSCRIBE 패킷 Properties 섹션 파싱 누락 버그도 발견해서 수정.
+
+### 트래픽 리플레이
+
+```
+feat: 트래픽 리플레이 기능 구현
+feat: 트래픽 리플레이 다이얼로그 UI 개선
+feat: 트래픽 리플레이 다이얼로그를 풀페이지 모달로 변경
+```
+
+리플레이 다이얼로그의 UI를 여러 번 수정했다:
+1. 기본 다이얼로그 → 풀페이지 모달
+2. 탭 스타일: shadcn → border-bottom → shadcn으로 복원
+3. 바디 편집기를 Monaco Editor로 변경
+4. 응답 뷰 레이아웃 수정 (헤더가 바디 영역 침범하는 문제)
+
+### E2E 테스트 인프라
+
+```
+feat: MCP bridge 플러그인 추가 (e2e 테스트 인프라)
+ci: 프론트엔드 유닛 테스트 및 e2e 테스트 워크플로우 추가
+test: 프론트엔드 유닛 테스트 및 MCP 기반 e2e 테스트 추가
+```
+
+MCP bridge 플러그인으로 Tauri 앱의 E2E 테스트를 자동화할 수 있게 됐다.
+
+### Map Local / Map Remote
+
+```
+feat(proxy_daemon): Map Local / Map Remote 인터셉트 액션 추가
+feat(tauri-ui): Map Local / Map Remote 규칙 관리 UI 추가
+```
+
+로컬 파일로 응답을 대체하거나, 다른 URL로 리다이렉트하는 기능. Charles Proxy의 핵심 기능 중 하나.
+
+### HTTP/2 활성화
+
+```
+feat(proxy_daemon): HTTP/2 지원 활성화
+```
+
+한 줄 커밋이지만, 이걸로 HTTP/2 트래픽도 인터셉트할 수 있게 됐다.
+
+:::info 1줄 요약
+03-05에 TLS 자동 바이패스와 코어 안정화를 하고, 03-06 하루에 MCP 서버, 인터셉트 규칙(Flow Filter→와일드카드 갈아엎기), WebSocket 뷰, 프로토콜 감지, 트래픽 리플레이, Map Local/Remote, HTTP/2까지 구현했다.
+:::
