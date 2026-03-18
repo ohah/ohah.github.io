@@ -1,0 +1,37 @@
+[
+  {
+    "type": "file",
+    "name": "background",
+    "label": "1. 개발 배경",
+    "tag": "26.02.07"
+  },
+  {
+    "type": "file",
+    "name": "tech-stack",
+    "label": "2. 기술 스택",
+    "tag": "26.02.19"
+  },
+  {
+    "type": "file",
+    "name": "development",
+    "label": "3. 개발 과정"
+  },
+  {
+    "type": "file",
+    "name": "development-1",
+    "label": "3-1. 런타임 인젝션과 Fiber 트리",
+    "tag": "26.02.19"
+  },
+  {
+    "type": "file",
+    "name": "development-2",
+    "label": "3-2. 48개 도구와 디바이스 제어",
+    "tag": "26.02.23"
+  },
+  {
+    "type": "file",
+    "name": "development-3",
+    "label": "3-3. 토큰 최적화와 안정성",
+    "tag": "26.03.05"
+  }
+]

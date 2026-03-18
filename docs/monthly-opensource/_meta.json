@@ -3,7 +3,7 @@
     "type": "file",
     "name": "index",
     "label": "월간 오픈소스"
-  },  
+  },
   {
     "type": "dir",
     "name": "hwpjs",
@@ -23,5 +23,20 @@
     "type": "dir",
     "name": "crd",
     "label": "Chrome Remote Debugger"
+  },
+  {
+    "type": "dir",
+    "name": "react-wasm-table",
+    "label": "React WASM Table"
+  },
+  {
+    "type": "dir",
+    "name": "electron-mcp-server",
+    "label": "Electron MCP Server"
+  },
+  {
+    "type": "dir",
+    "name": "react-native-mcp",
+    "label": "React Native MCP"
   }
 ]

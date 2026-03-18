@@ -1,0 +1,145 @@
+---
+title: 3-1. 런타임 인젝션과 Fiber 트리
+date: 2026-02-19
+---
+
+import { Badge } from '@theme';
+
+# 3-1. 런타임 인젝션과 Fiber 트리 <Badge type="tip">2026-02-07 ~ 02-19</Badge>
+
+## 런타임 아키텍처
+
+MCP 서버가 React Native 앱의 내부에 접근하려면, 앱 안에서 돌아가는 "에이전트"가 필요하다. 이 에이전트가 런타임이다.
+
+```
+React Native 앱 (시뮬레이터/디바이스)
+  └─ 런타임 (Babel 프리셋으로 자동 주입)
+       ↕ WebSocket (포트 12300)
+MCP 서버 (개발자 맥)
+  ↕ stdio (MCP 프로토콜)
+AI 어시스턴트 (Cursor / Claude Desktop / Claude Code)
+```
+
+런타임은 20개 이상의 모듈로 구성되어 있다:
+
+- `fiber-helpers.ts` — React Fiber 트리 탐색
+- `fiber-serialization.ts` — Fiber 노드를 직렬화
+- `mcp-state.ts` — 컴포넌트 state 읽기
+- `state-hooks.ts` — useState, Zustand 등 hook state 추출
+- `mcp-render.ts` — 렌더링 추적
+- `mcp-network.ts` — 네트워크 모니터링
+- `xhr-patch.ts`, `fetch-patch.ts` — XHR/fetch 가로채기
+- `mcp-query.ts` — CSS 유사 셀렉터 엔진
+- `mcp-measure.ts` — 엘리먼트 측정 (UIManager)
+- `mcp-accessibility.ts` — 접근성 트리
+- `console-hook.ts` — console.log 캡처
+- `websocket-guard.ts` — WebSocket 크래시 방어
+
+## React Fiber 접근
+
+### __REACT_DEVTOOLS_GLOBAL_HOOK__
+
+React는 DevTools를 위해 글로벌 훅을 제공한다. `window.__REACT_DEVTOOLS_GLOBAL_HOOK__`에 등록하면 React가 Fiber 트리에 접근할 수 있는 인터페이스를 제공한다.
+
+런타임이 앱 시작 전에 이 훅을 등록한다. React DevTools가 하는 것과 같은 방식이다.
+
+```typescript
+// devtools-hook.ts (간략화)
+global.__REACT_DEVTOOLS_GLOBAL_HOOK__ = {
+  renderers: new Map(),
+  inject(renderer) {
+    // renderer에서 Fiber 루트에 접근 가능
+    this.renderers.set(id, renderer);
+  },
+  // ...
+};
+```
+
+### Fiber 트리 탐색
+
+Fiber 노드는 링크드 리스트 구조이다. `child` → `sibling` → `return` 포인터로 트리를 탐색한다.
+
+```typescript
+function walkFiber(fiber: Fiber, visitor: (fiber: Fiber) => void) {
+  visitor(fiber);
+  if (fiber.child) walkFiber(fiber.child, visitor);
+  if (fiber.sibling) walkFiber(fiber.sibling, visitor);
+}
+```
+
+각 Fiber 노드에서 읽을 수 있는 정보:
+
+- `type` — 컴포넌트 이름 (`Button`, `TextInput` 등)
+- `memoizedProps` — 현재 props
+- `memoizedState` — 현재 state (hooks 체인)
+- `stateNode` — 네이티브 뷰 인스턴스
+- `_debugSource` — 소스 코드 위치 (파일명, 라인 번호)
+
+### State 읽기: Hook 체인 파싱
+
+`useState`의 값을 읽으려면 Fiber의 `memoizedState`를 파싱해야 한다. React의 hooks는 링크드 리스트로 저장된다:
+
+```
+memoizedState → { memoizedState: "홍길동", next → { memoizedState: 30, next → null } }
+```
+
+첫 번째 `useState`의 값은 "홍길동", 두 번째는 30. 이 체인을 순서대로 읽으면 컴포넌트의 모든 state를 가져올 수 있다.
+
+Zustand 같은 외부 상태 관리 라이브러리도 결국 React의 hooks를 통해 연결되니까, 같은 방법으로 읽을 수 있다.
+
+### 트러블슈팅: Fiber 직렬화 폭발
+
+Fiber 노드를 그냥 JSON.stringify하면 순환 참조 때문에 폭발한다. `return` 포인터가 부모를 가리키니까.
+
+그리고 Fiber에는 사용자가 관심 없는 내부 필드가 수십 개 있다. `updateQueue`, `lanes`, `flags` 같은 것들.
+
+`fiber-serialization.ts`에서 사용자에게 의미 있는 필드만 추출하고, 순환 참조를 끊고, 트리 깊이를 제한하는 직렬화 로직을 만들었다.
+
+## CSS 유사 셀렉터 엔진
+
+`query_selector` 도구는 웹의 CSS 셀렉터처럼 React Native 컴포넌트를 찾는다:
+
+```
+query_selector "Button[title='로그인']"
+query_selector "TextInput#email"
+query_selector "View > Text"
+```
+
+DOM이 없으니 직접 셀렉터 파서와 매처를 구현했다. Fiber 트리를 탐색하면서 셀렉터에 맞는 노드를 찾는다.
+
+지원하는 셀렉터:
+- 타입: `Button`, `Text`, `View`
+- 속성: `[title='로그인']`, `[testID='email-input']`
+- ID: `#email` (testID 기반)
+- 자식: `View > Text`
+- 자손: `View Text`
+
+## 네트워크 모니터링: XHR/Fetch 패치
+
+React Native의 네트워크 요청을 가로채서 모니터링한다.
+
+```typescript
+// xhr-patch.ts (간략화)
+const originalOpen = XMLHttpRequest.prototype.open;
+XMLHttpRequest.prototype.open = function(method, url, ...args) {
+  this.__mcp_method = method;
+  this.__mcp_url = url;
+  return originalOpen.call(this, method, url, ...args);
+};
+```
+
+`fetch`도 마찬가지로 패치한다. 이렇게 하면 앱이 어떤 HTTP 클라이언트를 쓰든(axios, fetch, XHR) 모든 네트워크 요청이 기록된다.
+
+### network_mock: 네트워크 모킹
+
+단순 모니터링을 넘어서, 특정 URL의 응답을 바꿔치기할 수도 있다.
+
+```
+network_mock "https://api.example.com/users" --status 500 --body '{"error": "서버 에러"}'
+```
+
+에러 상황 테스트할 때 유용하다. 서버를 건드리지 않고 AI가 직접 에러 응답을 주입해서 앱의 에러 핸들링을 검증할 수 있다.
+
+:::info 1줄 요약
+Babel 프리셋으로 런타임을 주입하고, React DevTools 글로벌 훅을 통해 Fiber 트리에 접근하여 컴포넌트 state까지 읽는 구조를 구현했다.
+:::

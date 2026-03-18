@@ -1,0 +1,86 @@
+---
+title: 2. 기술 스택
+date: 2026-02-25
+---
+
+import { Badge } from '@theme';
+
+# 2. 기술 스택
+
+> "성능이 목적이면 도구 선택에 타협이 없어야 한다"
+
+## Rust + WASM 코어
+
+### Taffy (flexbox 레이아웃 엔진)
+
+셀 내부에 Badge, Text, Checkbox 같은 컴포넌트를 배치하려면 레이아웃 계산이 필요하다. CSS flexbox를 Canvas에서 쓸 수 없으니, 레이아웃 계산만 따로 해주는 엔진이 필요했다.
+
+선택지는 두 가지였다:
+
+1. **직접 구현** — 셀 내부 레이아웃 정도면 간단한 계산으로 될 것 같았지만, flexbox의 `flex-wrap`, `align-items`, `gap` 같은 걸 다 구현하려면 끝이 없다
+2. **[Taffy](https://github.com/DioxusLabs/taffy)** — DioxusLabs에서 만든 러스트 flexbox/grid 엔진. 브라우저 없이 레이아웃 계산만 해준다
+
+Taffy가 정확히 내가 원하는 거였다. 브라우저의 flexbox 스펙을 러스트로 구현해놓은 것이니까, `Flex`, `Box`, `Stack` 같은 레이아웃 컴포넌트를 Canvas 위에서 쓸 수 있게 된다.
+
+> [!NOTE]
+> **[Taffy](https://github.com/DioxusLabs/taffy)** — 러스트로 작성된 flexbox/CSS Grid 레이아웃 엔진. DOM 없이 순수하게 레이아웃 좌표만 계산해준다. Dioxus, Bevy 같은 러스트 UI 프레임워크에서 사용된다.
+
+### wasm-bindgen + wasm-pack
+
+WASM 바인딩은 `wasm-bindgen`으로, 빌드는 `wasm-pack`으로 했다.
+
+hwpjs에서는 napi-rs를 통한 WASM 빌드를 썼는데 실험적 기능이라 삽질이 많았다. 이번에는 순수 웹 타겟이니까 정석대로 `wasm-pack`을 쓰는 게 맞았다.
+
+### serde + serde-wasm-bindgen
+
+복잡한 타입(컬럼 정의, 필터 조건 등)은 `serde-wasm-bindgen`으로 JS ↔ WASM 간 변환했다. 다만 숫자 컬럼은 `Float64Array`로 직접 넘겨서 serde를 아예 거치지 않는 제로카피 경로를 만들었다. 이게 성능의 핵심이다.
+
+### unsafe_code = "forbid"
+
+워크스페이스 전체에 `unsafe_code = "forbid"`를 걸었다. WASM이라 메모리 안전성이 더 중요하고, unsafe 없이도 충분히 빠르다.
+
+## 프론트엔드
+
+### React 18+
+
+peer dependency로 React 18 이상을 요구한다. Concurrent 기능을 직접 쓰진 않지만, `useSyncExternalStore` 같은 훅을 활용한다.
+
+### Canvas API
+
+테이블 전체를 하나의 `<canvas>` 엘리먼트로 그린다. DOM 엘리먼트는 `<canvas>` 하나뿐이고, 셀 편집할 때만 DOM 오버레이가 뜬다. 스크롤 중에는 React가 아무 일도 하지 않는다. `requestAnimationFrame`으로 직접 그린다.
+
+## 빌드 & 개발 도구
+
+### Bun
+
+hwpjs 때부터 써왔고, 이번에도 패키지 매니저 + 테스트 러너 + 워크스페이스 관리를 전부 Bun으로 했다.
+
+### tsdown
+
+라이브러리 번들러로 `tsdown`을 선택했다. `tsup`의 후속이고, tree-shaking 지원이 더 좋아서 subpath export별로 분리 빌드가 깔끔하게 된다.
+
+### oxlint + oxfmt
+
+린팅과 포맷팅은 oxlint + oxfmt. 러스트로 만들어진 JS 도구 체인이라 빠르고, 이미 hwpjs에서 검증했으니 그대로 가져왔다.
+
+### Playwright
+
+E2E 테스트는 Playwright. Canvas 기반이라 DOM 스냅샷 테스트가 안 되니까, 스크린샷 비교 테스트를 해야 했다.
+
+### Rspress
+
+문서 사이트는 Rspress로 만들었다. 이 블로그도 Rspress이고, hwpjs 문서도 Rspress이다. MDX 기반이고 i18n도 지원해서 한/영 문서를 동시에 만들 수 있었다.
+
+## 고민했지만 안 쓴 것들
+
+### Web Worker
+
+WASM 엔진을 Web Worker에서 돌리면 메인 스레드가 완전히 자유로워진다. `SharedArrayBuffer`로 레이아웃 버퍼를 공유하면 가능은 한데, 초기 구현의 복잡도가 너무 올라가서 로드맵에만 남겨뒀다.
+
+### OffscreenCanvas
+
+Worker에서 Canvas를 직접 그리는 방법인데, 브라우저 지원이 아직 불안정하고, 이벤트 처리가 복잡해져서 보류했다.
+
+:::info 1줄 요약
+Rust(Taffy + wasm-bindgen) + Canvas + React의 조합으로, 레이아웃 계산은 WASM에서, 렌더링은 Canvas에서, 상태 관리만 React에서 하는 구조를 잡았다.
+:::

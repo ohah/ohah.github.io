@@ -1,0 +1,37 @@
+[
+  {
+    "type": "file",
+    "name": "background",
+    "label": "1. 개발 배경",
+    "tag": "26.02.24"
+  },
+  {
+    "type": "file",
+    "name": "tech-stack",
+    "label": "2. 기술 스택",
+    "tag": "26.02.25"
+  },
+  {
+    "type": "file",
+    "name": "development",
+    "label": "3. 개발 과정"
+  },
+  {
+    "type": "file",
+    "name": "development-1",
+    "label": "3-1. 아키텍처 설계와 WASM 코어",
+    "tag": "26.02.25"
+  },
+  {
+    "type": "file",
+    "name": "development-2",
+    "label": "3-2. Canvas 렌더링과 제로카피",
+    "tag": "26.02.28"
+  },
+  {
+    "type": "file",
+    "name": "development-3",
+    "label": "3-3. TanStack API 호환과 컴포넌트",
+    "tag": "26.03.05"
+  }
+]

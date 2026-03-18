@@ -1,0 +1,70 @@
+---
+title: 2. 기술 스택
+date: 2026-02-03
+---
+
+import { Badge } from '@theme';
+
+# 2. 기술 스택
+
+> "Playwright 안 쓴다. CDP 직접 간다."
+
+## 핵심 선택: Playwright vs CDP 직접 연결
+
+Electron 앱을 자동화하는 방법은 크게 두 가지다:
+
+1. **Playwright** — 브라우저 자동화의 표준. Electron도 지원한다
+2. **CDP 직접 연결** — WebSocket으로 CDP 명령을 직접 보낸다
+
+Playwright를 쓰면 안정적이고 편하지만, 치명적인 단점이 있다:
+
+- **무거운 의존성** — Playwright는 브라우저 바이너리를 포함한다. `npx`로 가볍게 실행하려는데 수백MB를 다운받게 할 수는 없다
+- **메인 프로세스 접근 불가** — Playwright는 렌더러만 제어한다. Electron의 메인 프로세스(Node.js)에 접근하려면 결국 CDP를 직접 써야 한다
+- **토큰 비효율** — Playwright의 출력은 장황하다. AI에게 보내는 데이터는 최대한 압축해야 하는데 Playwright의 응답 포맷은 LLM 토큰을 낭비한다
+
+결론: `ws` WebSocket 라이브러리로 CDP를 직접 연결한다. 런타임 의존성이 `ws` + `zod` 두 개뿐이다.
+
+> [!NOTE]
+> **[@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/typescript-sdk)** — MCP 서버/클라이언트를 만들기 위한 공식 TypeScript SDK. stdio, SSE 등 여러 트랜스포트를 지원한다.
+
+## 번들링 전략: 단일 CJS 파일
+
+MCP 서버는 `npx`로 실행되는 경우가 대부분이다. 사용자가 별도로 `npm install`을 하지 않고:
+
+```bash
+npx -y @ohah/electron-mcp-server
+```
+
+이렇게 실행한다. 이 때 의존성 설치 시간이 길면 UX가 안 좋다.
+
+그래서 모든 의존성을 하나의 CJS 파일로 번들했다. `@modelcontextprotocol/sdk`, `ws` 등이 전부 `dist/index.cjs` 안에 들어간다.
+
+### 트러블슈팅: ajv 번들링 지옥 <Badge type="danger">rc.2</Badge>
+
+rc.1을 배포했더니 `npx`로 실행할 때 `ajv` 관련 에러가 터졌다. MCP SDK 내부에서 `ajv`를 쓰는데, dynamic require 패턴 때문에 번들러가 제대로 인라인하지 못한 것이다.
+
+처음엔 `bunup`으로 번들하고 있었는데, 이 문제를 해결하느라 rc.2에서 번들 설정을 갈아엎었다. MCP SDK + ws + 나머지를 전부 인라인하고, `dependencies`를 비워서 런타임에 아무것도 설치하지 않게 만들었다.
+
+### 트러블슈팅: zod 번들링 <Badge type="danger">rc.4</Badge>
+
+rc.4에서 또 터졌다. 이번에는 `zod`를 번들에 포함시켰더니 `util3 is not defined` 에러가 나왔다. zod가 Node.js의 `util` 모듈을 참조하는데, 번들러가 이름을 맹글링하면서 깨진 것이다.
+
+결국 `zod`만 `dependencies`에 남기고 번들에서 external로 빼서 해결했다. rc.5에서는 번들러도 `bunup`에서 `tsdown`으로 교체했다. tsdown이 external 처리가 더 깔끔했다.
+
+## TypeScript + Bun
+
+| 도구 | 역할 |
+|------|------|
+| TypeScript 5.9 | 언어 |
+| Bun | 런타임, 패키지 매니저, 테스트 러너 |
+| tsdown | 번들러 (rc.5부터) |
+| oxlint + oxfmt | 린팅/포맷팅 |
+| Playwright | E2E 테스트 (데모 앱에만 사용) |
+
+### 데모 앱
+
+E2E 테스트를 위해 React + Vite + Electron 22 기반 데모 앱을 `examples/electron-mcp-demo`에 만들었다. MCP 서버가 이 데모 앱에 연결해서 도구들이 잘 동작하는지 검증한다.
+
+:::info 1줄 요약
+Playwright 대신 CDP 직접 연결로 가볍고 빠른 MCP 서버를 만들었다. 단일 CJS 번들로 `npx` 실행을 최적화했고, ajv/zod 번들링 이슈를 3번의 RC를 거치며 해결했다.
+:::

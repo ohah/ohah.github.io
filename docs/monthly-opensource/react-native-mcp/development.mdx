@@ -1,0 +1,48 @@
+---
+title: 3. 개발 과정
+---
+
+import { Badge } from '@theme';
+
+# 3. 개발 과정
+
+- [3-1. 런타임 인젝션과 Fiber 트리](./development-1)
+- [3-2. 48개 도구와 디바이스 제어](./development-2)
+- [3-3. 토큰 최적화와 안정성](./development-3)
+
+## 릴리즈 타임라인
+
+| 버전 | 날짜 | 주요 변경 |
+|------|------|----------|
+| rc.1 | 02-19 | 첫 RC. WebSocket 통신, Babel 프리셋, Cursor/Claude 지원 |
+| rc.2 | 02-23 | `list_apps`, `terminate_app`, orientation, E2E 비디오 녹화 |
+| rc.3 | 02-23 | iOS 가로 모드 좌표 수정 |
+| rc.5 | 02-23 | WebSocket 재연결, Babel testID 인젝션 수정 |
+| rc.8 | 02-24 | `measureByNativeTag` Bridge API, 런타임 쿼리 개선 |
+| rc.10 | 03-05 | 컴팩트 텍스트 출력 (-90% 토큰) |
+| rc.11 | 03-15 | WebSocket 크래시 방어 패치 |
+| rc.12 | 03-15 | 서버 instructions, 도구 설명 개선, TypeScript strict null |
+| rc.13 | 03-16 | 토큰 효율적 도구 선택 가이드 |
+| rc.14 | 03-16 | iOS orientation 가이드 |
+
+## 도구 카테고리 (48개)
+
+**상호작용**: `tap`, `swipe`, `input_text`, `type_text`, `input_key`, `press_button`, `scroll_until_visible`, `switch_keyboard`
+
+**검사**: `query_selector`, `describe_ui`, `take_snapshot`, `take_screenshot`, `get_component_source`, `accessibility_audit`
+
+**실행**: `evaluate_script`, `webview_evaluate_script`
+
+**검증**: `assert`, `assert_state`
+
+**상태**: `inspect_state`, `get_state_changes`, `clear_state`, `clear_buffers`
+
+**네트워크**: `list_network_requests`, `network_mock`
+
+**콘솔**: `list_console_messages`
+
+**디바이스**: `list_devices`, `list_apps`, `terminate_app`, `get/set_orientation`, `get_screen_size`, `open_deeplink`, `set_location`, `file_push`, `add_media`
+
+**비주얼**: `visual_compare`, `render_tracking`, `render_overlay`
+
+**비디오**: `start/stop_video_recording`

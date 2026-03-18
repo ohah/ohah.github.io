@@ -1,0 +1,112 @@
+---
+title: 3-2. 메인 프로세스 모니터링
+date: 2026-02-05
+---
+
+import { Badge } from '@theme';
+
+# 3-2. 메인 프로세스 모니터링 <Badge type="warning">2026-02-05</Badge>
+
+## Electron의 진짜 매력: 메인 프로세스
+
+렌더러 제어(클릭, 스크린샷, DOM 검사)는 일반 브라우저 MCP와 큰 차이가 없다. Electron MCP의 차별점은 메인 프로세스에 접근할 수 있다는 것이다.
+
+메인 프로세스는 Node.js 런타임이 돌아가는 곳이다. 파일 시스템 접근, 네이티브 모듈, IPC 통신, 트레이, 윈도우 관리 등 Electron의 핵심 로직이 여기에 있다.
+
+## IPC 모니터링: Monkey-Patch 전략
+
+Electron 앱 디버깅에서 가장 많이 보는 게 IPC 통신이다. 렌더러에서 `ipcRenderer.send('do-something')` 하면 메인에서 `ipcMain.on('do-something', ...)` 으로 받는 그 패턴.
+
+이걸 모니터링하려면 `ipcMain.on`과 `ipcMain.handle`을 가로채야 한다. 근데 MCP 서버는 Electron 앱 외부에 있다. 앱 코드를 수정하지 않고 어떻게?
+
+답은 CDP의 `Runtime.evaluate`이다. 메인 프로세스의 Node.js 컨텍스트에서 JS를 실행할 수 있다.
+
+```javascript
+// CDP로 메인 프로세스에 주입하는 코드 (간략화)
+const originalOn = ipcMain.on.bind(ipcMain);
+ipcMain.on = function(channel, listener) {
+  const wrapped = (event, ...args) => {
+    // IPC 이벤트를 수집 배열에 기록
+    global.__mcp_ipc_events.push({
+      channel, args, timestamp: Date.now(), direction: 'on'
+    });
+    return listener(event, ...args);
+  };
+  return originalOn(channel, wrapped);
+};
+```
+
+`ipcMain.on`과 `ipcMain.handle`을 감싸서, 모든 IPC 호출을 전역 배열에 기록하게 한다. 나중에 `list_electron_main_ipc_events` 도구가 호출되면 이 배열을 읽어서 반환한다.
+
+### 트러블슈팅: require() 접근
+
+메인 프로세스에서 `Runtime.evaluate`로 코드를 실행할 때, `require('electron')`이 안 되는 문제가 있었다. V8 inspector의 evaluate 컨텍스트에서는 `require`가 기본적으로 노출되지 않는다.
+
+해결책은 `includeCommandLineAPI: true` 옵션이다. 이 옵션을 켜면 Node.js 디버거가 제공하는 `require` 함수에 접근할 수 있다.
+
+```typescript
+await sendCdp(ws, 'Runtime.evaluate', {
+  expression: code,
+  includeCommandLineAPI: true, // require() 접근 가능
+  returnByValue: true
+});
+```
+
+이걸 찾는 데 시간이 좀 걸렸다. CDP 문서에도 잘 안 나와 있고, Node.js Inspector 관련 문서를 뒤져야 했다.
+
+## 네트워크 모니터링: HTTP 래핑
+
+렌더러의 네트워크 요청은 CDP의 `Network` 도메인으로 쉽게 모니터링할 수 있다. 근데 메인 프로세스의 네트워크 요청(API 호출, 파일 다운로드 등)은 `Network` 도메인이 안 먹는다. Node.js의 `http`/`https` 모듈을 직접 쓰기 때문이다.
+
+그래서 IPC와 같은 전략을 썼다. `http.request`, `https.request`, `globalThis.fetch`를 monkey-patch해서 모든 요청을 기록한다.
+
+```javascript
+// 메인 프로세스에 주입
+const originalRequest = https.request;
+https.request = function(...args) {
+  const req = originalRequest.apply(this, args);
+  // 요청/응답 정보를 수집 배열에 기록
+  global.__mcp_network_requests.push({ ... });
+  return req;
+};
+```
+
+이렇게 하면 axios, got, node-fetch 같은 라이브러리가 내부적으로 `http.request`를 쓰기 때문에, 어떤 HTTP 클라이언트를 쓰든 투명하게 모니터링된다.
+
+## 리소스 모니터링 & 프로파일링
+
+### 리소스 사용량
+
+`get_electron_main_resource_usage`는 메인 프로세스의 `process.memoryUsage()`, `process.cpuUsage()`, `os.loadavg()`를 수집한다. 앱이 메모리를 많이 먹고 있는지, CPU를 많이 쓰고 있는지 빠르게 확인할 수 있다.
+
+### CPU 프로파일러
+
+CDP의 `Profiler` 도메인으로 메인 프로세스의 CPU 프로파일을 수집한다. `start_electron_main_cpu_profile` → 작업 수행 → `stop_electron_main_cpu_profile`로 프로파일링 데이터를 얻는다.
+
+### 힙 샘플링
+
+`HeapProfiler` 도메인으로 메모리 할당 패턴을 추적한다. 메모리 누수 디버깅에 유용하다.
+
+## 콘솔 모니터링의 진화
+
+### rc.3: 기본 콘솔
+
+처음에는 `Console.messageAdded`로 콘솔 메시지를 수집했다. 간단하지만, 객체를 `console.log`하면 `[object Object]`로만 나온다.
+
+### rc.4: 리치 콘솔 <Badge type="tip">03-05</Badge>
+
+`Runtime.consoleAPICalled` 이벤트로 전환했다. 이 이벤트는 콘솔에 찍힌 객체의 `objectId`를 포함하고 있어서, `Runtime.callFunctionOn`으로 중첩된 객체까지 풀어서 표시할 수 있다.
+
+```
+// Before (rc.3)
+[log] [object Object]
+
+// After (rc.4)
+[log] { user: { name: "홍길동", role: "admin" }, settings: { theme: "dark" } }
+```
+
+AI가 콘솔 출력을 보고 디버깅하려면 객체 내용이 보여야 하니까, 이건 꼭 필요한 개선이었다.
+
+:::info 1줄 요약
+CDP의 `Runtime.evaluate`로 메인 프로세스에 코드를 주입하여, 앱 수정 없이 IPC/네트워크/리소스/콘솔을 모니터링하는 도구들을 rc.3까지 구현했다.
+:::

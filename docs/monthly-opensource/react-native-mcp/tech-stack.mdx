@@ -1,0 +1,98 @@
+---
+title: 2. 기술 스택
+date: 2026-02-19
+---
+
+import { Badge } from '@theme';
+
+# 2. 기술 스택
+
+> "네이티브 모듈 안 쓴다. 순수 JS로 간다."
+
+## 런타임 인젝션: Babel 프리셋
+
+가장 큰 기술적 결정은 앱에 런타임을 어떻게 주입할 것인가였다.
+
+선택지는 세 가지:
+
+1. **네이티브 모듈** — 안정적이지만 설치가 복잡하고 앱 재빌드 필요
+2. **Metro 플러그인** — 번들러 레벨에서 코드 주입 가능하지만 Metro 내부 API에 의존
+3. **Babel 프리셋** — 빌드 타임에 코드를 변환하는 표준적인 방법
+
+Babel 프리셋으로 결정했다. 이유:
+
+- React Native는 이미 Babel을 필수로 쓴다. 추가 도구가 필요 없다
+- `babel.config.js`에 한 줄만 추가하면 된다
+- 네이티브 빌드 수정이 필요 없어서 `pod install` 불필요
+
+```javascript
+// babel.config.js
+module.exports = {
+  presets: [
+    'module:@react-native/babel-preset',
+    '@ohah/react-native-mcp-server/babel-preset' // 이 한 줄
+  ],
+};
+```
+
+### Babel 플러그인 3종
+
+실제로는 3개의 Babel 플러그인이 포함되어 있다:
+
+1. **babel-plugin-app-registry** — `AppRegistry.registerComponent` 호출을 감지해서 런타임 초기화 코드를 앱 시작점에 주입
+2. **babel-plugin-inject-testid** — 컴포넌트에 `testID` prop이 없으면 자동으로 컴포넌트명 기반 testID를 주입. AI가 요소를 찾을 때 유용
+3. **babel-preset** — 위 두 플러그인을 묶은 프리셋
+
+## WebSocket 통신
+
+런타임과 MCP 서버는 WebSocket(포트 12300)으로 통신한다.
+
+왜 WebSocket인가? React Native 앱은 모바일 디바이스(또는 시뮬레이터)에서 돌아가고, MCP 서버는 개발자의 맥에서 돌아간다. HTTP 폴링보다 WebSocket이 실시간성이 좋고, 양방향 통신이 필요하기 때문이다.
+
+### 재연결 전략
+
+모바일 앱은 백그라운드로 가거나, 핫 리로드가 되거나, 크래시가 날 수 있다. 연결이 끊어질 때마다 수동으로 재시작하면 DX가 최악이다.
+
+런타임에 지수 백오프(exponential backoff) 재연결을 구현했다. 연결이 끊어지면 1초 → 2초 → 4초 → ... 간격으로 재연결을 시도한다. 앱이 핫 리로드되면 자동으로 다시 연결된다.
+
+## 네이티브 디바이스 제어: adb + idb
+
+터치, 스크린샷, 앱 종료 같은 네이티브 조작은 순수 JS로는 불가능하다. 디바이스 밖에서 제어해야 한다.
+
+| 플랫폼 | 도구 | 설치 방법 |
+|--------|------|----------|
+| Android | `adb` | Android Studio 또는 `brew install android-platform-tools` |
+| iOS (시뮬레이터) | `idb-companion` + `fb-idb` | `brew install idb-companion` + `pip install fb-idb` |
+
+### 왜 Appium이 아닌가
+
+Appium은 무겁다. WebDriver 프로토콜에 Java 서버까지 돌아가니까. 터치와 스크린샷 정도는 `adb shell input tap`이나 `idb ui tap`으로 충분하다. 가볍게 가기 위해 CLI 도구를 직접 호출하는 방식을 택했다.
+
+### 트러블슈팅: iOS 가로 모드 좌표
+
+iOS 시뮬레이터에서 가로 모드일 때 스크린샷의 좌표계가 세로 모드 기준으로 반환되는 문제가 있었다. `idb`가 반환하는 좌표와 실제 화면 좌표가 90도 회전되어 있었다.
+
+rc.14에서 이 문제를 발견하고, MCP 서버 instructions의 맨 앞에 "iOS에서는 먼저 orientation을 확인하라"는 가이드를 추가했다. 좌표 변환 로직도 넣었지만, 근본적으로는 AI가 현재 orientation을 알고 있어야 정확한 좌표를 쓸 수 있다.
+
+## 이미지 비교: pixelmatch + sharp
+
+`visual_compare` 도구는 스크린샷 간 비주얼 리그레션 테스트를 지원한다.
+
+`sharp`로 이미지를 디코딩하고, `pixelmatch`로 픽셀 단위 비교를 한다. 차이점을 하이라이트한 diff 이미지도 생성할 수 있다. E2E 테스트에서 UI가 의도대로 바뀌었는지 검증하는 데 쓴다.
+
+## 기타 도구
+
+| 도구 | 역할 |
+|------|------|
+| TypeScript 5.x (strict) | 언어 |
+| Bun | 런타임, 패키지 매니저, 테스트 러너 |
+| tsdown | 번들러 |
+| oxlint + oxfmt | 린팅/포맷팅 |
+| zod | 스키마 검증 |
+| fast-xml-parser | XML 파싱 (네이티브 뷰 트리) |
+| source-map | 소스맵 지원 |
+| yaml | E2E 테스트 시나리오 파싱 |
+
+:::info 1줄 요약
+Babel 프리셋으로 네이티브 모듈 없이 런타임을 주입하고, WebSocket으로 통신하며, adb/idb CLI로 네이티브 제어를 하는 가벼운 아키텍처를 선택했다.
+:::

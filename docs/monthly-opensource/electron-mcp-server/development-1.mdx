@@ -1,0 +1,103 @@
+---
+title: 3-1. CDP 연동과 MCP 서버
+date: 2026-02-04
+---
+
+import { Badge } from '@theme';
+
+# 3-1. CDP 연동과 MCP 서버 <Badge type="tip">2026-02-02 ~ 02-04</Badge>
+
+## Electron 앱 발견: 포트 스캐닝
+
+MCP 서버가 처음 해야 할 일은 실행 중인 Electron 앱을 찾는 것이다.
+
+Electron을 `--remote-debugging-port=9222`로 실행하면 `http://127.0.0.1:9222/json`에서 디버깅 타겟 목록을 JSON으로 반환한다. 메인 프로세스는 `--inspect=9229`로 별도 포트를 열 수 있다.
+
+```typescript
+// 포트 스캐닝 순서: 9229 → 9230 → 9222 → 9223 → 9224 → 9225
+const SCAN_PORTS = [9229, 9230, 9222, 9223, 9224, 9225];
+```
+
+메인 프로세스 포트(9229)를 먼저 스캔하는 이유가 있다. 메인 프로세스에 접근할 수 있으면 IPC, 네트워크, 리소스 모니터링 같은 고급 기능을 쓸 수 있기 때문이다.
+
+## CDP 연결 패턴: 요청당 연결
+
+CRD에서는 WebSocket 연결을 유지하면서 지속적으로 통신했지만, MCP에서는 다른 전략을 택했다.
+
+각 도구 호출마다 CDP WebSocket을 열고, 작업이 끝나면 닫는다.
+
+```typescript
+async function withCdpWs<T>(
+  wsUrl: string,
+  fn: (ws: WebSocket) => Promise<T>
+): Promise<T> {
+  const ws = new WebSocket(wsUrl);
+  try {
+    return await fn(ws);
+  } finally {
+    ws.close();
+  }
+}
+```
+
+왜 이렇게 했냐면:
+
+1. **MCP의 특성** — 도구 호출 간 간격이 길 수 있다. AI가 생각하는 동안 연결을 유지하면 리소스 낭비
+2. **멀티 타겟** — Electron 앱에 여러 렌더러 프로세스가 있을 수 있고, 도구마다 다른 타겟에 연결해야 할 수 있다
+3. **안정성** — 연결이 끊겨도 다음 호출에서 자동으로 재연결
+
+단, 콘솔 모니터는 예외이다. 콘솔 메시지를 실시간으로 수집하려면 `Runtime.consoleAPICalled` 이벤트를 지속적으로 받아야 하니까, 별도의 persistent WebSocket 연결을 유지한다.
+
+## take_snapshot: 접근성 트리
+
+`take_snapshot`은 가장 중요한 도구이다. AI가 화면의 구조를 이해하려면 먼저 스냅샷을 봐야 한다.
+
+CDP의 `Accessibility.getFullAXTree`로 접근성 트리를 가져온다. 이 트리에는 모든 UI 요소의 역할(role), 이름(name), 값(value), 상태(state) 정보가 들어 있다.
+
+근데 원본 JSON은 거대하다. 간단한 Electron 앱의 접근성 트리가 20만 자 이상 나올 수 있다. 이걸 그대로 AI에게 보내면 토큰이 폭발한다.
+
+이 문제는 rc.5에서 본격적으로 해결했는데, [3-3. 토큰 최적화 대작전](./development-3)에서 다룬다.
+
+## ref 주소 시스템
+
+`take_snapshot`이 트리를 반환할 때, 각 요소에 `[ref=e1]`, `[ref=e2]` 같은 짧은 주소를 붙인다.
+
+```
+button "로그인" [ref=e1]
+  text "로그인"
+input "이메일" [ref=e2]
+  value: ""
+```
+
+이 ref를 후속 도구에서 사용한다:
+- `click @e1` → 로그인 버튼 클릭
+- `fill @e2 "test@example.com"` → 이메일 입력
+
+내부적으로 ref는 CDP의 `backendNodeId`에 매핑된다. `click @e1`이 들어오면:
+1. ref store에서 `e1` → `backendNodeId` 변환
+2. `DOM.getBoxModel`로 엘리먼트의 좌표 계산
+3. `Input.dispatchMouseEvent`로 클릭 이벤트 발생
+
+CSS 셀렉터도 지원하지만, ref가 더 정확하고 짧다.
+
+### ref 네임스페이스
+
+| 접두사 | 대상 | 사용 도구 |
+|--------|------|----------|
+| `@e1` | DOM 엘리먼트 | `click`, `fill`, `hover`, `drag` |
+| `@p1` | 프로세스/페이지 | `select_page` |
+| `@ch1` | IPC 채널/이벤트 | `get_electron_main_ipc_event` |
+
+각 네임스페이스가 독립적이라 번호 충돌이 없다.
+
+## rc.1 ~ rc.2: 첫 배포와 npx 삽질
+
+rc.1을 배포하고 `npx -y @ohah/electron-mcp-server`로 테스트했더니 바로 에러가 났다.
+
+`npx`는 임시 디렉토리에 패키지를 설치하고 실행하는데, 이 과정에서 MCP SDK 내부의 `ajv` 의존성이 제대로 해결되지 않았다. `package.json`에 `dependencies`로 선언되어 있어도, npx의 임시 환경에서는 peer dependency가 꼬이는 경우가 있다.
+
+결국 같은 날 rc.2를 배포했다. 모든 런타임 의존성을 `dist/index.js` 하나에 번들하고, `dependencies`를 완전히 비웠다. 이렇게 하면 npx가 설치할 게 아무것도 없으니 의존성 문제 자체가 사라진다.
+
+:::info 1줄 요약
+요청당 CDP 연결 패턴과 ref 주소 시스템으로 MCP 서버의 기본 구조를 잡고, npx 단일 번들 배포로 설치 없이 실행할 수 있게 만들었다.
+:::

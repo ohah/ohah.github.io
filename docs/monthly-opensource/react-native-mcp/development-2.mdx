@@ -1,0 +1,124 @@
+---
+title: 3-2. 48개 도구와 디바이스 제어
+date: 2026-02-23
+---
+
+import { Badge } from '@theme';
+
+# 3-2. 48개 도구와 디바이스 제어 <Badge type="warning">2026-02-19 ~ 02-28</Badge>
+
+## 왜 48개나 되나
+
+처음에는 10개 정도만 만들 생각이었다. 터치, 스크린샷, 상태 읽기 정도면 충분하지 않을까?
+
+근데 실제로 AI가 앱을 디버깅하는 과정을 보면, 필요한 도구가 점점 늘어난다:
+
+- "스크롤해서 아래쪽 버튼을 찾아줘" → `scroll_until_visible` 필요
+- "현재 화면이 가로인지 세로인지 확인해줘" → `get_orientation` 필요
+- "이 API 호출이 500을 반환하면 앱이 어떻게 되는지 봐줘" → `network_mock` 필요
+- "이 컴포넌트가 불필요하게 리렌더링 되는 것 같은데" → `render_tracking` 필요
+
+하나씩 필요할 때마다 추가하다 보니 48개가 됐다.
+
+## 디바이스 제어 도구들 <Badge type="tip">rc.2 ~ rc.8</Badge>
+
+rc.1에서는 앱 내부(WebSocket을 통한 런타임) 도구만 있었다. rc.2부터 디바이스 레벨 제어를 추가했다.
+
+### tap과 swipe
+
+터치 이벤트는 런타임에서 JS로 시뮬레이션할 수도 있지만, 네이티브 레벨에서 발생시키는 게 더 정확하다. 키보드 위의 버튼 같은 건 JS 레벨에서 접근이 안 되니까.
+
+```bash
+# Android
+adb shell input tap 200 500
+adb shell input swipe 200 500 200 100 300
+
+# iOS
+idb ui tap 200 500
+```
+
+### 앱 생명주기
+
+`list_apps`로 설치된 앱 목록을 보고, `terminate_app`으로 앱을 종료할 수 있다. 앱을 다시 시작해서 초기 상태를 테스트하는 데 유용하다.
+
+### 디바이스 정보
+
+`get_screen_size`로 화면 크기, `get_orientation`으로 현재 방향, `set_orientation`으로 방향 전환. UI가 다양한 화면 크기와 방향에서 잘 동작하는지 AI가 자동으로 검증할 수 있다.
+
+## 렌더링 추적: render_tracking
+
+React Native 앱의 성능 문제 중 가장 흔한 게 불필요한 리렌더링이다.
+
+`render_tracking`은 런타임에서 Fiber의 마운트/업데이트를 추적한다. 어떤 컴포넌트가 몇 번 렌더링됐는지, 왜 렌더링됐는지(props 변경? state 변경?)를 기록한다.
+
+```
+render_tracking 결과:
+UserProfile: 렌더 12회 (마운트 1, 업데이트 11)
+  - state 변경 8회
+  - props 변경 3회
+Avatar: 렌더 12회 (마운트 1, 업데이트 11)
+  - props 변경 11회 (부모 리렌더링)
+```
+
+Avatar가 11번 리렌더링된 건 부모(UserProfile)가 리렌더링될 때마다 새 props를 받기 때문이다. `React.memo`를 쓰면 해결될 수 있는 문제. AI가 이걸 보고 "Avatar에 memo를 적용하세요"라고 제안할 수 있다.
+
+### render_overlay
+
+`render_overlay`는 리렌더링되는 컴포넌트에 색깔 오버레이를 씌운다. React DevTools의 "Highlight updates" 기능과 비슷한데, DevTools 없이 런타임에서 직접 한다.
+
+## 셀 편집과 입력
+
+### input_text vs type_text
+
+두 가지 텍스트 입력 방법을 제공한다:
+
+- `input_text` — 한 번에 전체 텍스트를 설정. React의 `onChangeText`를 직접 호출
+- `type_text` — 키보드 입력을 시뮬레이션. 한 글자씩 입력. 자동완성이나 실시간 검증 테스트에 유용
+
+### switch_keyboard
+
+iOS에서 한/영 키보드 전환이 필요할 때. `input_key`로 특수 키를 보낼 수도 있다.
+
+## E2E 테스트: YAML 시나리오
+
+AI 없이도 E2E 테스트를 돌릴 수 있도록 YAML 기반 테스트 러너를 만들었다.
+
+```yaml
+name: 로그인 테스트
+steps:
+  - tap:
+      selector: "#email-input"
+  - input_text:
+      selector: "#email-input"
+      text: "test@example.com"
+  - tap:
+      selector: "#password-input"
+  - input_text:
+      selector: "#password-input"
+      text: "password123"
+  - tap:
+      selector: "#login-button"
+  - assert:
+      text: "환영합니다"
+      visible: true
+  - take_screenshot:
+      name: "after-login"
+```
+
+CI에서 이 YAML 파일을 실행하면 AI 없이도 자동화 테스트가 돌아간다. MCP 도구와 동일한 인터페이스를 사용하니까, AI가 만든 테스트 시나리오를 YAML로 변환해서 CI에 넣을 수도 있다.
+
+## VS Code 확장: react-native-mcp-devtools
+
+MCP 서버를 터미널로만 쓰기엔 아쉬워서 VS Code 확장도 만들었다.
+
+- 사이드바에 Chrome DevTools 스타일 웹뷰 (Console, Network, State, Renders)
+- Component Tree 뷰
+- 접근성 감사 커맨드
+- 컴포넌트 소스 코드 바로 가기
+- E2E 대시보드
+
+확장은 MCP 서버와 같은 WebSocket(포트 12300)에 연결해서 데이터를 가져온다.
+
+:::info 1줄 요약
+디바이스 제어(adb/idb), 렌더링 추적, 네트워크 모킹, YAML E2E 테스트, VS Code 확장까지 구현하여 AI와 개발자 모두를 위한 48개 도구 세트를 완성했다.
+:::

@@ -1,0 +1,115 @@
+---
+title: 3-2. Canvas 렌더링과 제로카피
+date: 2026-02-28
+---
+
+import { Badge } from '@theme';
+
+# 3-2. Canvas 렌더링과 제로카피 <Badge type="warning">2026-02-27 ~ 03-01</Badge>
+
+## 하루 113커밋의 날 <Badge type="danger">02-28</Badge>
+
+2월 28일은 이 프로젝트에서 가장 미친 날이었다. Canvas 컴포넌트 시스템, 합성 레이아웃, 컬럼 피닝, 드래그 앤 드롭, 클립보드, 컨텍스트 메뉴, Table API까지 전부 이 하루에 들어갔다.
+
+왜 이렇게 됐냐면, Canvas 렌더러의 기본 구조가 잡히자마자 컴포넌트를 올리는 건 패턴이 반복되는 작업이었기 때문이다. 하나를 만들면 다음 건 복붙 수준이었고, AI가 패턴을 학습한 뒤로는 "Badge랑 같은 패턴으로 Tag 컴포넌트 만들어줘"가 통했다.
+
+## Canvas Renderer 구조
+
+Canvas Renderer의 핵심은 단순하다. WASM이 채운 `Float32Array` 레이아웃 버퍼를 stride 8로 읽으면서 셀을 그린다.
+
+```
+버퍼 구조 (셀당 8개 float):
+[x, y, width, height, columnIndex, rowIndex, flags, reserved]
+```
+
+매 프레임 `requestAnimationFrame`에서:
+
+1. `canvas.getContext('2d').clearRect()` — 전체 클리어
+2. 레이아웃 버퍼 순회하면서 셀 그리기
+3. 헤더 영역 그리기
+4. 그리드 라인 그리기
+5. 셀렉션 하이라이트 그리기
+
+### 왜 React를 안 타나
+
+핵심은 이 과정에서 React가 개입하지 않는다는 것이다.
+
+스크롤 이벤트는 `EventManager`가 직접 Canvas에 바인딩한 네이티브 이벤트 리스너에서 처리한다. 스크롤 위치가 바뀌면 WASM의 `updateViewportColumnar`를 호출하고, 반환된 버퍼로 Canvas를 다시 그린다.
+
+React는 데이터가 바뀌거나, 컬럼 정의가 바뀌거나, 사용자가 상태를 변경할 때만 관여한다. 스크롤은 React의 영역 밖이다.
+
+## 제로카피 파이프라인
+
+### 데이터 인제스트
+
+`DataIngestor`가 JS 데이터를 WASM에 넘기는 과정이 제로카피의 시작이다:
+
+1. 컬럼 타입 분류 — 숫자면 `Float64Array`, 불린이면 `Uint8Array`, 문자열이면 StringTable 인턴
+2. 숫자/불린 컬럼은 TypedArray를 그대로 WASM에 전달 (serde 없음)
+3. 문자열 컬럼은 인턴 ID(`u32`)만 전달
+
+### 레이아웃 출력
+
+WASM이 계산한 레이아웃도 제로카피로 읽는다:
+
+```typescript
+// MemoryBridge가 WASM 선형 메모리를 Float32Array 뷰로 잡음
+const buffer = memoryBridge.getLayoutBuffer();
+// buffer는 복사본이 아니라 WASM 메모리의 뷰
+// Canvas Renderer가 이 뷰를 직접 읽어서 그림
+```
+
+이렇게 하면 10만 행짜리 테이블에서 스크롤해도 JS 힙에 새로운 객체가 생기지 않는다. GC 압력이 0에 가깝다.
+
+### 트러블슈팅: WASM 메모리 성장
+
+WASM 선형 메모리가 `grow`하면 기존 `ArrayBuffer`가 detach된다. 즉 `MemoryBridge`가 들고 있던 `Float32Array` 뷰가 갑자기 무효화된다.
+
+이건 처음에 잡기 어려운 버그였다. 데이터가 적을 때는 메모리가 안 자라서 문제가 없는데, 데이터가 많아지면 갑자기 빈 화면이 뜨거나 엉뚱한 좌표가 나왔다.
+
+해결책은 매 프레임 버퍼 포인터를 다시 가져오는 것이었다. `getLayoutBufferInfo`를 호출할 때마다 현재 메모리 오프셋을 확인하고, 필요하면 뷰를 재생성한다. 비용은 미미하지만 안정성은 확실히 올라갔다.
+
+## Canvas 컴포넌트 시스템: 23개
+
+Canvas 위에 그리는 컴포넌트가 총 23개이다:
+
+**Display**: Text, Badge, Tag, Color, Sparkline, Rating, ProgressBar, Link, Image, Icon, Avatar
+
+**Layout**: Flex, Box, Stack
+
+**Interactive (Canvas)**: Checkbox, Radio, Switch, Label
+
+**Interactive (DOM overlay)**: Input, Select, DatePicker, Dropdown
+
+### 셀 편집: DOM 오버레이
+
+Canvas로만 모든 걸 해결할 수는 없다. 텍스트 입력은 Canvas로 구현하면 IME 처리가 지옥이 된다. 크로미움 기여할 때 겪은 IME 지옥을 다시 겪고 싶지 않았다.
+
+그래서 셀 편집만큼은 DOM 오버레이를 쓴다. 사용자가 셀을 더블클릭하면 해당 셀 위치에 `<input>`, `<select>`, `<div>` 같은 DOM 엘리먼트를 올려서 편집하게 한다. 편집이 끝나면 DOM을 제거하고 Canvas로 돌아간다.
+
+DOM 엘리먼트는 편집 중인 셀 하나에만 존재하니까 성능 영향은 없다.
+
+### 트러블슈팅: Canvas 히트 테스팅
+
+Canvas에는 DOM의 `click` 이벤트 위임 같은 게 없다. Canvas에서 클릭하면 좌표만 오고, 그 좌표에 어떤 셀이 있는지는 직접 계산해야 한다.
+
+`EventManager`가 클릭 좌표를 받으면:
+1. 레이아웃 버퍼를 순회해서 해당 좌표에 걸리는 셀을 찾고
+2. 셀 내부에 합성 레이아웃 컴포넌트가 있으면 그 컴포넌트의 바운딩 박스도 체크
+
+합성 레이아웃까지 포함하면 히트 테스팅이 이중으로 필요하다. 처음에는 이걸 단순 반복으로 했는데, 컬럼이 많아지면 느려져서 현재 뷰포트에 보이는 셀만 검사하도록 최적화했다.
+
+## 컬럼 피닝 (Frozen Columns)
+
+왼쪽/오른쪽에 컬럼을 고정하는 기능이다. 스프레드시트에서 흔히 보는 그것.
+
+Canvas에서 이걸 구현하려면 렌더링 영역을 3개로 나눠야 한다:
+- 왼쪽 고정 영역
+- 스크롤 가능한 중앙 영역
+- 오른쪽 고정 영역
+
+각 영역을 `clip`으로 잘라서 독립적으로 그린다. 스크롤할 때 중앙만 이동하고 양쪽은 고정. 이것도 WASM 레이아웃 버퍼에 영역 정보가 포함되어 있어서 Canvas Renderer는 그냥 플래그를 보고 clip 범위를 결정하면 됐다.
+
+:::info 1줄 요약
+제로카피 파이프라인으로 데이터 인제스트부터 렌더링까지 JS 힙 할당을 최소화하고, 23개 Canvas 컴포넌트와 DOM 오버레이 편집 시스템을 구축했다.
+:::
