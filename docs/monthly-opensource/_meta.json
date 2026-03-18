@@ -38,5 +38,10 @@
     "type": "dir",
     "name": "react-wasm-table",
     "label": "React WASM Table"
+  },
+  {
+    "type": "dir",
+    "name": "cheolsu-proxy",
+    "label": "Cheolsu Proxy"
   }
 ]

@@ -1,0 +1,152 @@
+---
+title: 2. 기술 스택
+date: 2026-03-19
+---
+
+import { Badge } from '@theme';
+
+# 2. 기술 스택
+
+> "Rust 백엔드 + React 프론트엔드, V8으로 스크립팅까지"
+
+## 프록시 코어: Hyper + Tokio + Rustls
+
+MITM 프록시의 심장은 HTTP 처리 엔진이다. 세 가지 조합으로 갔다:
+
+| 라이브러리 | 역할 | 버전 |
+|------------|------|------|
+| **Hyper** | HTTP/1.1 서버/클라이언트 | 1.1.0 |
+| **Tokio** | 비동기 런타임 | 1.24.2 |
+| **Rustls / tokio-rustls** | TLS 처리 | 0.26.4 |
+| **rcgen** | 동적 인증서 생성 | 0.13.0 |
+| **tokio-tungstenite** | WebSocket 프로토콜 | 0.27.0 |
+
+### 왜 Hyper 직접 사용인가?
+
+Actix-web이나 Axum 같은 프레임워크를 쓸 수도 있었다. 하지만 MITM 프록시는 일반 웹 서버와 다르다:
+
+1. **CONNECT 메서드** — HTTPS 프록시의 핵심. 클라이언트가 프록시에 TCP 터널을 요청한다. 프레임워크 레벨에서는 이걸 가로채기 어렵다
+2. **바이트 레벨 제어** — TLS ClientHello를 파싱해서 버전을 감지해야 한다. 프레임워크의 추상화가 오히려 방해가 된다
+3. **WebSocket 업그레이드** — HTTP에서 WebSocket으로 전환하는 과정을 직접 제어해야 한다
+
+Hyper는 이 모든 걸 저수준에서 제어할 수 있다. 프레임워크의 편의성보다 제어권이 중요했다.
+
+### 인증서 생성: rcgen
+
+HTTPS 트래픽을 인터셉트하려면 도메인별로 가짜 인증서를 즉석에서 발급해야 한다. `rcgen`이 이걸 해준다:
+
+1. 첫 실행 시 CA(인증 기관) 인증서를 자동 생성
+2. HTTPS 요청이 들어오면 해당 도메인의 인증서를 CA로 서명해서 즉석 발급
+3. 클라이언트는 CA를 신뢰하도록 시스템에 등록
+
+개인 키는 바이너리에 포함하지 않는다. 사용자별로 고유한 키 쌍이 생성된다.
+
+### 비동기 압축/해제
+
+HTTP 응답은 대부분 압축되어 있다. `async-compression`으로 4가지 포맷을 지원한다:
+
+- Brotli, Gzip, Zlib, Zstd
+
+비동기 스트림 기반이라 응답 전체를 메모리에 올리지 않고도 압축을 풀 수 있다.
+
+## 스크립팅 엔진: Deno Core + V8 + oxc
+
+가장 독특한 기술 선택이다. TypeScript를 실행하기 위해 **Deno Core**를 직접 임베드했다.
+
+| 라이브러리 | 역할 | 버전 |
+|------------|------|------|
+| **deno_core** | V8 JavaScript 런타임 | 0.390 |
+| **v8** | JavaScript 엔진 | 146.1 |
+| **oxc_parser** | JS/TS 파서 | 0.116 |
+| **oxc_transformer** | AST 변환 | 0.116 |
+| **oxc_codegen** | 코드 생성 | 0.116 |
+
+### 왜 Deno Core인가?
+
+TypeScript를 실행하는 방법은 여러 가지다:
+
+1. ~~Node.js 임베드~~ — 무겁고 Rust에서 연동하기 까다롭다
+2. ~~QuickJS~~ — 가볍지만 성능이 V8 대비 떨어진다
+3. **Deno Core** — V8 엔진 + Rust 네이티브 통합. Deno가 이미 검증한 조합이다
+
+Deno Core를 쓰면 V8의 성능을 그대로 쓰면서, Rust에서 커스텀 API(`cheolsu.onRequest` 등)를 등록할 수 있다.
+
+### TypeScript → JavaScript 변환: oxc
+
+Deno Core(V8)는 JavaScript만 실행할 수 있다. TypeScript는 변환이 필요하다.
+
+이 변환에 **oxc** 프로젝트(Rust 기반 JS/TS 도구체인)를 사용한다. `tsc`보다 훨씬 빠르고 Rust에서 네이티브로 호출할 수 있다.
+
+흐름:
+```
+TypeScript → oxc_parser(파싱) → oxc_transformer(타입 제거) → oxc_codegen(JS 출력) → V8 실행
+```
+
+## 데스크톱 앱: Tauri + React
+
+| 도구 | 역할 | 버전 |
+|------|------|------|
+| **Tauri** | 데스크톱 프레임워크 | 2.10.2 |
+| **React** | UI 라이브러리 | 19.2.4 |
+| **Zustand** | 상태 관리 | 5.0.11 |
+| **React Hook Form + Zod** | 폼 + 검증 | 7.71.2 / 4.3.6 |
+| **Monaco Editor** | 코드 에디터 | 4.7.0 |
+| **Tailwind CSS** | 스타일링 | 4.2.1 |
+| **Lingui** | i18n | 5.9.2 |
+| **Vite** | 번들러 | 8.0.0 |
+
+### Monaco Editor
+
+스크립팅 기능과 Cheolsu-Query 에디터에 VS Code의 에디터 엔진을 그대로 쓴다. 구문 강조, 자동 완성, 에러 표시가 전부 지원된다.
+
+### Tauri 플러그인
+
+- `tauri-plugin-global-shortcut` — 전역 키보드 단축키
+- `tauri-plugin-store` — 설정 로컬 저장
+- `tauri-plugin-mcp-bridge` — MCP 브릿지
+- `tauri-plugin-updater` — 자동 업데이트
+- `tauri-plugin-single-instance` — 다중 실행 방지
+
+## TUI: Ratatui + Crossterm
+
+| 도구 | 역할 | 버전 |
+|------|------|------|
+| **Ratatui** | 터미널 UI | 0.29 |
+| **Crossterm** | 터미널 이벤트 | 0.28 |
+| **Clap** | CLI 인자 파싱 | 4 |
+
+데스크톱 앱 없이 터미널에서 프록시를 쓸 수 있다. SSH 환경이나 서버에서 유용하다.
+
+## MCP 서버: rmcp
+
+| 도구 | 역할 | 버전 |
+|------|------|------|
+| **rmcp** | MCP 프로토콜 구현 | 1.1 |
+
+Rust 네이티브 MCP 서버다. electron-mcp-server에서는 TypeScript SDK를 썼지만, 여기서는 Rust로 된 `rmcp` 크레이트를 쓴다. stdio 기반으로 AI 어시스턴트와 통신한다.
+
+## 개발 도구
+
+| 도구 | 역할 |
+|------|------|
+| **oxlint** | JS/TS 린팅 |
+| **oxfmt** | JS/TS 포맷팅 |
+| **rustfmt** | Rust 포맷팅 |
+| **Bun** | 패키지 매니저, 테스트 러너 |
+| **mise** | 도구 버전 관리 |
+
+## 빌드 최적화
+
+```toml
+[profile.release]
+lto = true          # Link Time Optimization
+strip = "symbols"   # 디버그 심볼 제거
+codegen-units = 1   # 단일 코드 생성 유닛 (최대 최적화)
+opt-level = "s"     # 바이너리 크기 최적화
+```
+
+릴리스 빌드에서 LTO를 켜고 심볼을 제거해서 바이너리를 최소화했다. 빌드는 느려지지만 결과물은 작고 빠르다.
+
+:::info 1줄 요약
+Rust(Hyper+Tokio+Rustls) 프록시 코어에 Deno Core(V8)로 TypeScript 스크립팅을 얹고, Tauri+React 데스크톱과 Ratatui TUI 두 가지 인터페이스를 제공한다.
+:::

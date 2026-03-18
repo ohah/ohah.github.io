@@ -1,0 +1,111 @@
+---
+title: 1. 개발 배경
+date: 2026-03-19
+---
+
+
+# 1. 개발 배경
+
+## Charles Proxy를 Rust로 만든다면?
+
+웹 개발을 하다 보면 HTTP 트래픽을 들여다봐야 할 때가 많다. API 응답이 이상하거나, 요청 헤더가 제대로 붙는지 확인하거나, WebSocket 메시지 흐름을 추적해야 할 때. 보통 Charles Proxy나 Fiddler를 쓴다.
+
+근데 이런 도구들에는 아쉬운 점이 있다:
+
+1. **유료** — Charles Proxy는 $50. 학습용으로 쓰기엔 부담
+2. **확장성 한계** — 트래픽을 프로그래밍 방식으로 조작하려면 제한적
+3. **AI 연동 불가** — MCP 같은 프로토콜로 AI 어시스턴트와 연결할 수 없다
+
+> 직접 만들면 이 문제를 다 해결할 수 있지 않나?
+
+## proxelar에서 시작
+
+원본은 [proxelar](https://github.com/emanuele-em/proxelar)다. Rust로 만든 오픈소스 MITM 프록시로, GitHub 스타 471개짜리 프로젝트. HTTP/HTTPS 인터셉션과 TUI/웹 GUI를 제공하는 꽤 완성도 있는 프로젝트였다.
+
+[ohah](https://github.com/ohah)가 이걸 포크해서 cheolsu-proxy로 발전시켰다. proxelar의 기본 프록시 구조 위에 TypeScript 스크립팅(Deno Core + V8), MCP 서버, Tauri 데스크톱 앱, Cheolsu-Query 같은 기능을 대폭 추가한 거다. 원본과는 완전히 다른 프로젝트 수준으로 확장됐다.
+
+## 포크 → 사내 도입
+
+처음에는 사내 개발자 3명이서 같이 시작했다. 내가 주도적으로 의견을 제시하면서 방향을 잡았는데, 어느 순간 내가 게을러지면서 1차 위기가 왔다. 그러다 서로 더 이상 같은 회사를 다니지 않게 되면서 프로젝트가 흐지부지됐다. 커밋 히스토리에 텀이 긴 구간이 있는 게 그 때문이다.
+
+그러다 최근에 갑자기 의욕이 불타올라서 다시 잡았다. 긱뉴스에도 올려봤지만...
+
+![놀라울 만큼, 그 누구도 관심을 주지 않았다.](/no-interest.webp) 그래도 지금은 사내에서 나 혼자 쓰고 있는데, 생각보다 유용해서 만족 중이다. MCP 서버를 통해 개발 서버를 우회하거나, 스크립팅으로 API 목업을 만들어서 프론트엔드 개발을 독립적으로 진행하는 식으로 활용하고 있다. Claude Code에 Skill까지 만들어서 프록시 제어를 자동화한 상태다.
+
+## MITM (Man In The Middle) 프록시란?
+
+MITM 프록시는 클라이언트와 서버 사이에 끼어들어 트래픽을 중계하는 프록시다. 단순 중계가 아니라, 중간에서 요청과 응답을 **검사하고 조작**할 수 있다.
+
+```
+[브라우저] → [MITM 프록시] → [실제 서버]
+           ↑ 여기서 트래픽을 가로챈다
+```
+
+HTTP는 평문이니 그냥 읽으면 되지만, HTTPS는 TLS 암호화가 걸려 있다. 이걸 풀려면 프록시가 **가짜 인증서**를 발급해서 클라이언트를 속여야 한다. 클라이언트는 프록시가 발급한 인증서를 신뢰하도록 CA 인증서를 시스템에 설치해야 한다.
+
+이게 MITM 프록시의 핵심 원리다. Charles, Fiddler, mitmproxy 전부 같은 방식이다.
+
+## 왜 Rust인가?
+
+프록시는 **모든 네트워크 트래픽이 지나가는 병목점**이다. 느리면 체감된다. 페이지 로딩이 느려지고, API 응답이 지연된다.
+
+Rust를 선택한 이유:
+
+1. **성능** — 네이티브 바이너리. GC 없음. 프록시를 켜놨다고 느려지면 안 된다
+2. **안전성** — 메모리 안전 보장. 프록시는 신뢰할 수 없는 데이터를 다루는데, C/C++로 짜면 취약점 걱정이 크다
+3. **비동기 생태계** — Tokio + Hyper 조합이 이미 검증되어 있다. HTTP/1.1, HTTP/2, WebSocket을 전부 비동기로 처리할 수 있다
+4. **Tauri** — 같은 Rust 코드를 데스크톱 앱으로 감쌀 수 있다. Electron 대비 메모리 사용량이 현저히 적다
+
+## 차별점: 스크립팅 + AI 통합
+
+기존 프록시 도구와 다른 점이 두 가지 있다.
+
+### TypeScript 스크립팅
+
+트래픽을 코드로 조작할 수 있다. Deno Core(V8)를 내장해서 TypeScript를 직접 실행한다.
+
+```typescript
+cheolsu.onRequest((request) => {
+  if (request.url.includes("/api/debug")) {
+    return {
+      action: "respond",
+      response: { status: 200, headers: {}, body: '{"mock": true}' }
+    };
+  }
+  return { action: "forward" };
+});
+```
+
+API 목업, 테스트 데이터 주입, 요청 변환 등을 스크립트 한 줄로 할 수 있다.
+
+### MCP 서버 통합
+
+Claude Code나 Cursor 같은 AI 어시스턴트가 프록시를 직접 제어할 수 있다.
+
+> "지금 트래픽에서 5xx 에러 나오는 요청 찾아봐" → AI가 MCP로 트래픽 검색
+>
+> "이 API 응답을 목업으로 바꿔줘" → AI가 MCP로 인터셉트 규칙 추가
+>
+> "WebSocket 메시지 흐름 분석해줘" → AI가 MCP로 메시지 조회
+
+디버깅을 AI와 함께 할 수 있게 되는 거다.
+
+## 프로젝트 구조
+
+워크스페이스를 크레이트 단위로 분리했다:
+
+| 크레이트 | 역할 |
+|----------|------|
+| `proxyapi_v2` | MITM 프록시 코어 (HTTP/HTTPS/WebSocket 인터셉션) |
+| `proxy_v2_models` | 데이터 모델 (요청, 응답, 규칙 등) |
+| `proxy_daemon` | 백그라운드 프록시 데몬 |
+| `scripting` | TypeScript 스크립팅 엔진 (Deno Core + V8) |
+| `mcp_server` | AI 어시스턴트 연동 (MCP 프로토콜) |
+| `tui` | 터미널 UI (Ratatui) |
+| `desktop/src-tauri` | 데스크톱 앱 (Tauri + React) |
+
+하나의 프록시 코어를 TUI, 데스크톱, MCP 서버 세 가지 인터페이스로 감싸는 구조다.
+
+:::info 1줄 요약
+Charles Proxy의 오픈소스 대안을 Rust로 만들되, TypeScript 스크립팅과 MCP AI 통합으로 차별화한 MITM 프록시 프로젝트다.
+:::

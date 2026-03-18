@@ -1,0 +1,37 @@
+[
+  {
+    "type": "file",
+    "name": "background",
+    "label": "1. 개발 배경",
+    "tag": "26.03.19"
+  },
+  {
+    "type": "file",
+    "name": "tech-stack",
+    "label": "2. 기술 스택",
+    "tag": "26.03.19"
+  },
+  {
+    "type": "file",
+    "name": "development",
+    "label": "3. 개발 과정"
+  },
+  {
+    "type": "file",
+    "name": "development-1",
+    "label": "3-1. MITM 프록시 코어",
+    "tag": "26.03.19"
+  },
+  {
+    "type": "file",
+    "name": "development-2",
+    "label": "3-2. 스크립팅 엔진과 트래픽 조작",
+    "tag": "26.03.19"
+  },
+  {
+    "type": "file",
+    "name": "development-3",
+    "label": "3-3. UI와 MCP 통합",
+    "tag": "26.03.19"
+  }
+]
