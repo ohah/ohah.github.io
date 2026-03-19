@@ -112,7 +112,7 @@ docs/monthly-opensource/hwpjs/development-5.mdx 검사 완료. 맞춤법 교정 
 - [x] docs/monthly-opensource/chromium/code-review.mdx
 - [x] docs/monthly-opensource/chromium/background.mdx
 - [x] docs/monthly-opensource/chromium/first-contribution.mdx
-- [x] docs/monthly-opensource/chromium/merge.mdx
+- [ ] docs/monthly-opensource/chromium/merge.mdx
 - [x] docs/monthly-opensource/chromium/setup.mdx
 - [x] docs/monthly-opensource/crd/background.mdx
 - [x] docs/monthly-opensource/crd/development.mdx
