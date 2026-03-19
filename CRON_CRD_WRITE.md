@@ -809,5 +809,8 @@ docs/index.mdx 검사 완료. 맞춤법 교정 필요 없음. Lint 통과, CRON_
 ## 296차 업데이트: 2026-03-19 7:00 AM (Asia/Seoul) - CRD 주기적 실행 요청
 전체 대상 27개 파일 목록(CRON_CRD_WRITE.md 포함)의 체크 상태 최종 재확인. 목록의 모든 .mdx 파일(26개)이 이미 [x] 체크 완료 상태로 추가 검사·수정할 파일 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋。
 
-## 299차 업데이트: 2026-03-19 11:00 AM (Asia/Seoul) - CRD 주기적 실행 요청
-docs/monthly-opensource/chromium/code-review.mdx 검사 완료. 맞춤법 교정 필요 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋。
+## 300차 업데이트: 2026-03-19 12:00 PM (Asia/Seoul) - CRD 주기적 실행 요청
+docs/monthly-opensource/hwpjs/development-5.mdx 검사 완료. 맞춤법 교정 필요 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋。
+
+## 301차 업데이트: 2026-03-19 12:00 PM (Asia/Seoul) - CRD 주기적 실행 요청
+전체 대상 27개 파일 목록(CRON_CRD_WRITE.md 포함)의 체크 상태 최종 재확인. 목록의 모든 mdx 파일(26개)이 이미 [x] 체크 완료 상태로 추가 검사·수정할 파일 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋。
