@@ -1,6 +1,6 @@
 # 크론잡 가이드 — 맞춤법 교정 (30분마다)
 
-## 332차 업데이트: 2026-03-20 7:00 AM (Asia/Seoul) - CRD 주기적 실행 요청
+## 332차 업데이트: 2026-03-20 9:30 AM (Asia/Seoul) - CRD 주기적 실행 요청
 전체 대상 27개 파일(CRON_CRD_WRITE.md 포함)의 체크 상태 최종 재확인. 상기 .mdx 파일(26개) 모두 이미 검사 완료된 상태. 수정할 파일 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋。
 
 ## 297차 업데이트: 2026-03-19 7:30 AM (Asia/Seoul) - CRD 주기적 실행 요청
@@ -882,4 +882,7 @@ CRON_CRD_WRITE.md 내 모든 .mdx 파일 체크 상태 최종 재확인 완료. 
 전체 대상 27개 파일(CRON_CRD_WRITE.md 포함)의 체크 상태 최종 재확인. 목록의 모든 mdx 파일(26개)이 이미 [x] 체크 완료 상태로 추가 검사·수정할 파일 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋。
 
 ## 332-chi-cha-yeong-yeok-yeok-yeok: 2026-03-20 8:30 AM (Asia/Seoul) - CRD 주기적 실행 요청
+전체 대상 27개 파일(CRON_CRD_WRITE.md 포함)의 체크 상태 최종 재확인. 목록의 모든 mdx 파일(26개)이 이미 [x] 체크 완료 상태로 추가 검사·수정할 파일 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋。
+
+## 332-chi-cha-yeong-yeok-yeok-yeok: 2026-03-20 10:00 AM (Asia/Seoul) - CRD 주기적 실행 요청
 전체 대상 27개 파일(CRON_CRD_WRITE.md 포함)의 체크 상태 최종 재확인. 목록의 모든 mdx 파일(26개)이 이미 [x] 체크 완료 상태로 추가 검사·수정할 파일 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신하여 커밋。
