@@ -1029,3 +1029,6 @@ CRON_CRD_WRITE.md 재확인. 전체 대상 27개 파일(CRON_CRD_WRITE.md 포함
 
 ## 340-cha-gyeong-cha-jeong-ja - 2026-03-22 4:00 AM (Asia/Seoul) - CRD 주기적 재확인 실행
 전체 대상 27개 파일(CRON_CRD_WRITE.md 포함) 재확인. §7 목록의 모든 .mdx 파일이 이미 [x] 체크 완료 상태로, 타겟의 [ ] 파일 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신 및 커밋 후 push。
+
+## 340-cha-gyeong-cha-jeong-ja-2 - 2026-03-22 2:00 PM (Asia/Seoul) - CRD 주기적 실행 요청 (현재)
+CRON_CRD_WRITE.md 자기 갱신. 전체 대상 27개 파일(CRON_CRD_WRITE.md 포함) 재확인. §7 목록의 모든 .mdx 파일이 이미 [x] 체크 완료 상태로, 타겟의 [ ] 파일 없음. 추가 검사·수정할 파일 없음. Lint 통과, CRON_CRD_WRITE.md 상태만 갱신 및 커밋 후 push。
