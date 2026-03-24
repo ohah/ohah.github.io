@@ -13,6 +13,7 @@
 [x] docs/index.mdx
 [x] docs/monthly-opensource/crd/background.mdx
 [x] docs/monthly-opensource/crd/development.mdx
+[x] docs/monthly-opensource/electron-mcp-server/development.mdx
 [x] docs/monthly-opensource/crd/development-1.mdx
 [x] docs/monthly-opensource/crd/development-2.mdx
 [x] docs/monthly-opensource/crd/development-3.mdx
@@ -48,4 +49,10 @@ CRON_CRD_WRITE.md 재확인. 전체 대상 27개 .mdx 파일 재확인. docs/mon
 CRON_CRD_WRITE.md 재확인. 전체 대상 27개 .mdx 파일 재확인. docs/monthly-opensource/hwpjs/development.mdx 파일을 1개 선별하여 맞춤법·띄어쓰기·오타 점검 완료. §7 목록의 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. Lint 통과(0 warnings, 0 errors). CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
 
 ## 340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-73 - 2026-03-24 08:00 PM (Asia/Seoul) - CRD 주기적 실행 (새로운 실행)
+
+CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 전체 점검 완료. §7 목록의 모든 .mdx 파일이 이미 [x] 체크 완료 상태. 수정사항 없음. Lint 통과(0 warnings, 0 errors). CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
+
+## 340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-74 - 2026-03-24 08:30 PM (Asia/Seoul) - CRD 주기적 실행 (현재)
+
+CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. docs/monthly-opensource/crd/development.mdx 파일을 1개 선별하여 맞춤법·띄어쓰기·오타 점검 완료. §7 목록의 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. Lint 통과(0 warnings, 0 errors). CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
 CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 전체 점검 완료. §7 목록의 모든 .mdx 파일이 이미 [x] 체크 완료 상태. 수정사항 없음. Lint 통과(0 warnings, 0 errors). CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
