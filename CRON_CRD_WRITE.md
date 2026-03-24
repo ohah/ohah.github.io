@@ -77,3 +77,6 @@ CRON_CRD_WRITE.md 재확인. 전체 대상 27개 .mdx 파일 재확인. docs/mon
 
 ## 340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-65 - 2026-03-24 03:30 PM (Asia/Seoul) - CRD 주기적 실행 (현재)
 CRON_CRD_WRITE.md 재확인. 전체 대상 27개 .mdx 파일 재확인. §7 목록의 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 추가 검사·수정할 파일 없음. 수정사항 없음. Lint 통과(0 warnings, 0 errors). CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
+
+## 340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-66 - 2026-03-24 04:00 PM (Asia/Seoul) - CRD 주기적 실행 (현재)
+CRON_CRD_WRITE.md 재확인. 전체 대상 27개 .mdx 파일 재확인. docs/index.mdx 파일을 1개 선별하여 맞춤법·띄어쓰기·오타 점검 완료. §7 목록의 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. Lint 통과(0 warnings, 0 errors). CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
