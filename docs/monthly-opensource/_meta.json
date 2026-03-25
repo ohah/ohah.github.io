@@ -43,5 +43,10 @@
     "type": "dir",
     "name": "cheolsu-proxy",
     "label": "Cheolsu Proxy"
+  },
+  {
+    "type": "dir",
+    "name": "zts",
+    "label": "ZTS (Zig TypeScript Transpiler)"
   }
 ]

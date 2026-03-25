@@ -1,0 +1,249 @@
+---
+title: "3-3. Test262 100% 달성기"
+date: 2026-03-20
+---
+
+# 3-3. Test262 100% 달성기
+
+> **기간**: 2026년 3월 19~20일 (2일)
+> **커밋**: 261개 (138 + 123)
+> **세션**: 19개 (3/19: 5개, 3/20: 14개!)
+> **핵심**: Test262 13.7% → 65.6% → 100% (50,504건 전체 통과)
+
+## 3/19 아침: "ZTS 백로그 이어서 진행해줘"
+
+3월 19일 첫 세션(01:45 UTC)의 요청은 명확했다:
+
+> "ZTS 백로그 이어서 진행해줘. Test262 파서 통과율 개선부터"
+
+### 파서 통과율 13.7% → 65.6%
+
+```
+601b4ff feat(parser,test262): Test262 parser pass rate 13.7% → 65.6%
+```
+
+이 하나의 커밋 뒤에는 수십 가지 수정이 들어있었다. 하지만 곧바로 `/simplify` 리뷰 요구가 따라왔다:
+
+> "네 끊고 올리고 다음에 해야할 숙제 메모리에 저장 후 /simplify하고 머지 하고 ㄱㄱ"
+> "리베이스 머지가 규칙이에요" — PR 머지 방식에 대한 명확한 규칙 설정
+
+이 세션에서 확립된 중요한 워크플로우:
+
+> "아니 멈추고 PR 올리고 /simplify 진행하고 계속 이어서 가시죠" — 기능 구현 → PR → /simplify → 머지의 사이클
+
+그리고 계속 `/simplify` 실행 여부를 확인했다:
+> "/simplify 한거야?"
+> "/simplify 진행 하셧어요?"
+> "/simplify 했어?"
+
+### Semantic Analysis 설계 (D038) — 의사결정의 전형
+
+두 번째 세션(03:29 UTC):
+
+> "semantic analysis 의사결정(D038) 진행하고 구현 시작해줘"
+
+여기서 의사결정 프로세스의 전형적인 패턴이 드러난다. 5개의 하위 결정에 대해:
+
+> "51. B / 52. B / 53. 은 추천대로 / 54. A / 55. A 로 갈건데 나머지 옵션이나 이런것도 일단 진행전에 다 장단점 좀 더 자세히 설명해줘"
+
+각 옵션에 대해 깊이 파고들었다:
+
+> "A는 세밀한 통계를 볼 수 있는거야?"
+> "근데 그게 좋을까?"
+> "러스트 장점이 컴파일러가 친절하다는거였는데, 이런거랑은 맥락이 다른가?"
+
+결정 후에도 지속적으로 방향 확인:
+> "그리고 코드 작성하면서 기존 계획이 무너지거나 엣지 케이스가 생긴건 없나요?"
+> "처음 설계대로 안간게 문제가 있을까요?"
+> "구현 목표에 영향이 가는게 없죠?"
+
+### Context 비트플래그 리팩터링과 "oxc를 따르라" 원칙
+
+세 번째 세션(08:15 UTC):
+
+> "Context bitflags 리팩터링 시작해줘"
+
+파서의 Context를 개별 bool에서 packed struct(u8)로 통합:
+
+```zig
+// 리팩터링 전: 8바이트
+allow_in: bool, in_generator: bool, in_async: bool, ...
+
+// 리팩터링 후: 1바이트
+const Context = packed struct(u8) {
+    allow_in: bool, in_generator: bool, in_async: bool,
+    in_function: bool, is_top_level: bool, in_decorator: bool,
+    in_ambient: bool, disallow_conditional_types: bool,
+};
+```
+
+**이 세션에서 프로젝트의 핵심 원칙이 확립됐다:**
+
+> "그리고 구현 방법이 여러가지라면 왠만하면 oxc 따라줘 그리고 병렬로 해줘" — 3/19 세션
+
+이 한 마디가 이후 프로젝트의 모든 의사결정에 적용되는 기본 원칙이 됐다.
+
+### 네 번째 세션 — dstr rest-init + RegExp 설계 결정
+
+> "그룹 1 (dstr rest-init, ~279건)부터 시작해줘 그리고 메모리에 정해져있는 우선순위대로 계속 진행"
+
+이 세션에서 중요한 구조적 결정들이 이루어졌다:
+
+**Cover Grammar 방식 결정**:
+> "추후 유지보수를 위해선 저 방법 중 뭐가 더 나은데? 다른 방법은 또 없어?" — 4가지 방법을 비교
+> "방법 2로 가자 그럼 계속"
+
+**RegExp validator 설계 — 풀 파서(C) 선택**:
+
+세 가지 선택지가 있었다:
+- **A**: 플래그만 검증 (빠르지만 불완전)
+- **B**: 중간 수준 검증
+- **C**: 풀 regexp parser
+
+각각의 성능과 안정성을 상세히 비교한 후:
+
+> "C 성능은 어때?"
+> "A,B,C 중 뭐가 젤 안정성 있는데?"
+> "그럼 상위버전에서 풀파서면 하위버전으로 내려갈떄 C는 영향 없지?"
+> **"C로 가자 이런건 좀 크더라도 유지보수나 안정성을 생각해야해"**
+
+이 결정은 "안정성 우선" 원칙의 대표적 사례다. 단기적으로는 A가 빠르지만, 장기적 유지보수와 스펙 변경 대응을 위해 가장 완전한 방식을 선택했다.
+
+**comptime 모드 분리도 이때 결정됐다:**
+
+```zig
+fn RegExpParser(comptime emit_ast: bool) type {
+    // emit_ast=false: 검증만 (현재)
+    // emit_ast=true: AST 빌드 (Phase 6에서 활성화 예정)
+}
+```
+
+> "근데 나중에 할거라면 B 미리 해둬도 상관없는건지? 아니면 미리 안하는게 더 안좋은지?"
+> "네 그럼 그거 문서에 꼭 적어주시고 B로 가시죠"
+
+미래에 필요한 확장성은 문서에 기록하되, 현재는 필요한 것만 구현하는 실용적 접근.
+
+### "cover grammar로 우리도 전면 리팩토링 하자"
+
+세션 말미에 중요한 결정:
+
+> "어떤것들 해야하죠 이제?"
+> (엣지 케이스 설명을 듣고)
+> "어느게 구조적 설계에 영향을 미치는 놈들일까요?"
+> **"cover grammar로 우리도 전면 리팩토링 하자"**
+
+이것이 3/20의 Cover Grammar 리팩터링으로 이어진다.
+
+## 3/20: 14개 세션 — 프로젝트 최다 세션
+
+3월 20일은 프로젝트에서 가장 집약적인 날이었다. **하루에 14개 세션**, **123개 커밋**.
+
+### Cover Grammar 리팩터링 (02:41 UTC)
+
+ECMAScript에서 `(a, b) = [1, 2]`를 만났을 때, 파서는 처음에 이것을 "괄호로 묶인 표현식"으로 파싱한다. 그러다 `=`을 만나면 "아, 이건 destructuring 패턴이었구나"라고 **재해석**해야 한다.
+
+```
+e08bd1b feat(parser): add cover grammar functions for expression→pattern reinterpretation
+b5041fb feat(parser): switch call sites to cover grammar functions (PR 2/3)
+f006d3a refactor(parser): remove 6 dead validation functions after cover grammar migration
+```
+
+ZTS의 24바이트 고정 노드 설계가 여기서 빛났다. 표현식 노드를 패턴 노드로 변환할 때, 새 노드를 할당하지 않고 `setTag`로 태그만 바꾸면 됐다. 7개의 assignment target 태그가 이 목적으로 추가됐다.
+
+### RegExp 풀 파서 구현 (03:18 UTC)
+
+4개의 연속 PR로 구현:
+
+```
+7380955 feat(regexp): add AST types and emit_ast activation (PR 1/4)
+deb80f1 feat(regexp): unicode property validation + codepoint/range checks (PR 2/4)
+90f95ab feat(regexp): v-flag set operations + nested classes (PR 3/4)
+cd73e3d feat(regexp): 2-pass pre-parse + ES2025 duplicate named groups (PR 4/4)
+```
+
+각 PR 후에 `/simplify` 리뷰:
+> "네 계속 이 패턴으로 가주세요" — /simplify → 수정 → PR → 머지 사이클 확인
+
+### Semantic Early Error Checker (05:04 UTC)
+
+> "semantic 검증은 어떻게 구현하는게 좋을까요?"
+> "그리고 oxc, swc, esbuild, babel 등은 어떻게 하는지?"
+> "완전 분리라는게 B?"
+> "네 그러시죠 B로 갑시다"
+
+별도 checker.zig 모듈로 분리:
+```
+d2541fa feat(semantic): add checker.zig with class + object early error checks
+eb03e8d feat(semantic): duplicate parameter detection for functions and arrows
+```
+
+### Parser 구조 리팩터링 (06:34 UTC)
+
+Test262가 98.0%(470건 실패)에 도달한 시점에서, parser.zig가 너무 커져 구조 분리가 필요했다:
+
+```
+e3c39af refactor(parser): split monolithic parser.zig into modules (oxc structure)
+b526d24 refactor(parser): extract object.zig and binding.zig from expression.zig
+```
+
+### 100% 달성 직전의 극단적 엣지 케이스들
+
+마지막 34건은 가장 까다로운 케이스들이었다:
+- `in_static_initializer` 컨텍스트가 화살표 함수 본문에서 복원되지 않는 문제
+- 중첩 클래스에서 `has_super_class` 리셋 누락
+- computed property key에서 private name 해석 시 escape sequence 고려 누락
+- `delete private_field` 금지 (ECMAScript)
+- constructor가 getter/setter/generator/async 불가
+
+```
+1a3059b feat(parser): fix remaining 34 Test262 failures (34 → 0, 100%)
+```
+
+### 100% 달성 후 — "한번 더 점검하고 싶어" (12:43 UTC)
+
+> "좋아 이제 Test262 달성하긴 했는데 한번 더 점검하고 싶어"
+> "좋아 다 가자"
+
+100%를 달성했지만 바로 다음으로 넘어가지 않았다:
+
+```
+b968ce7 fix(ci): enforce test262 failures and enable parser conformance
+e3c39af refactor(parser): split monolithic parser.zig into modules (oxc structure)
+```
+
+> "CI 다돌면 머지좀" — CI 통과 확인 후에만 머지
+
+### "이제 해야할 작업이 무엇일까요?" (14:57 UTC)
+
+Test262 100%와 구조 리팩터링을 마치고:
+
+> "이제 해야할 작업이 무엇일까요?"
+> "페이즈 2, 1 아직 안된거야?? 어느부분이 부족? 언제하는게 낫지?"
+
+이 세션에서 Diagnostic 통합, 예약어 검증, @panic("OOM") 교체 등의 인프라 작업이 진행됐다:
+
+> "갑자기 왜이리 많은 부분을 고친거야??" — /simplify가 한번에 많은 이슈를 발견
+> "그리고 스킵한 이유는 뭐야??"
+> "아니 잘 고쳤는데 이유가 궁금해"
+> "나머지 스킵한 항목들도 언젠간해야되는건지? 걍유지해도 되는지 궁금해"
+> **"하면 좋은건 하자"**
+
+### Phase 6 선행 작업 + Arena Allocator (17:38~18:08 UTC)
+
+> "페이즈 6 들어가기전에 선행해야할거 또 뭐 있을까?"
+
+Arena Allocator를 도입:
+```
+89e55c3 feat(core): add Arena allocator to transpileFile
+92e811f fix(lexer,parser): replace @panic("OOM") with error propagation
+```
+
+`@panic("OOM")` 90개 이상을 에러 전파로 교체하는 대규모 리팩터링도 이때 진행됐다.
+
+## 이 시기의 핵심 교훈
+
+1. **Test262는 최고의 안전망**: 50,504개의 테스트가 모든 리팩터링의 안전을 보장했다.
+2. **"oxc를 따르라"**: 구현 방법이 여러 가지일 때의 기본 선택으로 의사결정 시간을 크게 줄였다.
+3. **안정성 우선**: RegExp 풀 파서(C) 선택, 구조적 수정 우선 — 단기 비용보다 장기 안정성.
+4. **comptime의 위력**: RegExp 파서를 검증/AST 이중 모드로, 런타임 비용 없이 하나의 코드로.
+5. **끊임없는 /simplify**: 매 PR마다 리뷰를 빠뜨리지 않는 규율이 코드 품질을 유지.

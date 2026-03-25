@@ -1,0 +1,67 @@
+[
+  {
+    "type": "file",
+    "name": "background",
+    "label": "1. 개발 배경과 동기",
+    "tag": "26.03.18"
+  },
+  {
+    "type": "file",
+    "name": "tech-stack",
+    "label": "2. 기술 스택과 설계 철학",
+    "tag": "26.03.18"
+  },
+  {
+    "type": "file",
+    "name": "development",
+    "label": "3. 개발 과정"
+  },
+  {
+    "type": "file",
+    "name": "development-1",
+    "label": "3-1. Phase 1~2: 렉서와 파서",
+    "tag": "26.03.18"
+  },
+  {
+    "type": "file",
+    "name": "development-2",
+    "label": "3-2. Phase 3~5: 트랜스포머와 코드젠",
+    "tag": "26.03.18"
+  },
+  {
+    "type": "file",
+    "name": "development-3",
+    "label": "3-3. Test262 100% 달성기",
+    "tag": "26.03.20"
+  },
+  {
+    "type": "file",
+    "name": "development-4",
+    "label": "3-4. 번들러 Phase B1~B2",
+    "tag": "26.03.21"
+  },
+  {
+    "type": "file",
+    "name": "development-5",
+    "label": "3-5. Dev Server와 HMR",
+    "tag": "26.03.22"
+  },
+  {
+    "type": "file",
+    "name": "development-6",
+    "label": "3-6. 스모크 테스트와 실전 호환성",
+    "tag": "26.03.23"
+  },
+  {
+    "type": "file",
+    "name": "development-7",
+    "label": "3-7. 트랜스파일 적합성 9.5%→74.1%",
+    "tag": "26.03.24"
+  },
+  {
+    "type": "file",
+    "name": "development-8",
+    "label": "3-8. 워크플로우와 AI 협업 방식",
+    "tag": "26.03.26"
+  }
+]

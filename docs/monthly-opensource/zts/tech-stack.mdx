@@ -1,0 +1,158 @@
+---
+title: 2. 기술 스택과 설계 철학
+date: 2026-03-18
+---
+
+# 2. 기술 스택과 설계 철학
+
+## Zig 0.15.2
+
+메인 언어로 Zig를 선택한 이유:
+
+- **C/C++ 수준의 성능** — SIMD `@Vector`, 수동 메모리 관리, 제로 런타임 오버헤드
+- **comptime(컴파일 타임 실행)** — JS/JSX/TS/TSX/Flow 파서를 컴파일 타임에 각각 생성. 런타임 분기가 전혀 없다
+- **C/C++ 직접 링크 가능** — `@cImport`로 Hermes C++ 파서를 직접 링크하는 선택지가 열려 있음 (Flow 지원 방식 B)
+- **WASM 빌드 네이티브 지원** — 별도 툴체인 없이 `zig build -Dtarget=wasm32-wasi`
+
+> "난 OXC보다 빨랐으면 좋겠는데 너무 양보하면 안되는데" — 3/18, 성능 목표
+
+처음에는 Zig 0.14.0으로 시작했고, 3월 21일에 0.15.2로 업그레이드:
+> "지그 버전업 진행해주세요 최신버전으로" — 3/21
+
+## 메모리 전략: Arena + Index 기반 AST (D004)
+
+```zig
+// Phase-based arena allocator
+// AST 노드는 포인터 대신 인덱스로 참조 → use-after-free 방지
+const ast = try arena.create(Ast);
+const node_idx: NodeIndex = ast.addNode(tag, main_token, data);
+```
+
+- **Arena allocator**: 파싱 → 트랜스폼 → 코드젠 단계별로 메모리를 한 번에 해제
+- **24바이트 고정 노드**: 모든 AST 노드가 정확히 24바이트 — 캐시 라인에 최적화
+- **인덱스 기반 참조**: 포인터 대신 `NodeIndex`(u32)로 노드를 참조. use-after-free 원천 차단
+
+> "24, 32로 갔을때 차이점 및 성능 트레이드오프 다 말해줘" — 3/18
+> "근데 bun에는 지나?" — Bun도 24바이트
+> "24바이트로 가시죠" — 최종 결정
+
+이 결정은 프로젝트 전체에서 **한 번도 변경하지 않았다**. 3/22에 `extra_data` vs 노드 플래그 논쟁(40개+ 메시지)이 있었지만, 24바이트 노드 자체는 흔들리지 않았다.
+
+### @panic("OOM") → 에러 전파 (3/20)
+
+초기에는 메모리 할당 실패 시 `@panic("OOM")`으로 처리했다 (Zig 생태계 일반 패턴). 3/20에 90개 이상의 `@panic("OOM")`을 에러 전파로 교체:
+
+```
+92e811f fix(lexer,parser): replace @panic("OOM") with error propagation
+2c83e00 fix(semantic): replace @panic("OOM") with error propagation
+```
+
+> "나머지 스킵한 항목들도 언젠간해야되는건지? 걍유지해도 되는지 궁금해"
+> "하면 좋은건 하자" — 선제적 개선
+
+## 렉서: SIMD 가속 (3/25 추가)
+
+```zig
+// @Vector 16바이트 SIMD로 공백 스킵
+const chunk: @Vector(16, u8) = source[pos..][0..16].*;
+const spaces = chunk == @as(@Vector(16, u8), @splat(@as(u8, ' ')));
+const tabs = chunk == @as(@Vector(16, u8), @splat(@as(u8, '\t')));
+const mask = spaces | tabs;
+```
+
+렉서는 약 208개의 토큰 종류를 u8 플랫 enum으로 관리. SIMD는 3/25에 적합성 작업을 마무리한 후 성능 최적화 단계에서 추가됐다.
+
+```
+361057f feat(lexer): SIMD 공백 스킵 + 식별자 스캔 (@Vector 16바이트)
+```
+
+## 파서: comptime 제네릭
+
+```zig
+pub fn Parser(comptime mode: Mode) type {
+    return struct {
+        // mode == .ts 일 때만 타입 어노테이션 파싱 코드가 포함됨
+        // mode == .jsx 일 때만 JSX 파싱 코드가 포함됨
+    };
+}
+```
+
+Zig의 `comptime`은 이 프로젝트에서 가장 빛났던 기능. RegExp 파서도 동일한 패턴:
+
+```zig
+fn RegExpParser(comptime emit_ast: bool) type {
+    // emit_ast=false: 검증만 (현재)
+    // emit_ast=true: AST 빌드 (Phase 6에서 활성화 예정)
+}
+```
+
+> "C로 가자 이런건 좀 크더라도 유지보수나 안정성을 생각해야해" — 3/19, RegExp 풀 파서 선택
+
+## Context: packed struct(u8)
+
+파서의 "현재 상태"를 1바이트로 추적:
+
+```zig
+const Context = packed struct(u8) {
+    allow_in: bool,
+    in_generator: bool,
+    in_async: bool,
+    in_function: bool,
+    is_top_level: bool,
+    in_decorator: bool,
+    in_ambient: bool,
+    disallow_conditional_types: bool,
+};
+```
+
+함수 경계에서 save/restore가 단일 u8 복사로 끝난다. 이 리팩터링은 3/19에 수행:
+
+> "Context bitflags 리팩터링 시작해줘" — 3/19 세 번째 세션
+
+## 번들러 아키텍처
+
+esbuild + oxc의 하이브리드:
+
+```
+src/bundler/
+  graph.zig      — 모듈 그래프 (DFS 순회, 양방향 인접 리스트)
+  resolver.zig   — node_modules + package.json exports/imports
+  scanner.zig    — import/require 추출
+  linker.zig     — scope hoisting + 심볼 바인딩
+  tree_shaker.zig — @__PURE__/@__NO_SIDE_EFFECTS__ + 미사용 export 제거
+  emitter.zig    — 청크 생성 + code splitting
+  chunk.zig      — BitSet 기반 청크 그래프
+```
+
+> "처음부터 호이스팅 하는게 낫지 않아요? 어차피 거기로 갈건데 중간 과정을 왜" — 3/21
+> "어 HMR 고려하고 있어서 양방향으로 가자" — 3/21, 모듈 그래프 양방향 결정
+
+## 테스트 전략
+
+| 레벨 | 도구 | 대상 | 달성 |
+|------|------|------|------|
+| 단위 테스트 | `zig build test` | 파서, 렉서, 시맨틱 | 전체 통과 |
+| Test262 | TC39 공식 | 파서 정합성 | **50,504/50,504 (100%)** |
+| 적합성 테스트 | esbuild/SWC 비교 | 트랜스파일 출력 | **74.1% (822/1110)** |
+| 스모크 테스트 | 111개 실제 패키지 | 번들 실행 검증 | **111/111** |
+| 브라우저 E2E | Playwright | 브라우저 로딩 검증 | **95/95** |
+| 벤치마크 | hyperfine | 7개 도구 비교 | 수집 중 |
+
+> "테스트 먼저 작성하고, 코드 고쳐서 통과시켜" — 3/22, TDD 요구
+> "실제 실행도 해보면서 통과했다고 확인한거야?" — 3/23, 스모크 테스트 검증
+> "그정도로 실제 잘됐다고 보증할 수 있어??" — 테스트 충분성 의문
+
+## 의사결정 문서화: D001~D082
+
+모든 설계 결정에 번호를 매겼다. 82개.
+
+| 범위 | 내용 |
+|------|------|
+| D001~D003 | 언어, 타입 체크, decorator 전략 |
+| D004~D036 | 메모리, AST, 렉서, 파서 설계 |
+| D037~D055 | 파서 세부, 트랜스포머, 코드젠, CLI |
+| D056~D082 | 번들러 전체 (모듈 그래프~플러그인, 27개) |
+
+각 결정에는 **선택지, 트레이드오프, 최종 선택 이유**가 기록되어 있다. 이 방식은 "왜 이렇게 구현했지?"하는 미래의 질문에 대한 답변을 미리 남겨두는 것이다.
+
+> "다시 한번 정리 깔끔하게 해줄래? 왜 선택했는지 어떤 번들러가 그렇게 하고 있는지 등" — 3/21, 모든 결정에 근거 요구

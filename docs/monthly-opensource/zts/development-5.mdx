@@ -1,0 +1,194 @@
+---
+title: "3-5. Dev Server와 HMR"
+date: 2026-03-22
+---
+
+# 3-5. Dev Server와 HMR
+
+> **기간**: 2026년 3월 22~23일
+> **세션**: 3/22 13b5d3c9 (67개 메시지), 3/23 0af86702 (49개 메시지), 19fa5cfa (46개 메시지)
+> **핵심**: HTTP/WS 서버 → HMR → React Fast Refresh → CSS 핫 리로드 → 벤치마크
+
+## Bun 모노레포 셋업
+
+Dev Server는 JavaScript 런타임 코드(E2E 테스트, 벤치마크)가 필요했다:
+
+> "bun 모노레포 셋업을 할건데, 그럼 기존 지그는 어떻게 옮겨가나요?" — 3/23 세션
+> "기존 액션들도 다 옮겨가야하나요?" — CI 워크플로우 걱정
+> "bun도 그렇게 하고 있나요?" — Bun 프로젝트 구조 참고
+> "mise도 추가했어요?" — 버전 관리 도구
+
+```
+eaf1287 feat: Bun 모노레포 셋업 + 통합/E2E 테스트 환경 구축
+db5cb8a feat: oxlint + oxfmt 설정 추가
+```
+
+## HMR 서버 아키텍처 결정
+
+### HTTP 서버 선택
+
+> "1번은 어떤걸 추천해? Bun은 어떻게 하고있지?"
+> "Bun 표준 라이브러리 쓸때 손해가있어? 번은 왜 그렇게 했을까?"
+> **"그럼 std.http.Server로 결정"** — Zig 표준 라이브러리 사용
+
+### HMR API 호환성 — Metro 고려
+
+> "2번은 웹팩까지 호환하려면 import.meta.hot으론 안되지않아?"
+> "spack은??"
+> "그리고 metro도 생각해야하는데"
+
+webpack의 `module.hot`과 Vite의 `import.meta.hot` 중 `import.meta.hot`을 선택. 하지만 Metro 호환도 고려:
+
+> "좋아 그렇게 가자 문서에 적어줘"
+
+### 스레딩 결정 — thread-per-connection
+
+> "스레드 3개? 좀 과하다싶으면 10개이상 돌리는경우도 있을거자나"
+> "zig는 뭐가 젤 어울리는데?"
+> "스레드 늘어난다고 나쁜게 있어? 개발시에"
+> "공유 데이터가 뭐야??"
+> "메트로도 그렇게 하고 있지 않아?"
+> **"좋아요 그렇게 가시져 1번으로 가요"** — thread-per-connection
+
+## HMR 6단계 구현
+
+### 1~4단계: 기본 서버 구축
+
+```
+4ff3479 feat(server): HTTP 정적 파일 서버 (HMR 1/6단계)
+8408275 feat(server): on-the-fly 번들 서빙 (HMR 2/6단계)
+c9ae3b8 feat(server): WebSocket HMR 채널 (HMR 3/6단계)
+54212e2 feat(server): thread-per-connection + watch → full-reload (HMR 4/6단계)
+```
+
+매 단계 후 E2E 검증:
+> "e2e 테스트 해봤어요??"
+> "번들링버그 고쳐줘" — 실제 동작 테스트에서 발견
+
+레퍼런스 누락 확인:
+> "한번 더 레퍼런스보고 참고해서 누락된게 없는지 확인해줄 수 있어?"
+> "누락된것중에 우리가 구현해야될건?"
+
+### 5~6단계: 모듈 단위 HMR
+
+```
+62ba7d1 feat(server): 모듈 그래프 전체 파일 감시 (HMR 5/6단계)
+76a6023 feat(server): import.meta.hot dev 번들 — 모듈 래핑 + HMR 런타임 (D060)
+6b6d5cc feat(server): HMR 모듈 단위 업데이트 — 변경 모듈만 WS로 전송
+```
+
+> "import.meta.hot API 구현해줘" — 6단계 시작
+
+D060에서 Vite 방식의 "모듈 래핑"을 채택:
+
+> "선택지를 보여줘" — 항상 선택지부터
+> "추천대로 가시죠 좋아여"
+
+## 에러 오버레이 + SPA 폴백
+
+```
+4deed3d feat(server): 에러 오버레이
+e32c483 feat(server): SPA 폴백 (historyApiFallback)
+```
+
+/simplify가 에러 오버레이에서 **XSS 취약점**을 발견했다:
+```
+8ccdd17 fix(server): /simplify — XSS 방지 + comptime 빈 슬라이스 free 수정
+```
+
+에러 메시지를 HTML escape 없이 DOM에 주입하고 있었다. /simplify가 없었다면 보안 취약점이 프로덕션까지 갈 뻔했다.
+
+## React Fast Refresh
+
+> "일단 리액트 핫 리로드 해야한다는거 아니예요? $RefreshSig$ Hook 시그니처 먼저 해야하는거 아닌지?"
+> "기능 갭이 뭐야?"
+
+```
+7e36abb feat(transformer): React Fast Refresh — $RefreshReg$ 컴포넌트 등록 주입
+1946f8e feat(server): React Fast Refresh 런타임 통합
+d931a9d feat(server): /@react-refresh 가상 엔드포인트 (Vite 방식)
+b4d29cb feat(transformer): $RefreshSig$ Hook 시그니처 주입
+b5639c2 feat(transformer): $RefreshSig$ 바인딩 정보 포함 (oxc/Babel 동일)
+```
+
+### Hook 시그니처 추적
+
+```typescript
+// 원본
+function App() {
+  const [count, setCount] = useState(0);
+  useEffect(() => {}, []);
+  return <div>{count}</div>;
+}
+
+// 변환 (dev)
+var _s = $RefreshSig$();
+function App() {
+  _s();
+  const [count, setCount] = useState(0);
+  useEffect(() => {}, []);
+  return <div>{count}</div>;
+}
+_s(App, "useState{[count, setCount]}\\nuseEffect{}");
+$RefreshReg$(App, "App");
+```
+
+> "좀 더 자주 리셋 안됐으면 좋겠는데 포함하면 안되나" — Hook 순서 변경 감지를 더 세밀하게
+
+## CSS 핫 리로드
+
+```
+07187c4 feat(server): CSS 핫 리로드 — link tag swap + E2E 테스트
+```
+
+CSS 변경은 `<link>` 태그의 `href`에 타임스탬프를 붙여 브라우저 캐시를 무시하게 한다.
+
+## 벤치마크 — 7개 도구 비교
+
+> "프로파일링은 리소스 많이드나요?"
+> "esbuild, swc, oxc, webpack, rspack 이 다 벤치마킹이였으면 좋겠는데"
+> **"벤치마크 결과가 좋다는게 뭔소리예요 너만 보면 안되죠"** — 다른 도구와의 비교 필수
+> "CI에도 추가하고, 윈도우, 리눅스, 맥 환경 다 CI 돌리고"
+
+```
+346b665 feat: 벤치마크 스위트 — esbuild/SWC/oxc/webpack/rspack/rolldown 비교
+5e2f434 feat: 벤치마크에 Bun 추가 — 7개 도구 전체 비교
+40c9b38 feat: 파이프라인 프로파일링 — 단계별 병목 분석
+```
+
+> "프로파일링 병목 한번 잡아보시죠"
+
+프로파일링에서 발견한 핵심 성능 문제: `.ts` 파일이 CJS 모드로 파싱되고 있었다:
+```
+c42a145 fix(cli): .ts/.tsx/.mts/.mjs 파일 자동 ESM module mode — 18배 성능 개선
+```
+
+> "느려도 몇등인거예요?" — 순위 확인
+> "그리고 왜 bun은 뺀거야" — Bun이 벤치마크에서 빠져있는 것을 지적
+> "좋아 미니파이어 가자" — identifier mangling으로 넘어감
+
+### Identifier Mangling
+
+```
+f0589c0 feat(codegen): identifier mangling MVP — 변수 이름 단축으로 번들 크기 절감
+d48dbe4 feat(linker): 번들 모드 identifier mangling — scope hoisting 후 이름 단축
+```
+
+> "oxc는 어떻게 하고 있는데요?" — mangling 방식 비교
+> "B가 나아? C가 나아?"
+
+## 이 시기의 핵심: "dev server는 번들러 위에 쌓는다"
+
+Dev Server는 번들러 위에 구축된다. 모듈 그래프, 트랜스포머, 코드젠 — Phase B1~B2에서 구현한 모든 것이 Dev Server의 기반이다.
+
+Phase B1에서 양방향 인접 리스트를 설계한 것은 이 날을 위한 것이었다:
+
+> "어 HMR 고려하고 있어서 양방향으로 가자" — 3/21의 결정
+
+HMR에서 "변경된 파일에 의존하는 모듈 찾기"는 이 양방향 그래프 덕분에 O(1) 역추적으로 해결된다.
+
+그리고 dev server 구현 전에 bun 모노레포가 필요하다는 것도 자연스럽게 도출됐다:
+
+> "하나 더 궁금한거 테스트코드로 다 테스트 가능한 수준이야? 아니면 사용자가 직접 실행해서 검증해야해??" — 3/22
+> "그럼 하기전에 bun 모노레포 하는게 낫겟네?"
+> "구현전에 셋업"

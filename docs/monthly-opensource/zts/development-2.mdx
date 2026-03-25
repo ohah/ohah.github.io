@@ -1,0 +1,154 @@
+---
+title: "3-2. Phase 3~5: 트랜스포머와 코드젠"
+date: 2026-03-18
+---
+
+# 3-2. Phase 3~5: 트랜스포머와 코드젠
+
+> **기간**: 2026년 3월 18~19일 (세션 c3cee63f가 자정을 넘겨 진행)
+> **세션**: c3cee63f — 41개 유저 메시지, 15.8MB 로그
+> **핵심**: TS→JS 변환 파이프라인 완성, 소스맵 생성, CLI, Phase 5까지 완료
+
+## Phase 3 시작: "zts Phase 3 진행해줘"
+
+3월 18일 16:13(UTC), 프로젝트의 첫 실질적 대화 세션:
+
+> "zts Phase 3 진행해줘"
+
+곧바로 핵심 설계 논의가 시작됐다.
+
+### 트랜스포머 전략 결정 (D041)
+
+> "트랜스포머 전략은 어느게 낫다고 생각해? 각 장단점 설명해줘"
+
+두 가지 선택지:
+- **A**: in-place AST 변환 (성능 우위)
+- **B**: 새 AST 생성 + 별도 Codegen (oxc/SWC 방식)
+
+성능에 대한 고민이 깊었다:
+> "근데 A가 성능상 나은거 아냐?"
+> **"난 OXC보다 빨랐으면 좋겠는데 너무 양보하면 안되는데"**
+> "아니 옵션 A로 가지말고 얼마나 느려지는지 다시 좀 더 비교해줘"
+
+하지만 결국 유지보수성을 선택:
+> "B로 가는게 더 유지보수도 편한거지? 다른 트랜스파일러는 뭘 선택했어?"
+> **"트랜스포머는 B"** — 최종 결정
+
+### 비지터 패턴 결정 (D042)
+
+> "비지터는 뭐가 나아? 각각 장단점 더 설명해줘"
+
+Switch-based 비지터를 선택. Zig의 comptime과 잘 맞고, 인라인이 쉬우며, 패턴 매칭이 명시적이다.
+
+### 24바이트 vs 32바이트 노드 (D037)
+
+트랜스포머를 구현하면서 AST 노드 크기 재논의:
+
+> "24, 32로 갔을때 차이점 및 성능 트레이드오프 다 말해줘"
+> "근데 bun에는 지나?" — Bun 성능 비교
+> **"24바이트로 가시죠"** — 캐시 라인 최적화 + 인덱스 기반 접근의 이점
+
+첫 /simplify 리뷰 후:
+> "24바이트로 된거죠? 다른것도 다 통과하고" — 확인
+
+## enum → IIFE 변환
+
+TypeScript의 `enum`은 JavaScript에 존재하지 않는다. IIFE(즉시 실행 함수)로 변환:
+
+```typescript
+// TypeScript
+enum Color { Red, Green, Blue }
+
+// 변환된 JavaScript (3/25에 @__PURE__ + return 패턴으로 업그레이드)
+var Color = /* @__PURE__ */ ((Color) => {
+  Color[Color["Red"] = 0] = "Red";
+  Color[Color["Green"] = 1] = "Green";
+  Color[Color["Blue"] = 2] = "Blue";
+  return Color;
+})(Color || {});
+```
+
+초기에는 `@__PURE__` 없이 구현됐다. 3/25에 적합성 테스트를 진행하면서:
+
+> "이넘 리턴 패턴 저거 실행에 상관없지 않아여?"
+> "esbuild는 왜 퓨어가 붙어요?"
+> "우리도 붙이는게 좋을거 같아영"
+
+이렇게 해서 `@__PURE__` + return 패턴이 추가됐다. tree-shaker가 미사용 enum을 제거할 수 있게 하는 핵심 최적화다.
+
+## namespace → IIFE 변환
+
+namespace는 enum보다 훨씬 복잡하다. 중첩 namespace, export 참조 치환(`Foo.x`), 변수 중복 제거 등이 필요하다. 이 변환은 3/24~25에 적합성 테스트에서 가장 많은 런타임 에러를 유발한 영역이었다:
+
+- namespace reserved word 충돌 → 파라미터 리네이밍 (PR #372)
+- namespace destructuring export → `ns.a = a; ns.b = b;` 패턴 (PR #379)
+- namespace export 초기값 없으면 스킵 (PR #380)
+
+## JSX → React.createElement
+
+```
+fa2d915 feat(codegen): JSX → React.createElement transformation
+```
+
+JSX 변환에서 가장 까다로웠던 점은 `/>` (self-closing) 처리였다. 렉서가 `>`를 너무 일찍 소비하는 버그가 3/22에 발견됐다:
+
+```
+a04c976 fix(lexer): JSX self-closing /> was consuming > prematurely — broke sibling elements
+```
+
+## Phase 4: 코드젠 — "AST를 텍스트로"
+
+> "1,2,3 다른 라이브러리들은 어떻게 하고 있는데?" — 포맷팅 옵션 결정 시
+> "네 좋아요 의사결정 추천해주신대로 하시죠"
+
+```
+4460144 feat(codegen): add formatting support (indent, newline, minify)
+adbc287 feat(codegen): source map V3 generation (D046)
+cbe863b feat(codegen): --ascii-only option (D031)
+ddbe3ea feat(lexer,codegen): comment preservation
+6524f11 fix(codegen): accurate source map line/column using Scanner line_offsets
+```
+
+### 주석 처리 — 순서 고민
+
+> "그전에 주석처리 진행 안해도 돼?" — Phase 4 진행 전 백로그 확인
+> "백로그 먼저 하면 좋은거 뭐 있는데"
+> **"1,2,3,4 다 해주고 페이즈 5 가자"** — 백로그 4건을 먼저 처리
+
+legal comments(`/*! */`) 보존:
+```
+ef82055 feat(lexer,codegen): legal comments preservation (D022)
+```
+
+## Phase 5: CLI
+
+> "백로그는 안해도 돼?" — Phase 5 진행 전 확인
+> "그리고 262 다 통과라며?" — Test262 상태 확인
+
+```
+ba27f89 feat(cli): stdin pipe support (D050)
+d5d5c71 feat(cli): error code frame output (D012)
+33c1bec feat(cli): directory-level transformation (D049)
+892d30a feat(cli): tsconfig.json reader and --project option (D047)
+03f85c0 feat(cli): watch mode with polling (D048)
+```
+
+## 세션 마무리 — "다음에 뭐라고 말해야해?"
+
+이 긴 세션(약 10시간)의 마지막:
+
+> "뭐라고 말해야해 이어가려면?" — 다음 세션 연속성 확보
+
+이 질문은 이후 거의 모든 세션 마무리에서 반복됐다.
+
+## 3/18~19 하루의 성과
+
+```
+Phase 1 (렉서)     ✅ — 토큰 enum 208개, SIMD 공백 스킵, 정규식 컨텍스트 감지
+Phase 2 (파서)     ✅ — AST 200개 태그, 재귀 하강, TS/JSX 지원
+Phase 3 (트랜스포머) ✅ — enum/namespace/JSX/ESM→CJS/decorator/parameter property
+Phase 4 (코드젠)    ✅ — 포맷/minify, 소스맵 V3, comment 보존, ascii-only
+Phase 5 (CLI)      ✅ — stdin, watch, tsconfig, 에러 프레임, 디렉토리 변환
+```
+
+Phase 1~5를 하루 만에 완주했다. Test262 통과율은 아직 13.7%에 불과했지만, **전체 파이프라인이 end-to-end로 동작하는 상태**였다. 다음은 이 13.7%를 100%로 끌어올리는 여정이다.

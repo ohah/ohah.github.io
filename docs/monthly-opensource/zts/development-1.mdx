@@ -1,0 +1,156 @@
+---
+title: "3-1. Phase 1~2: 렉서와 파서"
+date: 2026-03-18
+---
+
+# 3-1. Phase 1~2: 렉서와 파서
+
+> **기간**: 2026년 3월 18일 (하루)
+> **커밋**: 48개
+> **세션**: 3개 (첫 세션 로그는 유실됨)
+> **핵심**: 렉서 전체 완성 → 파서 AST 200개 태그 → Phase 3 트랜스포머 시작
+
+## 프로젝트 시작: 의사결정부터
+
+3월 18일 09:30(UTC), 첫 커밋 `Initial project setup`. 하지만 코드를 작성하기 전에 먼저 한 일은 **의사결정 문서 작성**이었다.
+
+```
+e951029 Initial project setup
+c9bd1e2 Add Test262 test suite as submodule
+8f0eb5f Add Test262 runner and resolve key decisions
+5ba5229 Resolve all remaining decisions and update roadmap
+bb75ea0 Add decisions D024-D033 from reference code analysis
+affd9ab Add lexer design decisions D034-D036
+```
+
+Test262(TC39 공식 테스트 50,504건)를 서브모듈로 추가하고, CI/CD를 설정하고, 핵심 결정들(D001~D036)을 한 번에 내렸다. 결정 내용:
+
+- **D001**: 언어 — Zig
+- **D002**: 타입 체크 안 함 (스트리핑만)
+- **D004**: 메모리 전략 — Phase-based arena allocator + 인덱스 기반 참조
+- **D015**: 토큰 enum — oxc 방식 ~208개 u8 플랫 enum
+- **D019**: 소스 위치 — start+end byte offset, line/column은 lazy 계산
+- **D025**: 렉서-파서 연동 — 파서가 렉서를 직접 호출
+- **D026**: JSX pragma 감지
+- **D034~D036**: 렉서 세부 설계
+
+"코드를 쓰기 전에 설계하라" — 이 원칙은 프로젝트 전체에서 일관됐다. 이후 번들러 진입 시에도(D056~D082) 27개 의사결정을 먼저 내린 뒤 코드를 쓰기 시작했다.
+
+## Phase 1: 렉서 — "하루에 렉서 전체를 완성하다"
+
+렉서는 Phase 1의 전부였고, 3월 18일 하루 만에 완성됐다.
+
+```
+c36def3 feat(lexer): define token enum and keyword map
+b44af3b fix(lexer): address /simplify review findings
+8e6b041 feat(lexer): add base Scanner struct with whitespace, operators, identifiers
+4ce02a0 fix(lexer): address /simplify review findings for Scanner
+e861b35 feat(lexer): add comment scanning with @__PURE__ detection
+de1cb63 feat(lexer): implement full numeric literal scanning
+2b03ba4 feat(lexer): implement string literal scanning with escape sequences
+d61cbca feat(lexer): implement template literal scanning with nested interpolation
+1ace880 feat(lexer): implement regex literal scanning with context detection
+6706e85 feat(lexer): add unicode identifier support
+67e9691 feat(lexer): add JSX mode scanning
+c1e20a3 feat(lexer): add JSX pragma comment detection (D026)
+6e231a0 feat(lexer): connect Test262 runner to lexer and add CLI
+b77444f fix(lexer): add numeric literal validation for Test262 compliance
+84c71c2 fix(lexer): /simplify review fixes + Test262 improvements
+e2e208d chore: update docs for Phase 1 (lexer) completion
+```
+
+각 커밋이 독립적인 기능 단위이고, **매 기능 후에 `/simplify` 리뷰가 따라온다**는 패턴에 주목하자. `fix(lexer): address /simplify review findings`가 매번 기능 커밋 바로 뒤에 온다. 이것은 프로젝트 전체를 관통하는 워크플로우의 시작이었다.
+
+### 렉서의 핵심 설계
+
+**토큰 enum**: ~208개 토큰을 u8 플랫 enum으로 관리. TS 키워드(`type`, `interface`, `declare` 등)도 개별 토큰으로, 숫자는 11가지로 세분화(integer, float, binary, octal, hex, bigint 등). oxc 방식을 따랐다.
+
+**@__PURE__ 주석 추적**: esbuild가 도입하고 업계 표준이 된 `@__PURE__` 주석을 렉서 수준에서 추적한다. 이 정보는 나중에(3/22) tree-shaking에서 사이드 이펙트 없는 함수 호출을 제거하는 데 핵심적이었다. `@__NO_SIDE_EFFECTS__`도 이후 추가됐다.
+
+**Regex 리터럴 컨텍스트 감지**: `/`가 나누기 연산자인지 정규식 리터럴의 시작인지 판단하는 것은 JS 렉서에서 가장 까다로운 부분이다. `a / b`는 나누기지만 `if (a) /regex/`는 정규식이다. 이전 토큰의 종류를 기반으로 컨텍스트를 추적해 해결했다. 이 문제는 3/23에 `/=/` 패턴(`c7ed88a fix(lexer): /=/ 정규식 파싱`)으로 다시 돌아왔다.
+
+## Phase 2: 파서 — "재귀 하강 + 24바이트 고정 노드"
+
+같은 날 파서 구현도 시작됐다.
+
+```
+a425a4c feat(parser): define AST node types (~200 tags) with 24-byte fixed layout
+14e3045 feat(parser): add recursive descent parser with expression/statement parsing
+5bc2ca4 feat(parser): add for-in/for-of, do-while, switch/case
+07cc8c5 feat(parser): add arrow functions and spread operator
+9051243 feat(parser): add class declaration/expression and function expression
+20e15f3 feat(parser): add destructuring patterns (array, object, nested, rest, defaults)
+f606d2d feat(parser): add import/export (ESM) parsing
+cbd3b17 feat(parser): add async function, generator, yield expression
+6def441 feat(parser): add #private fields/methods
+c7ce62d feat(parser): add TypeScript type annotation parsing
+d7d09e8 feat(parser): add TS declarations (interface, type alias, enum, namespace, declare, abstract)
+dabd9e0 feat(parser): add TS parameter properties, decorators, implements, class generics
+a58e1de feat(parser): add JSX parsing (elements, fragments, attributes, expressions)
+```
+
+### 24바이트 고정 AST 노드 — 핵심 설계 결정
+
+이것은 프로젝트에서 가장 중요한 단일 설계 결정이었다. 3/18 세션에서 24바이트와 32바이트를 비교 논의했다:
+
+> "24, 32로 갔을때 차이점 및 성능 트레이드오프 다 말해줘" — 노드 크기 결정 시
+> "근데 bun에는 지나?" — 성능 비교 질문
+> "24바이트로 가시죠" — 최종 결정
+
+모든 AST 노드가 정확히 24바이트:
+
+```
+| tag (u8) | flags (u8) | main_token (u32) | data (16 bytes) |
+```
+
+이 설계의 핵심 이점들:
+1. **캐시 라인 최적화**: 모든 노드가 같은 크기이므로 배열 인덱스로 즉시 접근 가능
+2. **제로 코스트 변환**: 노드를 "변환"할 때 새 노드를 할당하지 않고 `setTag`로 태그만 교체 — 이것이 나중에(3/20) Cover Grammar 구현의 핵심이 됨
+3. **인덱스 기반 참조**: 포인터 대신 `NodeIndex`(u32)로 노드를 참조해 use-after-free 원천 차단
+
+이 결정은 D004/D037에서 내려졌고, **이후 한 번도 변경하지 않았다**. 3/22에 `extra_data` vs 노드 플래그 논쟁이 있었지만, 24바이트 노드 자체는 흔들리지 않았다.
+
+## Phase 3 시작: 트랜스포머 전략 결정
+
+같은 날 저녁(16:13 UTC = 01:13 KST 3/19), 첫 실질적 대화 세션이 시작됐다:
+
+> "zts Phase 3 진행해줘"
+
+곧바로 트랜스포머 전략 논의:
+
+> "트랜스포머 전략은 어느게 낫다고 생각해? 각 장단점 설명해줘"
+> "트랜스포머는 B" — 새 AST 생성 + 별도 Codegen (oxc/SWC 방식, D041)
+
+비지터 패턴도 논의됐다:
+
+> "비지터는 뭐가 나아? 각각 장단점 더 설명해줘"
+> "근데 A가 성능상 나은거 아냐?" — in-place 변환이 더 빠를 수 있다는 의문
+> "아니 옵션 A로 가지말고 얼마나 느려지는지 다시 좀 더 비교해줘"
+> "B로 가는게 더 유지보수도 편한거지? 다른 트랜스파일러는 뭘 선택했어?"
+
+결론은 switch-based 비지터(D042) + 단일 패스 트랜스포머(D043). 성능과 유지보수의 균형점이었다.
+
+## Test262 연동 — 13.7%에서 시작
+
+파서를 구현하면서 동시에 Test262 러너를 연결했다:
+
+```
+6e231a0 feat(lexer): connect Test262 runner to lexer and add CLI
+a90b446 chore: measure and document Test262 parser pass rates
+```
+
+이 시점에서 Test262 통과율은 **13.7%**. 기본적인 구문만 파싱하는 수준이었다. 이 수치가 3/19~20에 걸쳐 100%(50,504건 전체 통과)까지 올라가는 여정은 [3-3. Test262 100% 달성기](./development-3)에서 다룬다.
+
+## 첫날의 교훈
+
+하루에 렉서+파서+트랜스포머 시작까지 진행하면서도, 각 PR마다 `/simplify` 리뷰를 빠뜨리지 않았다. 세션 중간에도:
+
+> "계획 변경된거 없이 잘 진행되고 있는거죠?" — 방향 확인
+> "다 /simplify 하신거죠?" — 리뷰 확인
+
+이것은 의도적인 선택이었다. 초기에 기술 부채를 쌓으면 나중에 기하급수적으로 불어난다. 특히 파서처럼 모든 것의 기반이 되는 코드에서는 더욱 그렇다. `/simplify`가 잡아낸 문제들:
+- Scanner 백트래킹 시 라인 상태 미복원
+- extra_data와 binary/extra 필드 불일치 (트랜스포머 크래시 유발 가능)
+- `peekNextKind` 상태 오염 (JSX 파싱 오동작 가능)
+
+하루 만에 쌓인 코드가 이미 수천 줄이었지만, `/simplify`가 모든 변경을 감시했기 때문에 안심하고 속도를 낼 수 있었다.
