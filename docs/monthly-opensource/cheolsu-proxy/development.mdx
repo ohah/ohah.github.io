@@ -15,6 +15,7 @@ title: 3. 개발 과정
 - [3-8. 보안과 프로토콜 확장](./development-8) (2026-03-10 ~ 03-11)
 - [3-9. 리팩토링과 v0.1.0](./development-9) (2026-03-12 ~ 03-13)
 - [3-10. 릴리스 이후와 사내 활용](./development-10) (2026-03-14 ~ 03-18)
+- [3-11. CLI 통합과 인증서 안정화](./development-11) (2026-03-19 ~ 03-26)
 
 ## 타임라인
 
@@ -40,11 +41,27 @@ title: 3. 개발 과정
    03-07    스크립팅 엔진, TUI, 서버 리플레이, i18n
    03-08    다크 테마, 시스템 트레이, SOCKS5
    03-09    브레이크포인트, 스로틀링, QR코드, Diff
-   03-10    mTLS, SSL Proxying, 연결 풀
+   03-10    mTLS, SSL Proxying, 연결 풀 (190커밋 — 최다!)
    03-11    SSE, gRPC, TLS 세분화 설정
    03-12    대규모 리팩토링, 쿼리 빌더, CI/CD
    03-13    ■ v0.1.0 릴리스 ■
    03-14    OpenAPI 내보내기, gRPC Proto 관리
    03-17    GraphQL 뷰어, AI 트래픽 분석
    03-18    UI 폴리싱, 필터 프리셋, 다크 테마 5종
+   03-21    cheolsu_ops + CLI 크레이트, TLS 키 미러링
+   03-22    Block QUIC, TanStack Table 마이그레이션
+   03-24    인증서 안정화 (128비트 Serial, Subject DN 복제)
+   03-25    V8 OOM 수정, Thundering Herd 방지, CA 자동 재생성
 ```
+
+## 숫자로 보는 전체 프로젝트
+
+| 지표 | 수치 |
+|------|------|
+| 총 커밋 | 1,799개 |
+| 총 PR | 331개 (merged) |
+| Claude Code 세션 | 231개 |
+| 크레이트 | 9개 (proxyapi_v2, proxy_v2_models, proxy_daemon, scripting, mcp_server, cheolsu_ops, cli, tui, desktop) |
+| 최다 커밋 일 | 2026-03-10 (190커밋) |
+| 3월 커밋 | 1,095개 (전체의 61%) |
+| 지원 프로토콜 | HTTP, HTTPS, WebSocket, gRPC, GraphQL, SSE, MQTT, Socket.IO, SOCKS5 |

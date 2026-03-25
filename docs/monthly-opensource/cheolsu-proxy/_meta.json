@@ -75,5 +75,11 @@
     "name": "development-10",
     "label": "3-10. 릴리스 이후와 사내 활용",
     "tag": "26.03.14"
+  },
+  {
+    "type": "file",
+    "name": "development-11",
+    "label": "3-11. CLI 통합과 인증서 안정화",
+    "tag": "26.03.21"
   }
 ]
