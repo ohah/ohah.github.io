@@ -5,32 +5,69 @@ date: 2026-03-18
 
 # 2. 기술 스택과 설계 철학
 
-## Zig 0.15.2
+## Zig 0.15.2 — "왜 Zig인가"
 
-메인 언어로 Zig를 선택한 이유:
+### 트랜스파일러에 Zig가 필요한 이유
 
-- **C/C++ 수준의 성능** — SIMD `@Vector`, 수동 메모리 관리, 제로 런타임 오버헤드
-- **comptime(컴파일 타임 실행)** — JS/JSX/TS/TSX/Flow 파서를 컴파일 타임에 각각 생성. 런타임 분기가 전혀 없다
-- **C/C++ 직접 링크 가능** — `@cImport`로 Hermes C++ 파서를 직접 링크하는 선택지가 열려 있음 (Flow 지원 방식 B)
-- **WASM 빌드 네이티브 지원** — 별도 툴체인 없이 `zig build -Dtarget=wasm32-wasi`
+트랜스파일러는 **소스 코드를 입력받아 다른 소스 코드를 출력**하는 프로그램이다. 수십만 줄의 코드를 밀리초 단위로 처리해야 하므로, 언어 선택이 성능에 직접적인 영향을 미친다.
 
-> "난 OXC보다 빨랐으면 좋겠는데 너무 양보하면 안되는데" — 3/18, 성능 목표
+기존 도구들의 언어:
+- **esbuild**: Go — goroutine 병렬 처리, GC 오버헤드 있지만 개발 속도 빠름
+- **SWC**: Rust — 안전성 보장, 매크로 강력, 학습 곡선 높음
+- **oxc**: Rust — SWC보다 최적화에 집중, arena allocator 적극 활용
+- **Bun**: Zig — C/C++ 수준 성능, SIMD 직접 제어, WASM 네이티브
+
+### Zig를 선택한 이유
+
+> "zig로 swc 같은걸 만들면 어떤 이득이 있을까요?" — 3/18 최초 질문
+> "설계를 어떻게 해야 oxc보다 앞설 수 있죠? 번은 앞서나요?" — 성능 목표
+
+1. **SIMD `@Vector` 직접 제어**: Zig는 SIMD 벡터 연산을 언어 수준에서 지원한다. 렉서에서 공백 스킵, 식별자 스캔을 16바이트씩 한 번에 처리할 수 있다. Rust에서는 `packed_simd` 크레이트가 필요하지만 Zig는 내장이다.
+
+2. **comptime(컴파일 타임 실행)**: Zig의 가장 강력한 기능. `comptime` 파라미터로 JS/JSX/TS/TSX 4개의 파서를 **컴파일 타임에 각각 생성**한다. 런타임에 "지금 TS 모드인가?" 같은 분기가 전혀 없다. Rust의 제네릭/트레잇으로도 비슷하게 할 수 있지만, Zig의 comptime은 임의의 코드를 실행할 수 있어 더 유연하다.
+
+3. **C/C++ 직접 링크**: `@cImport`로 C/C++ 라이브러리를 직접 링크할 수 있다. 이것은 Flow 지원에 핵심적이다 — Hermes(Meta의 Flow 파서, C++ 128개 파일)를 별도 빌드 시스템 없이 `build.zig`로 직접 컴파일할 수 있다.
+
+4. **WASM 빌드 네이티브**: `zig build -Dtarget=wasm32-wasi`로 별도 툴체인 없이 WASM 바이너리를 생성한다. 브라우저에서 트랜스파일러를 실행하거나, Node.js NAPI 바인딩 없이 WASM으로 배포할 수 있다.
+
+5. **수동 메모리 관리 + errdefer**: GC 없이 Arena allocator로 메모리를 관리하되, `errdefer`로 에러 경로에서의 메모리 해제를 보장한다. Rust의 RAII와 비슷하지만 더 명시적이다.
+
+> "그리고 그렇게 했을때 속도는 얼마나, 안정성은 얼마나 장단점을 가질 수 있을까? 설계가 아니라 언어레벨에서는?" — 3/18
 
 처음에는 Zig 0.14.0으로 시작했고, 3월 21일에 0.15.2로 업그레이드:
 > "지그 버전업 진행해주세요 최신버전으로" — 3/21
 
 ## 메모리 전략: Arena + Index 기반 AST (D004)
 
+### Arena Allocator — 왜 필요한가
+
+트랜스파일러는 "파싱 → 변환 → 출력" 단계를 거친다. 각 단계에서 수만 개의 AST 노드, 문자열, 심볼 테이블을 할당한다. 일반적인 `malloc/free`로는 할당/해제 오버헤드가 크고, 메모리 단편화가 발생한다.
+
+**Arena allocator**는 큰 메모리 블록을 미리 잡아두고, 그 안에서 순차적으로 할당만 한다. 해제는 단계가 끝날 때 한 번에 한다. 개별 `free`가 없으므로:
+- 할당이 O(1) (포인터만 이동)
+- 해제가 O(1) (블록 전체를 한 번에)
+- 메모리 단편화 없음
+- `errdefer` 누락으로 인한 메모리 누수 원천 차단 (Arena가 알아서 해제)
+
 ```zig
-// Phase-based arena allocator
-// AST 노드는 포인터 대신 인덱스로 참조 → use-after-free 방지
 const ast = try arena.create(Ast);
 const node_idx: NodeIndex = ast.addNode(tag, main_token, data);
 ```
 
-- **Arena allocator**: 파싱 → 트랜스폼 → 코드젠 단계별로 메모리를 한 번에 해제
-- **24바이트 고정 노드**: 모든 AST 노드가 정확히 24바이트 — 캐시 라인에 최적화
-- **인덱스 기반 참조**: 포인터 대신 `NodeIndex`(u32)로 노드를 참조. use-after-free 원천 차단
+### 24바이트 고정 노드 — 왜 고정 크기인가
+
+모든 AST 노드가 **정확히 24바이트**. 가변 크기 노드 대신 고정 크기를 선택한 이유:
+
+1. **배열 인덱스 접근**: `nodes[i]`로 O(1) 접근. 가변 크기면 오프셋 테이블이 필요
+2. **캐시 라인 최적화**: 64바이트 캐시 라인에 2~3개 노드가 들어감. 트리 순회 시 캐시 히트율 극대화
+3. **인덱스 기반 참조**: 포인터(8바이트) 대신 `NodeIndex`(u32, 4바이트)로 참조. use-after-free 원천 차단 + 메모리 절약
+4. **제로 코스트 변환**: Cover Grammar에서 expression→pattern 변환 시 새 노드 할당 없이 `setTag`로 태그만 교체
+
+```
+| tag (u8) | flags (u8) | main_token (u32) | data (16 bytes) |
+```
+
+16바이트 data 영역에 들어가지 않는 추가 정보는 `extra_data` 배열에 저장한다 (3/22에 D082에서 결정).
 
 > "24, 32로 갔을때 차이점 및 성능 트레이드오프 다 말해줘" — 3/18
 > "근데 bun에는 지나?" — Bun도 24바이트
@@ -52,15 +89,32 @@ const node_idx: NodeIndex = ast.addNode(tag, main_token, data);
 
 ## 렉서: SIMD 가속 (3/25 추가)
 
+### 렉서란?
+
+렉서(Lexer/Tokenizer)는 소스 코드 텍스트를 **토큰 스트림**으로 변환하는 첫 번째 단계다. `const x = 42;`를 `[kw_const, identifier("x"), =, number(42), ;]`로 변환한다.
+
+렉서가 처리해야 하는 것들:
+- 공백/탭/줄바꿈 스킵
+- 식별자 스캔 (`myVariable`, `async`, `yield`)
+- 숫자 리터럴 (정수, 소수, 2진수, 8진수, 16진수, BigInt — 11종)
+- 문자열 리터럴 (escape sequence, template literal 중첩)
+- 정규식 리터럴 (나누기 연산자 `/`와 구별)
+- 주석 (`//`, `/* */`, `@__PURE__` 추적)
+- JSX 모드 (HTML-like 토큰)
+
+### SIMD로 공백 스킵
+
+소스 코드의 상당 부분은 공백이다. SIMD로 16바이트(16문자)를 한 번에 비교하면 공백 스킵이 16배 빨라진다:
+
 ```zig
-// @Vector 16바이트 SIMD로 공백 스킵
 const chunk: @Vector(16, u8) = source[pos..][0..16].*;
 const spaces = chunk == @as(@Vector(16, u8), @splat(@as(u8, ' ')));
 const tabs = chunk == @as(@Vector(16, u8), @splat(@as(u8, '\t')));
 const mask = spaces | tabs;
+// popcount로 연속 공백 길이를 한 번에 계산
 ```
 
-렉서는 약 208개의 토큰 종류를 u8 플랫 enum으로 관리. SIMD는 3/25에 적합성 작업을 마무리한 후 성능 최적화 단계에서 추가됐다.
+약 208개의 토큰 종류를 u8 플랫 enum으로 관리한다 (oxc 방식). SIMD는 3/25에 성능 최적화 단계에서 추가됐다.
 
 ```
 361057f feat(lexer): SIMD 공백 스킵 + 식별자 스캔 (@Vector 16바이트)
@@ -68,16 +122,30 @@ const mask = spaces | tabs;
 
 ## 파서: comptime 제네릭
 
+### 파서란?
+
+파서(Parser)는 토큰 스트림을 **AST(추상 구문 트리)**로 변환한다. `const x = 1 + 2;`가 `VariableDeclaration(name="x", init=BinaryExpression("+", 1, 2))`라는 트리 구조가 된다.
+
+JS/TS 파서가 어려운 이유:
+- **ECMAScript 스펙의 복잡성**: Cover Grammar (expression→pattern 재해석), Automatic Semicolon Insertion (세미콜론 자동 삽입), 컨텍스트에 따라 의미가 달라지는 키워드 (`yield`, `await`, `let`)
+- **TypeScript 확장**: 제네릭 `<T>` vs JSX `<Component>` 모호성, 타입 어노테이션, 데코레이터
+- **JSX 확장**: HTML-like 구문이 JS 안에 혼재
+
+### comptime으로 4개 파서 자동 생성
+
 ```zig
 pub fn Parser(comptime mode: Mode) type {
     return struct {
         // mode == .ts 일 때만 타입 어노테이션 파싱 코드가 포함됨
         // mode == .jsx 일 때만 JSX 파싱 코드가 포함됨
+        // 런타임에 "지금 TS 모드인가?" 분기가 전혀 없다
     };
 }
 ```
 
-Zig의 `comptime`은 이 프로젝트에서 가장 빛났던 기능. RegExp 파서도 동일한 패턴:
+컴파일 결과물은 4개의 독립적인 파서 바이너리다. `.ts` 파일을 파싱할 때 JSX 관련 코드가 바이너리에 아예 존재하지 않는다. 이것이 Zig `comptime`의 위력이다.
+
+RegExp 파서도 동일한 패턴:
 
 ```zig
 fn RegExpParser(comptime emit_ast: bool) type {
@@ -90,7 +158,11 @@ fn RegExpParser(comptime emit_ast: bool) type {
 
 ## Context: packed struct(u8)
 
-파서의 "현재 상태"를 1바이트로 추적:
+### 파서 컨텍스트란?
+
+JS 파서는 "지금 어디에 있는가"를 추적해야 한다. `yield`는 generator 함수 안에서만 키워드이고, 밖에서는 일반 식별자다. `await`도 async 함수 안에서만 키워드다. `in` 키워드는 for-in 루프의 초기화식에서는 허용되지 않는다.
+
+이 정보를 파서 컨텍스트라고 하며, 1바이트로 추적:
 
 ```zig
 const Context = packed struct(u8) {
@@ -111,17 +183,29 @@ const Context = packed struct(u8) {
 
 ## 번들러 아키텍처
 
+### 번들러란?
+
+번들러는 여러 모듈(파일)을 하나 또는 소수의 파일로 합친다. 브라우저는 수백 개의 HTTP 요청을 보내는 것보다 하나의 큰 파일을 로드하는 것이 빠르다.
+
+번들러가 해야 하는 일:
+1. **모듈 해석(Resolve)**: `import lodash from 'lodash'` → `node_modules/lodash/index.js` 경로 찾기
+2. **의존성 그래프 구축**: 모든 import/require를 따라가며 트리 구조 생성
+3. **Scope Hoisting**: 여러 모듈의 코드를 하나의 스코프로 합치기 (변수 이름 충돌 해결 필요)
+4. **Tree-Shaking**: 사용하지 않는 export 제거 (번들 크기 절감)
+5. **Code Splitting**: 공유 모듈을 별도 청크로 분리 (동적 import 지원)
+6. **CJS/ESM 상호운용**: CommonJS(`require`)와 ES Module(`import`)을 함께 처리
+
 esbuild + oxc의 하이브리드:
 
 ```
 src/bundler/
   graph.zig      — 모듈 그래프 (DFS 순회, 양방향 인접 리스트)
-  resolver.zig   — node_modules + package.json exports/imports
-  scanner.zig    — import/require 추출
-  linker.zig     — scope hoisting + 심볼 바인딩
+  resolver.zig   — node_modules + package.json exports/imports 해석
+  scanner.zig    — AST에서 import/require 추출
+  linker.zig     — scope hoisting + 심볼 바인딩 + 이름 충돌 해결
   tree_shaker.zig — @__PURE__/@__NO_SIDE_EFFECTS__ + 미사용 export 제거
-  emitter.zig    — 청크 생성 + code splitting
-  chunk.zig      — BitSet 기반 청크 그래프
+  emitter.zig    — 청크 생성 + 최종 JS 출력
+  chunk.zig      — BitSet 기반 청크 그래프 (code splitting)
 ```
 
 > "처음부터 호이스팅 하는게 낫지 않아요? 어차피 거기로 갈건데 중간 과정을 왜" — 3/21
@@ -129,15 +213,23 @@ src/bundler/
 
 ## 테스트 전략
 
-| 레벨 | 도구 | 대상 | 달성 |
-|------|------|------|------|
-| 단위 테스트 | `zig build test` | 파서, 렉서, 시맨틱 | 전체 통과 |
-| Test262 | TC39 공식 | 파서 정합성 | **50,504/50,504 (100%)** |
-| 적합성 테스트 | esbuild/SWC 비교 | 트랜스파일 출력 | **74.1% (822/1110)** |
-| 스모크 테스트 | 111개 실제 패키지 | 번들 실행 검증 | **111/111** |
-| 브라우저 E2E | Playwright | 브라우저 로딩 검증 | **95/95** |
-| 벤치마크 | hyperfine | 7개 도구 비교 | 수집 중 |
+### 5단계 테스트 피라미드
 
+| 레벨 | 도구 | 역할 | 달성 |
+|------|------|------|------|
+| **단위 테스트** | `zig build test` | 개별 함수/모듈 검증 | 전체 통과 |
+| **Test262** | TC39 공식 50,504건 | **파서가 ECMAScript 스펙을 정확히 구현하는가** | **100%** |
+| **적합성 테스트** | esbuild/SWC 비교 1,110건 | **트랜스파일 출력이 esbuild/SWC와 동일한가** | **74.1%** |
+| **스모크 테스트** | 111개 실제 npm 패키지 | **실제 라이브러리를 번들링하면 동작하는가** | **111/111** |
+| **브라우저 E2E** | Playwright 95건 | **번들 결과물이 브라우저에서 로드되는가** | **95/95** |
+
+각 레벨의 역할이 다르다:
+- Test262는 "파서가 `for (let x of y)...`를 올바르게 파싱하는가"를 검증
+- 적합성은 "TS의 `enum Color { Red }`가 올바른 JS IIFE로 변환되는가"를 검증
+- 스모크는 "lodash-es를 번들링한 결과가 `node`로 실행하면 정상 동작하는가"를 검증
+- E2E는 "번들 결과물을 `<script>` 태그로 넣으면 브라우저에서 에러 없이 로드되는가"를 검증
+
+> "왜 95? **100% 통과 목표가 아닌가요?**" — 3/18, 최초 Test262 목표 설정
 > "테스트 먼저 작성하고, 코드 고쳐서 통과시켜" — 3/22, TDD 요구
 > "실제 실행도 해보면서 통과했다고 확인한거야?" — 3/23, 스모크 테스트 검증
 > "그정도로 실제 잘됐다고 보증할 수 있어??" — 테스트 충분성 의문
