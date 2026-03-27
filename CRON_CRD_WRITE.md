@@ -72,14 +72,14 @@
 - [x] docs/monthly-opensource/crd/development.mdx
 - [x] docs/monthly-opensource/crd/development-1.mdx
 - [x] docs/monthly-opensource/crd/development-2.mdx
-- [ ] docs/monthly-opensource/crd/development-3.mdx
-- [ ] docs/monthly-opensource/crd/development-4.mdx
-- [ ] docs/monthly-opensource/crd/development-5.mdx
-- [ ] docs/monthly-opensource/crd/development-6.mdx
-- [ ] docs/monthly-opensource/crd/development-7.mdx
-- [ ] docs/monthly-opensource/crd/development-8.mdx
-- [ ] docs/monthly-opensource/crd/development-9.mdx
-- [ ] docs/monthly-opensource/crd/tech-stack.mdx
+- [x] docs/monthly-opensource/crd/development-3.mdx
+- [x] docs/monthly-opensource/crd/development-4.mdx
+- [x] docs/monthly-opensource/crd/development-5.mdx
+- [x] docs/monthly-opensource/crd/development-6.mdx
+- [x] docs/monthly-opensource/crd/development-7.mdx
+- [x] docs/monthly-opensource/crd/development-8.mdx
+- [x] docs/monthly-opensource/crd/development-9.mdx
+- [x] docs/monthly-opensource/crd/tech-stack.mdx
 - [ ] docs/monthly-opensource/hwpjs/background.mdx
 - [ ] docs/monthly-opensource/hwpjs/development.mdx
 - [ ] docs/monthly-opensource/hwpjs/development-1.mdx
