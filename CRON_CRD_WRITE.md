@@ -80,7 +80,7 @@
 - [x] docs/monthly-opensource/crd/development-8.mdx
 - [x] docs/monthly-opensource/crd/development-9.mdx
 - [x] docs/monthly-opensource/crd/tech-stack.mdx
-- [ ] docs/monthly-opensource/hwpjs/background.mdx
+- [x] docs/monthly-opensource/hwpjs/background.mdx
 - [ ] docs/monthly-opensource/hwpjs/development.mdx
 - [ ] docs/monthly-opensource/hwpjs/development-1.mdx
 - [ ] docs/monthly-opensource/hwpjs/development-2.mdx
