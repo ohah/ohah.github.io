@@ -1,0 +1,325 @@
+---
+title: "3-10. React Native 플랫폼과 최종 성능"
+date: 2026-04-07
+---
+
+# 3-10. React Native 플랫폼과 최종 성능
+
+> **기간**: 2026년 3월 27일 ~ 4월 7일
+> **커밋**: Phase 20, 24 관련 ~30개
+> **핵심**: `--platform=react-native` 프리셋, Metro 호환, Hermes 구문 검증, Rolldown 비교, ZTS 속도
+
+## RN 번들러의 목표: "Metro를 대체할 수 있는가?"
+
+첫날(3/18)부터 방향은 정해져 있었다:
+
+> "React Native도 목표라 Flow 지원 하고 싶어" — 3/18 첫 세션
+> "추후 번들러까지 확장할 생각이긴 한데" — 3/18
+
+그리고 3/21 번들러 설계에서 RN을 구체적으로 고려했다:
+
+> "나중에 react-native도 지원 계획이라, strictExecutionOrder를 제공하려면 고민해야할 부분이 뭘까요" — 3/21
+> "근데 메트로는 CJS 순서 보장 중요한데" — 3/21
+
+이 모든 준비가 마침내 `--platform=react-native`로 결실을 맺었다.
+
+## --platform=react-native 프리셋
+
+하나의 플래그로 RN에 필요한 모든 설정이 자동으로 켜진다:
+
+```bash
+zts --bundle index.js --platform=react-native --rn-platform=ios -o bundle.js
+```
+
+이 한 줄이 내부적으로 활성화하는 것:
+
+| 설정 | 값 | 이유 |
+|------|-----|------|
+| JSX | automatic | Metro 기본값 |
+| Flow | 자동 감지 (@flow pragma) | RN 코어가 Flow |
+| 확장자 해석 | `.ios.ts`, `.android.ts`, `.native.ts` | 플랫폼 분기 |
+| main-fields | `react-native, browser, module, main` | RN 패키지 해석 순서 |
+| Node builtins | empty (빈 모듈) | 브라우저 환경 |
+| format | IIFE | Metro 호환 |
+| NODE_ENV | define 자동 설정 | `__DEV__` 제어 |
+| configurable_exports | true | Hermes 호환 |
+| shimMissingExports | true | 플랫폼 파일 누락 대응 |
+
+### 플랫폼 확장자 해석 (--rn-platform)
+
+React Native에서 `import Button from './Button'`은 플랫폼에 따라 다른 파일을 로드한다:
+
+```
+--rn-platform=ios  → Button.ios.ts → Button.native.ts → Button.ts
+--rn-platform=android → Button.android.ts → Button.native.ts → Button.ts
+```
+
+Metro의 `--platform ios`와 정확히 동일한 해석 순서. `--resolve-extensions` 옵션으로 구현되어 있어, RN 외에도 커스텀 플랫폼 확장자가 가능하다.
+
+### shimMissingExports — 플랫폼 파일 누락 대응
+
+React Native 코드에는 플랫폼별로만 존재하는 파일이 있다. 예를 들어 `ProgressBarAndroid.js`는 Android에서만 존재한다. iOS 번들링 시 이 파일의 export를 참조하면 에러가 발생한다.
+
+```
+890e4c5 fix(linker): self-require/re-export 자기참조 방지 + shimMissingExports + RN 프리셋 정렬
+```
+
+`--shim-missing-exports`는 누락된 export를 `var xxx = void 0;`으로 shim 처리한다. Rolldown도 동일한 옵션을 제공한다 — 이것은 ZTS가 Rolldown의 RN 호환 전략을 참고한 결과다.
+
+### configurable_exports — Hermes 호환
+
+```
+db8c4cf feat(runtime): configurable_exports 옵션 추가 (RN/Hermes 호환)
+9648f8d fix(runtime): Object.defineProperty에 configurable: true 추가
+```
+
+Hermes 엔진에서는 `Object.defineProperty`로 정의된 프로퍼티가 `configurable: false`이면 동적 모듈 재정의가 불가능하다. RN의 `polyfillGlobal()` 패턴과 충돌한다.
+
+`configurable: true`를 추가하는 것은 작은 변경이지만, 이것 없이는 RN 앱이 **시작조차 하지 못한다**.
+
+## Metro 호환 번들 실행 순서
+
+Metro와 ZTS의 번들 구조는 근본적으로 다르다:
+
+```
+Metro: prelude → polyfills → __d() 모듈 정의 → __r(InitializeCore) → __r(entry)
+ZTS:   banner → polyfills(IIFE) → 런타임 헬퍼 → 모듈 코드 → run-before-main → entry
+```
+
+Metro는 `__d()`/`__r()` 패턴으로 모듈을 **격리**한다. ZTS는 scope hoisting으로 모듈을 **병합**한다. 이 차이가 성능 이점(tree-shaking, 번들 크기 절감)을 만들지만, 동시에 모든 호환성 문제의 원인이기도 하다.
+
+### IIFE 래핑 제거
+
+```
+265ff68 fix(bundler): RN 플랫폼에서 IIFE 래핑 제거
+```
+
+RN 번들은 top-level IIFE가 필요 없다. Metro도 전역 스코프에서 실행한다. 불필요한 IIFE는 Hermes 컴파일러에서 추가 오버헤드가 된다.
+
+### __esm 래핑과 초기화 순서
+
+```
+aa40f50 fix(bundler): RN 엔트리 모듈도 __esm 래핑하여 초기화 순서 보장
+```
+
+엔트리 모듈도 `__esm` 래퍼로 감싸야 한다. 그렇지 않으면 엔트리의 side-effect가 의존 모듈보다 먼저 실행될 수 있다. React Native에서 이는 `InitializeCore` 전에 `ErrorUtils`를 참조하는 크래시로 이어진다.
+
+### JSX automatic 기본값
+
+```
+0b6a5f5 fix(bundler): JSX 옵션을 번들러에 전달 + RN automatic 기본값 설정
+```
+
+Metro는 JSX automatic mode가 기본값이다. ZTS의 `--platform=react-native`도 이를 따른다. `jsx-runtime` import가 자동 주입되므로 사용자가 `import React from 'react'`를 매번 쓸 필요가 없다.
+
+## RN 전역 식별자 충돌 — scope hoisting의 대가
+
+scope hoisting의 가장 큰 부작용은 **전역 이름 충돌**이다. Metro의 모듈 격리에서는 각 모듈이 독립된 스코프를 가지므로 충돌이 없다. ZTS에서는 모든 모듈이 같은 스코프에 병합된다.
+
+React Native는 `polyfillGlobal()`로 50개 이상의 전역 이름을 등록한다:
+
+```
+Promise, XMLHttpRequest, fetch, WebSocket, URL, AbortController,
+Performance, EventCounts, IntersectionObserver, MutationObserver...
+```
+
+이 이름들과 모듈 내부 변수가 충돌하면 런타임 에러가 발생한다. `--global-identifier` 옵션으로 linker가 이 이름들을 자동으로 리네이밍한다:
+
+```bash
+--global-identifier=Performance --global-identifier=EventCounts ...
+```
+
+linker가 `Performance` → `Performance$1`로 리네이밍하여 충돌을 방지한다. esbuild와 Rolldown에는 이 기능이 없다 — RN 특화 기능이다.
+
+## Hermes 구문 검증
+
+RN 앱의 최종 실행 환경은 Hermes다. ZTS 번들이 Hermes에서 올바르게 파싱되는지 검증하는 것이 최종 관문이다.
+
+```typescript
+// es5-rn.test.ts
+test("Hermes 구문 검증 (hermesc)", async () => {
+  // ZTS 번들
+  const zts = Bun.spawnSync([
+    ZTS_BIN, "--bundle", "index.js",
+    "--platform=react-native", "--rn-platform=ios", "--flow",
+    "-o", outFile,
+  ]);
+
+  // hermesc로 구문 검증
+  const hermes = Bun.spawnSync([hermesc, "-emit-binary", "-out", hbc, outFile]);
+  expect(errorCount).toBe(0);
+});
+```
+
+hermesc(Hermes Compiler)가 ZTS 번들을 바이트코드로 컴파일할 수 있으면, Hermes에서 실행 가능하다는 뜻이다. **에러 0건** — ZTS 번들은 Hermes에서 올바르게 동작한다.
+
+## Metro vs ZTS 모듈 수 비교
+
+```typescript
+test("Metro 번들 모듈 수 기준선", async () => {
+  // Metro 번들
+  const metro = Bun.spawnSync(["npx", "react-native", "bundle", ...]);
+  const metroModules = (metroOutput.match(/^__d\(function/gm) || []).length;
+
+  // ZTS 번들
+  const zts = Bun.spawnSync([ZTS_BIN, "--bundle", ...]);
+  const ztsModules = Object.keys(meta.inputs || {}).length;
+
+  // ZTS가 Metro 이상의 모듈을 resolve해야 함
+  expect(ztsModules / metroModules).toBeGreaterThanOrEqual(1.0);
+});
+```
+
+ZTS가 Metro와 **동일하거나 더 많은** 모듈을 resolve한다는 것은, 누락 없이 모든 의존성을 처리한다는 증거다. tree-shaking으로 실제 번들 크기는 더 작으면서도.
+
+## 추가 검증: 번들 내 미변환 패턴 검출
+
+RN 번들의 견고성을 보장하기 위한 4가지 추가 검증:
+
+1. **raw require() 검출**: 번들 내에 `require("specifier")`가 남아있으면 런타임 에러. `require_xxx()`로 치환되어야 한다.
+2. **__esm 내 CJS exports 부재**: `__esm` 래퍼 안에 `exports.x = x`가 있으면 런타임 에러.
+3. **__export getter 변수 정의**: getter가 참조하는 변수가 같은 래퍼 안에 정의되어 있어야 한다.
+4. **Node 실행 검증**: 실제로 Node.js에서 번들을 실행하여 ReferenceError/SyntaxError 검출.
+
+모든 검증 통과.
+
+## Rolldown과의 비교
+
+ZTS의 번들러 설계에서 Rolldown은 가장 중요한 레퍼런스 중 하나다. esbuild가 "실전에서 검증된 알고리즘"이라면, Rolldown은 "최신 설계 사상"을 대표한다.
+
+### 런타임 헬퍼 호환
+
+| 헬퍼 | esbuild | Rolldown | ZTS |
+|------|---------|----------|-----|
+| `__esm` | lazy init | strict execution order | **Rolldown 방식** |
+| `__commonJS` | wrapper function | wrapper function | 동일 |
+| `__toESM` | default 분기 | default 분기 | 동일 |
+| live binding | getter | getter + strict order | **Rolldown 방식** |
+| configurable | false | false | **true** (Hermes용) |
+
+핵심 차이는 `__esm`의 실행 순서 보장이다. esbuild는 lazy initialization으로 "호출될 때" 초기화하지만, Rolldown은 import 순서에 따라 "정해진 순서대로" 초기화한다. RN에서는 후자가 필수다.
+
+### tree-shaking 방식
+
+| | esbuild | Rolldown | ZTS |
+|---|---------|----------|-----|
+| 알고리즘 | export-level DCE | stmt-level + side-effect analysis | **export-level + StmtInfo + crossBFS** |
+| @__PURE__ | ✅ | ✅ | ✅ |
+| @__NO_SIDE_EFFECTS__ | ✅ | ✅ | ✅ (cross-module 전파) |
+| scope hoisting | ✅ | ✅ (Rollup 알고리즘) | ✅ (esbuild 기반) |
+
+ZTS는 esbuild의 export-level DCE에 Rolldown 스타일의 StmtInfo 기반 문장 수준 분석을 결합했다. 이것은 두 프로젝트의 장점을 취한 하이브리드 접근이다.
+
+### 기능 비교 (번들러)
+
+| 기능 | esbuild | Rolldown | ZTS |
+|------|---------|----------|-----|
+| scope hoisting | ✅ | ✅ | ✅ |
+| code splitting | ✅ | ✅ | ✅ |
+| tree-shaking | ✅ | ✅ | ✅ |
+| source maps | ✅ | ✅ | ✅ |
+| CSS bundling | ✅ | ✅ | ❌ (플러그인 위임) |
+| 플러그인 API | Go API | Rollup 호환 JS | JS subprocess + Zig native |
+| Web Worker | ❌ | ✅ | ✅ |
+| RN 플랫폼 | ❌ | ❌ | ✅ |
+| Flow 지원 | ❌ | ❌ | ✅ |
+| ES5 다운레벨링 | 부분 | ❌ | ✅ (99%) |
+| Hermes 호환 | ❌ | ❌ | ✅ |
+
+ZTS가 esbuild/Rolldown 대비 **유일하게** 지원하는 영역: React Native 플랫폼, Flow 타입 스트리핑, ES5 다운레벨링, Hermes 호환. 이것이 ZTS의 차별점이다.
+
+## 최종 성능: ZTS는 얼마나 빠른가
+
+### 번들러 벤치마크 (2,592 모듈 실측, 2026-03-31)
+
+```
+ZTS 136ms vs esbuild 110ms — 1.24배
+```
+
+| 단계 | ZTS | esbuild | 배율 | 비고 |
+|------|-----|---------|------|------|
+| **scan** (resolve+parse) | 101ms | ~80ms | 1.3x | 파이프라인화 완료, SIMD 여지 |
+| **tree-shake** | 15ms | 1ms | 15x | fixpoint 2회 + StmtInfo + crossBFS |
+| **link** | 16ms | 54ms | **0.3x** | **ZTS가 3배 빠름** |
+| **emit** | 15ms | 32ms | **0.5x** | **ZTS가 2배 빠름** |
+| **총합** | **136ms** | **110ms** | 1.25x | |
+
+**link와 emit에서 ZTS가 esbuild보다 빠르다.** tree-shake에서 15배 느린 것은 StmtInfo 기반 정밀 분석의 대가다 — esbuild는 이 수준의 분석을 하지 않는다. 그리고 15ms는 전체 136ms 중 11%에 불과하다.
+
+### 성능 최적화 히스토리
+
+| 최적화 | 효과 |
+|--------|------|
+| GPA → c_allocator → mimalloc | 267ms → 30ms (200-모듈 기준) |
+| emit 병렬화 | 74ms → 15ms (**-80%**) |
+| resolve 병렬화 | 191ms → 134ms (-30%) |
+| fixpoint oscillation 수정 | 100회 → 2회 수렴, 238ms → 51ms |
+| scan 파이프라인화 | 배치 → 파이프라인 → Producer-Consumer, -15% |
+| 증분 빌드 (파싱 캐시) | watch/serve 리빌드 시 변경 모듈만 재파싱 |
+
+### 스모크 테스트 성능
+
+**143개 패키지**, 평균 **0.94x** (esbuild 대비). 실패 0개.
+
+0.94x는 esbuild보다 **6% 빠르다**는 뜻이다. 단일 파일 트랜스파일에서는 ZTS가 esbuild를 앞선다.
+
+### 왜 빠른가
+
+1. **Zig의 제로 오버헤드**: GC 없음, 런타임 없음. Arena allocator로 한 번에 할당/해제
+2. **24바이트 고정 AST 노드**: 캐시 라인에 최적화. 포인터 체이싱 최소화
+3. **SIMD 공백 스킵 + 식별자 스캔**: `@Vector(16, u8)`로 16바이트 동시 처리
+4. **emit 병렬화**: 모듈별 transform + codegen을 스레드 풀에서 동시 실행
+5. **Producer-Consumer 파이프라인**: parse → resolve → spawn을 파이프라인으로 연결
+
+### esbuild와 1.24배 차이의 의미
+
+esbuild는 **Go로 작성된 7년차 프로젝트**다. 2020년 출시 이후 수많은 실전 최적화를 거쳤다. ZTS는 **Zig로 작성된 20일차 프로젝트**다.
+
+그런데 **1.24배 차이밖에 나지 않는다.**
+
+- link 단계: ZTS가 **3배 빠르다**
+- emit 단계: ZTS가 **2배 빠르다**
+- scan 단계: 1.3배 느림 — SIMD 추가 최적화 여지가 있다
+- tree-shake 단계: 15배 느림 — 하지만 esbuild보다 **정밀한 분석**을 한다
+
+tree-shake를 esbuild 수준으로 단순화하면 즉시 1.0x 이하가 될 수 있다. 하지만 그것은 "올바른 최적화"가 아니다. 정밀한 tree-shaking은 번들 크기를 줄이고, 최종 사용자의 로딩 시간을 줄인다.
+
+### Rolldown/rspack과의 성능 비교
+
+Rolldown과 rspack은 Rust로 작성되었다. 벤치마크 스위트에서 7개 도구(esbuild, SWC, oxc, webpack, rspack, rolldown, Bun)를 비교한다.
+
+ZTS의 포지션: **esbuild급 속도 + Rolldown급 기능 + RN 전용 최적화**.
+
+## 숫자로 보는 전체 프로젝트 (4/7 기준)
+
+| 지표 | 값 |
+|------|-----|
+| 개발 기간 | **20일** (3/18~4/7) |
+| 총 커밋 | **~850개** |
+| Test262 통과 | 50,504/50,504 (**100%**) |
+| ES5 다운레벨링 | kangax **99%** (257/259) |
+| 트랜스파일 적합성 | 74.1% (822/1110) |
+| 스모크 테스트 | **143개 패키지**, 실패 0개 |
+| 브라우저 E2E | 95개 (Playwright) |
+| 벤치마크 비교 | 7개 도구 |
+| Hermes 구문 검증 | **에러 0건** |
+| RN 번들 실행 | Node.js + hermesc **통과** |
+
+## 앞으로
+
+```
+3/18 ████████ Phase 1~5 — 렉서→파서→트랜스포머→코드젠→CLI
+3/19 ████████████████ Semantic + Test262 65.6%
+3/20 ██████████████ RegExp + Test262 100%
+3/21 █████████ 번들러 B1~B2 + 27개 설계 결정
+3/22 █████████ tree-shaking + HMR + dev server
+3/23 ██████████████ 스모크 테스트 5→47개
+3/24 ██████████ 적합성 9.5%→58.8%
+3/25 ██████ 적합성 74.1% + SIMD + 병렬 파싱
+3/26 █ ES 다운레벨링 시작
+3/27~4/7 ████████████████████ 소스맵 + JSX 리팩터 + block scoping + RN + ES5 99%
+```
+
+ZTS는 학습 프로젝트로 시작했다. 20일이 지난 지금, **Test262 100%, kangax ES5 99%, Hermes 구문 검증 통과, esbuild 1.24배 성능**의 트랜스파일러/번들러가 됐다.
+
+남은 과제(CSS 번들링, 플러그인 고도화, NAPI 바인딩)가 있지만, 핵심은 증명됐다: **Zig로 만든 JS/TS 트랜스파일러는 빠르고, React Native 번들러로 쓸 수 있다.**

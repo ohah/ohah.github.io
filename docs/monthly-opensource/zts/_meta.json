@@ -63,5 +63,17 @@
     "name": "development-8",
     "label": "3-8. 워크플로우와 AI 협업 방식",
     "tag": "26.03.26"
+  },
+  {
+    "type": "file",
+    "name": "development-9",
+    "label": "3-9. ES5 다운레벨링 완성과 번들러 고도화",
+    "tag": "26.04.07"
+  },
+  {
+    "type": "file",
+    "name": "development-10",
+    "label": "3-10. React Native 플랫폼과 최종 성능",
+    "tag": "26.04.07"
   }
 ]

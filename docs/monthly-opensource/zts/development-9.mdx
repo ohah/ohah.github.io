@@ -1,0 +1,645 @@
+---
+title: "3-9. ES5 다운레벨링 완성과 번들러 고도화"
+date: 2026-04-07
+---
+
+# 3-9. ES5 다운레벨링 완성과 번들러 고도화
+
+> **기간**: 2026년 3월 26일 ~ 4월 7일 (12일)
+> **커밋**: 613개
+> **핵심**: statement-level tree-shaking, 플러그인 API, Flow 파서, 엔진 타겟, 소스맵, JSX 리팩터링, block scoping, AST 통합, Rolldown 호환 런타임, ES5 다운레벨링 kangax 99%
+
+## 3/26 이후: "이제 실전이다"
+
+Test262 100%, 적합성 74.1%, 스모크 테스트 111개. 3/18~3/26의 9일간은 "될까?"를 증명하는 시간이었다면, 이후 12일은 **"실전에서 쓸 수 있는가?"**를 증명하는 시간이었다.
+
+남은 과제는 명확했다:
+- tree-shaking이 export 수준에서만 동작 — 문장 단위 DCE 필요
+- 플러그인 API 없이는 CSS, Vue, Svelte 같은 비-JS 파일 처리 불가
+- Flow 지원 없이는 RN 코어 라이브러리 파싱 불가
+- 번들 소스맵이 없으면 디버깅 불가
+- JSX 변환이 codegen에 하드코딩 — 번들 모드에서 스코프 문제
+- ES5 다운레벨링이 미완성 — React Native(Hermes)에서 돌리려면 필수
+- Rolldown 호환 런타임이 아니면 모듈 실행 순서 보장 불가
+
+## 작업 강도 — 12일간 613커밋
+
+```
+일별 커밋 분포:
+3/26  67  ████████████████████  statement shaker + ES 다운레벨링 시작
+3/27  49  ███████████████      tree-shaker 2단계 + StmtInfo + 스모크 수정
+3/28  32  ██████████           배치 A~C (alias, banner, content hash, asset 로더)
+3/29  68  ████████████████████ 소스맵 정확도 + inotify + 증분 빌드
+3/30  74  ██████████████████████ 플러그인 API + Flow 파서 + config + watch
+3/31  27  ████████             RN resolve + 엔진 타겟 + scan 파이프라인
+4/01  20  ██████               emit 병렬화 + resolve 병렬화
+4/02  48  ██████████████       fixpoint 수정 + Producer-Consumer + jsx-dev
+4/03  61  ██████████████████   증분 빌드 + watch-json + 성능 최적화
+4/04  59  █████████████████    RN 플랫폼 + Hermes 호환 + global-identifier
+4/05  56  ████████████████     JSX 리팩터링 + Rolldown 런타임 + 소스맵 번들
+4/06  41  ████████████         block scoping + ES5 완성 + AST 통합
+4/07  11  ███                  kangax 99% + SWC 비교 CI
+```
+
+가장 많은 날은 **3/30 (74커밋)** — 플러그인 API 전체 구현 + Flow 파서 구현 + config 시스템을 하루에 다 했다.
+
+## 3/26~27: statement-level tree-shaking + StmtInfo
+
+### tree-shaker 2단계 — export 수준 DCE
+
+기존 tree-shaking은 "이 export가 사용되는가?"만 판단했다. 하나의 export가 사용되면 그 모듈의 **모든 문장**이 포함됐다.
+
+> "다른 번들러의 tree-shaking은 statement 수준까지 내려가?"
+> "rolldown은 StmtInfo 기반이라고?"
+
+```
+ee703e5 feat(bundler): statement-level tree-shaking 구현
+cee15cc feat(bundler): tree-shaker 2단계 — export 수준 DCE (#458)
+12c9fbb feat(bundler): StmtInfo 기반 statement-level tree-shaking (rolldown 방식)
+```
+
+StmtInfo는 Rolldown이 사용하는 방식이다. 각 문장(statement)에 대해:
+- 어떤 심볼을 정의하는가?
+- 어떤 심볼을 참조하는가?
+- side-effect가 있는가?
+
+이 정보로 "사용되지 않는 문장"을 개별적으로 제거한다.
+
+**결과**: svelte 번들 크기 78KB → 22KB (**72% 감소**)
+
+```
+3375785 fix(bundler): 심볼 기반 모듈 도달성 — svelte 78KB→22KB (72% 감소)
+```
+
+### Rolldown 방식 CJS→ESM Interop
+
+> "rolldown은 CJS interop을 어떻게 하는데?"
+> "esbuild랑 뭐가 달라?"
+
+```
+a727e3a fix(bundler): Rolldown 방식 CJS→ESM Interop 도입 (#456)
+```
+
+esbuild의 interop은 `__toESM(require("..."))` 패턴이다. Rolldown은 여기에 **default export 추론 로직**을 추가한다. CJS 모듈이 `module.exports = {...}`를 하면 그것을 default export로 취급하는 로직이다.
+
+### exports 조건 해석 — Node.js 스펙 순수
+
+```
+3a71f55 fix(bundler): exports 조건 해석을 Node.js 스펙 순서로 변경
+```
+
+package.json의 `exports` 필드 해석이 Node.js 스펙과 미세하게 달랐다. tslib이 CJS로 resolve되는 문제 — exports 조건 평가 순서를 `import > require > default` (Node.js 스펙)으로 정렬하여 해결. 이것으로 tslib ESM 번들 크기가 95% 감소.
+
+### 스모크 테스트 수정 연쇄
+
+StmtInfo 도입 후 기존 스모크 테스트에서 regression이 발생했다:
+
+```
+330634b fix(bundler): export_bindings 필터 — named re-export 경유 모듈 보호 (#462)
+e039cfd fix(bundler): export_bindings 필터 — export * re-export 경유 모듈 보호 (#463)
+0051a05 fix(bundler): export_bindings 필터 비활성화 (arktype flatMorph regression)
+```
+
+arktype 패키지에서 `flatMorph` 함수가 tree-shaking으로 제거되는 regression이 발생. export_bindings 필터가 re-export 경유 모듈을 보호하지 못하는 문제였다. 비활성화 → 원인 분석 → 정밀 수정의 3단계로 해결.
+
+## 3/28: 배치 A~C — 번들러 CLI 옵션 일괄 추가
+
+### 의사결정: 어떤 옵션부터?
+
+> "esbuild가 제공하는 옵션 중에 우리가 빠진 것 목록 줘"
+> "난이도별로 분류해줘"
+> "S급끼리 묶어서 한 PR로 하자"
+
+배치 A (10개 옵션): `--alias`, `--banner:js`, `--footer:js`, `--global-name`, `--public-path`, `--define`, `--drop`, `--charset`, JSON ESM named export, `--conditions`
+
+```
+af2d353 feat(bundler): --conditions CLI + 상수 인라인 + codegen DCE
+```
+
+배치 B (content hash + naming): `--entry-names`, `--chunk-names`, `--asset-names` 패턴
+
+배치 C (Asset 로더): `--loader:.png=file`, dataurl, text, binary, copy
+
+**하루에 3개 배치(22개 옵션)를 전부 구현했다.** 각각은 S급(반나절) 난이도지만, 묶어서 처리하니 하루 만에 가능했다.
+
+## 3/29~30: 소스맵 + 증분 빌드 + inotify + 플러그인 API + Flow
+
+이 이틀이 프로젝트에서 **가장 밀도 높은 구간**이다. 74 + 68 = **142커밋**.
+
+### 소스맵 정확도 개선
+
+```
+92cb9b5 feat: 소스맵 정확도 + 네이티브 파일 감시 + 증분 빌드
+```
+
+### 네이티브 파일 감시 — kqueue(macOS) + inotify(Linux)
+
+기존 watch는 polling 방식이었다. 네이티브 파일 감시로 전환:
+
+> "inotify 써야지 리눅스에서"
+> "macOS는 kqueue"
+
+```
+8dd885f fix: inotify — CLOSE_WRITE 추가 + atomic write 후 watch 재등록
+1a91122 fix: watchLoop use-after-free — result.paths가 inc_bundler 내부 메모리를 가리키는 문제
+3218ec7 fix: inotify 재등록 메모리 누수 수정
+863105e fix: inotify addPath — 존재하지 않는 파일 스킵
+7d5013d fix: inotify 디렉토리 감시로 전환
+```
+
+inotify에서 **use-after-free** 버그가 있었다. `watchLoop`의 `result.paths`가 `inc_bundler` 내부 메모리를 가리키고 있었는데, 리빌드 후 그 메모리가 해제됐다. `/simplify`가 이 문제를 포착.
+
+### 증분 빌드 — PersistentModuleStore
+
+```
+4b2c45e fix: 증분 빌드 — 코드 diff만으로 변경 판단 (경로 매칭 제거)
+```
+
+watch/serve 모드에서 리빌드할 때, 변경되지 않은 모듈을 재파싱하지 않는다. 파싱 결과를 `PersistentModuleStore`에 캐시하고, 파일 내용의 diff로 변경 여부를 판단.
+
+### 배치 D — metafile + analyze + inject + legal comments + keepNames
+
+```
+a9ade45 feat(bundler): metafile + analyze (배치 D 1/3)
+b9ef503 feat(bundler): legal comments (배치 D 2/3)
+ea0539f feat(bundler): inject (배치 D 3/3)
+23a5316 feat(bundler): keepNames (배치 D 완료)
+```
+
+`--metafile`은 esbuild 호환 JSON 포맷. 번들에 포함된 모든 모듈, 크기, import 관계를 출력한다. 이것은 나중에 RN 번들 검증에서 Metro vs ZTS 모듈 수 비교에 사용된다.
+
+### 플러그인 API — 3단계 전략
+
+> "플러그인 시스템은 어떻게 가져가는게 좋아?"
+> "rollup 호환? esbuild 호환?"
+> "Zig에서 JS 플러그인을 어떻게 실행하는데?"
+
+3단계 전략을 세웠다:
+
+1. **1단계: Zig Builtin 플러그인** — 함수 포인터 기반 Plugin struct
+2. **2단계: JS 플러그인 subprocess** — stdin/stdout JSON IPC
+3. **3단계: N-API .node addon** — in-process 호출 (선택적, 후순위)
+
+```
+d826040 feat(bundler): 플러그인 인프라 1단계 — Zig 함수 포인터 기반 Plugin struct
+40018f5 feat(bundler): subprocess 플러그인 — Node.js spawn + JSON IPC
+c6909ae feat: @zts/core npm 패키지 — subprocess 플러그인 JS API
+4d4cfe4 feat: CLI --plugin 옵션 + Bundler 통합
+```
+
+`@zts/core` npm 패키지를 만들어서 JS에서 플러그인을 작성할 수 있게 했다:
+
+```javascript
+// my-plugin.js
+import { definePlugin } from '@zts/core';
+
+export default definePlugin({
+  name: 'my-plugin',
+  setup(build) {
+    build.onResolve({ filter: /\.css$/ }, (args) => {
+      return { path: args.path, loader: 'text' };
+    });
+  }
+});
+```
+
+**하루 만에 1단계 + 2단계 완료.** Vue SFC와 Svelte 컴파일러 플러그인 테스트까지 포함.
+
+### Flow 파서 — flow.zig 독립 구현
+
+> "Flow 지원은 어떻게 하는게 좋아?"
+> "A: 직접 구현, B: Hermes C++ 링크, C: WASM 런타임"
+> "A로 가자 — 의존성 없이 가는게 낫지"
+
+피드백 규칙 중 하나: **"Flow는 ts_ 태그/핸들러 재사용 금지, flow_ 독립 구현"**.
+
+```
+c5158cd feat(parser): add Flow infrastructure — is_flow flag, @flow pragma detection, --flow CLI
+3ad7a07 feat(parser): add Flow basic type parsing — flow.zig, flow_ AST tags, type stripping
+b2a47b3 feat(parser): add Flow opaque type + variance support
+ed146a4 feat(parser): add Flow import typeof support
+0b85698 feat(parser): add Flow declare + interface
+94b4e99 feat(parser): add Flow as expression
+c5655e2 test: add Flow Metro smoke test — 410 @flow files pass
+```
+
+**Metro의 410개 @flow 파일 전체 통과.** 하루 만에 Flow 파서를 완성하고 스모크 테스트까지 통과시켰다.
+
+## 3/31: RN Resolve + 엔진 타겟 + scan 파이프라인
+
+### --resolve-extensions + --main-fields
+
+```
+a934d71 feat(bundler): add --resolve-extensions + --main-fields CLI options
+```
+
+React Native에서는 `.ios.ts`, `.android.ts`, `.native.ts` 순서로 확장자를 해석한다. package.json의 `main` 필드 대신 `react-native` 필드를 우선한다. 이 두 옵션으로 Metro와 동일한 모듈 해석이 가능해졌다.
+
+### 엔진 타겟 — --target=chrome80,safari14
+
+> "esbuild의 엔진 타겟은 어떻게 동작하는데?"
+> "compat-table 데이터를 써야하지 않나?"
+
+```
+de0ee99 feat(transformer): add engine target support (--target=chrome80,safari14)
+```
+
+esbuild의 compat-table 데이터를 기반으로 8개 엔진(chrome, firefox, safari, edge, node, deno, ios, hermes) × 18개 feature를 매핑. `--target=chrome80`이면 Chrome 80이 지원하지 않는 기능만 다운레벨링한다.
+
+`--target=hermes`가 가능하다는 것은 React Native에서 중요하다 — Hermes가 지원하지 않는 기능만 정확히 다운레벨링할 수 있다.
+
+### scan 파이프라인화 — 배치 → 파이프라인
+
+> "벤치마크 돌려봤어? scan이 왜 느린지?"
+> "배치로 모아서 처리하는 구조가 문제야"
+
+```
+5b9c472 perf(bundler): scan 파이프라인화 — 배치 경계 제거로 15% 개선
+```
+
+기존: 한 배치의 모듈을 모두 파싱한 후 → 다음 배치의 resolve 시작
+개선: 모듈 하나를 파싱하면 바로 resolve 시작 (파이프라인)
+
+이 변경으로 전체 번들링 시간 **15% 개선**.
+
+### 번개(Bungae) 연동
+
+```
+205cf97 feat(bundler): 번개(bungae) 연동 — RN 플랫폼, watch-json, 증분 빌드
+```
+
+Bungae(RN 래퍼)가 ZTS CLI를 subprocess로 호출하여 번들링하는 구조가 이날 완성됐다. `--watch-json` 옵션으로 NDJSON 이벤트를 출력하여 Bungae가 리빌드 상태를 추적할 수 있다.
+
+## 4/1~2: 성능 최적화 집중
+
+### emit 병렬화
+
+> "emit이 왜 74ms나 걸려?"
+> "모듈별로 병렬화하면 안돼?"
+
+```
+emit 병렬화: 74ms → 15ms (-80%)
+```
+
+각 모듈의 transform + codegen을 스레드 풀에서 동시 실행. 모듈 간 의존성이 없으므로 완전 병렬화가 가능하다.
+
+### resolve 병렬화
+
+```
+resolve 병렬화: 191ms → 134ms (-30%)
+```
+
+resolve는 파일 시스템 I/O가 주된 병목. 캐시 히트율이 높아서 병렬화 효과가 제한적이었다.
+
+### fixpoint oscillation 수정
+
+tree-shaking의 fixpoint 알고리즘이 수렴하지 않고 **100회 반복**하는 버그:
+
+> "왜 fixpoint가 100회나 도는거야?"
+> "미사용 모듈 제거를 fixpoint 안에서 하면 안되는거구나"
+
+```
+fixpoint oscillation: 100회 → 2회 수렴
+tree-shake: 238ms → 51ms
+```
+
+미사용 모듈 제거를 fixpoint **후**로 이동하여 해결. 모듈이 제거되면 다른 모듈의 사용 상태가 변하고, 이것이 다시 모듈 제거를 유발하는 순환이 원인이었다.
+
+### Producer-Consumer 전환
+
+```
+fbe8d12 refactor(bundler): scan Producer-Consumer 전환 — 포인터 안정성 근본 해결
+```
+
+scan 파이프라인에서 `ArrayList`의 `resize`가 포인터를 무효화하는 문제가 있었다. Producer-Consumer 패턴으로 전환하여 메인 스레드만 `ArrayList`에 쓰고, 워커는 parse + resolve만 수행. pre-allocation 제거, 포인터 안전.
+
+### jsx-dev 모드
+
+```
+feat: jsx-dev — React 개발 모드 jsxDEV + __source/__self
+```
+
+React 개발 모드에서는 `jsx` 대신 `jsxDEV`를 호출하고, `__source`(파일:라인)와 `__self`를 주입한다. 이것은 React DevTools에서 컴포넌트 위치를 표시하는 데 사용된다.
+
+## 4/3~4: 증분 빌드 + RN 플랫폼 + Hermes 호환
+
+### 증분 빌드 — watch/serve 리빌드 최적화
+
+```
+PersistentModuleStore + ResolveCache 보존
+```
+
+첫 빌드 후 모듈 그래프와 파싱 결과를 메모리에 유지. 파일이 변경되면 해당 모듈만 재파싱하고, 나머지는 캐시에서 재사용.
+
+### RN 플랫폼 프리셋
+
+> "Metro가 기본으로 설정하는 것들이 뭐야?"
+> "그걸 --platform=react-native 하나로 다 켜자"
+
+```
+--platform=react-native 프리셋:
+- JSX automatic (Metro 기본값)
+- Flow 자동 감지 (@flow pragma)
+- .ios.ts/.android.ts/.native.ts 확장자
+- main-fields: react-native, browser, module, main
+- Node builtins: empty
+- format: IIFE
+- configurable_exports: true (Hermes)
+- shimMissingExports: true
+```
+
+### global-identifier — scope hoisting 충돌 해결
+
+scope hoisting에서 RN의 `polyfillGlobal()` 전역 이름과 모듈 변수가 충돌하는 문제:
+
+> "Performance 모듈 변수와 전역 Performance가 충돌해"
+> "linker가 리네이밍해야지"
+> "esbuild는 이 문제 어떻게 해결해?"
+> "esbuild에는 이 기능이 없다고?"
+
+```
+--global-identifier=Performance → Performance$1로 자동 리네이밍
+```
+
+50개 이상의 RN 전역 이름(Promise, fetch, WebSocket, URL, Performance 등)을 `--global-identifier`로 전달하면 linker가 충돌을 방지한다. **esbuild와 Rolldown에는 없는 ZTS만의 기능이다.**
+
+### configurable_exports — Hermes 호환
+
+> "Hermes에서 defineProperty가 안 먹힌다고?"
+> "configurable: false면 재정의 불가능하잖아"
+
+```
+db8c4cf feat(runtime): configurable_exports 옵션 추가 (RN/Hermes 호환)
+9648f8d fix(runtime): Object.defineProperty에 configurable: true 추가
+```
+
+`configurable: true`가 없으면 RN 앱이 시작조차 못한다. 작은 변경이지만 치명적인 차이.
+
+## 4/5: JSX 리팩터링 + Rolldown 런타임 + 번들 소스맵
+
+이 날은 **3가지 독립적인 대작업**을 동시에 진행했다 (56커밋).
+
+### JSX Lowering 리팩터링 — codegen에서 Transformer로
+
+기존에는 JSX 변환(`<App />` → `React.createElement(App)`)이 codegen(코드 출력) 단계에 직접 구현되어 있었다. 단일 파일 모드에서는 문제가 없었지만, 번들 모드에서 scope hoisting과 결합하면 **JSX 바인딩이 잘못된 스코프를 참조**하는 문제가 발생했다.
+
+```
+c0b2722 test(codegen): JSX transform 리팩터링 방어 테스트 20개 추가
+2781833 refactor(transformer): JSX lowering을 codegen에서 Transformer 패스로 이동 (Phase 1)
+5bfcba6 refactor(codegen): 번들 모드 JSX를 Transformer로 이동 + codegen JSX 코드 제거 (Phase 2)
+```
+
+2단계로 나눠서 진행:
+1. **Phase 1**: Transformer에 JSX lowering 구현 + 기존 codegen 유지 (양쪽 다 동작)
+2. **Phase 2**: codegen의 JSX 코드 완전 제거, Transformer로 일원화
+
+방어 테스트 20개를 **먼저** 작성하고 리팩터링에 들어갔다 — B2 tree-shaking에서 확립된 TDD 패턴.
+
+#### JSX automatic import injection 버그
+
+번들 모드에서 `jsx-runtime` import가 자동 주입되지 않는 버그:
+
+```
+77597fc fix(bundler): automatic JSX transform에서 jsx-runtime import 자동 주입
+308cc69 fix(linker): ESM-wrapped 모듈에서 synthetic JSX binding이 skip되는 버그 수정
+c45c178 fix(emitter): ESM-wrapped 모듈에서 JSX binding 스코프 문제 수정
+```
+
+Transformer가 주입한 synthetic import를 linker가 ESM-wrapped 모듈에서 건너뛰고 있었다. `__esm` 래퍼 안에서는 synthetic binding의 스코프가 달라지기 때문이다. 이 버그를 찾는 데 **7개 테스트를 먼저 작성**하고 하나씩 좁혀갔다.
+
+#### JSX 스펙 준수 5가지 수정
+
+```
+18ccc78 feat(codegen): JSX 스펙 준수 5가지 수정
+5317e5d fix(codegen): JSX single child 텍스트의 개행 정규화 누락 수정
+```
+
+- HTML entity 디코딩 (`&amp;` → `&`)
+- 제어 문자 이스케이프
+- 텍스트 노드 개행 정규화
+- namespaced tag 처리
+- dead code 분기 정리
+
+### Rolldown 호환 런타임 헬퍼
+
+esbuild의 런타임 헬퍼(`__commonJS`, `__toESM`)를 Rolldown 방식으로 전환한 것은 이 시기의 가장 중요한 아키텍처 결정 중 하나다.
+
+#### __esm 모듈 간 live binding
+
+> "esbuild의 __esm은 lazy init이잖아"
+> "rolldown은 strict execution order를 보장한다고?"
+> "RN에서는 어떤 게 안전해?"
+
+```
+14070e2 fix(bundler): __esm 모듈 간 live binding 적용 (rolldown 방식)
+ceffa90 __esm 실행 순서 보장 — rolldown 방식 strict execution order
+```
+
+ESM 모듈이 `__esm` 래퍼로 감싸질 때, 모듈 간 변수 참조가 **live binding**이어야 한다. esbuild는 이를 getter로 처리하지만, Rolldown은 실행 순서를 엄격히 보장하는 방식을 사용한다.
+
+React Native에서 이 차이는 치명적이다 — 모듈 초기화 순서가 틀리면 `InitializeCore`가 먼저 실행되지 않아 `ErrorUtils`가 undefined가 된다.
+
+#### __copyProps/__toCommonJS Rolldown 호환
+
+```
+429eecd fix(bundler): __copyProps/__toCommonJS 런타임 헬퍼를 Rolldown 호환으로 수정
+739bafe fix(bundler): 런타임 헬퍼 ES5 호환 + 합성 노드 주석 위치 수정
+```
+
+런타임 헬퍼 자체도 ES5 호환이어야 한다 — 번들 출력이 ES5 타겟이면 헬퍼 코드도 화살표 함수, `const`, `let`을 쓸 수 없다.
+
+### 번들 소스맵 지원
+
+번들러가 여러 모듈을 하나로 합치면서 소스맵을 생성하는 것은 단일 파일 소스맵보다 훨씬 복잡하다. 각 모듈의 오프셋, preamble(런타임 헬퍼), chunk 경계를 모두 고려해야 한다.
+
+```
+d190741 feat(bundler): 번들 모드 소스맵 생성 지원
+1a34022 feat(bundler): emitWithTreeShaking에 소스맵 생성 통합
+d3e8762 fix(sourcemap): 번들 소스맵에 sourcesContent 추가 및 preamble 오프셋 수정
+cbedca8 fix(bundler): sourceMappingURL에 실제 파일명 사용
+```
+
+preamble(런타임 헬퍼 코드)이 소스맵 오프셋을 밀어내는 문제가 가장 까다로웠다. 런타임 헬퍼는 소스 파일이 없으므로 매핑할 대상이 없지만, 그 길이만큼 이후 모든 매핑의 라인/컬럼이 밀린다.
+
+## 4/6: Block Scoping + ES5 완성 + AST 통합
+
+이 날은 **ES5 다운레벨링의 마지막 퍼즐**을 맞추는 날이었다 (41커밋, 새벽 2시~저녁 6시 연속).
+
+### Block Scoping — let/const 스코프 격리
+
+ES5 다운레벨링의 핵심 난관. `let`과 `const`는 블록 스코프이지만, `var`는 함수 스코프다. 단순히 `let` → `var`로 바꾸면 스코프가 달라진다:
+
+```javascript
+// 원본
+for (let i = 0; i < 3; i++) {
+  setTimeout(() => console.log(i)); // 0, 1, 2
+}
+
+// 잘못된 var 변환
+for (var i = 0; i < 3; i++) {
+  setTimeout(() => console.log(i)); // 3, 3, 3 — 버그!
+}
+
+// 올바른 IIFE 추출
+var _loop = function(i) {
+  setTimeout(() => console.log(i));
+};
+for (var i = 0; i < 3; i++) _loop(i);
+```
+
+> "SWC는 block scoping을 어떻게 해?"
+> "IIFE 추출 방식이 가장 안전하다고?"
+
+```
+6b0ee3c feat(transformer): block scoping 블록 단위 let/const 스코프 격리 (#784)
+5634079 fix(transformer): block scoping 재귀→반복 변환 + AST 노드 레이아웃 오분류 수정
+79ed18f fix(transformer): block scoping 격리에서 destructuring 패턴 지원 (#800)
+fd8d0d3 feat(transformer): for-loop let/const 클로저 캡처 IIFE 추출 (Phase 4)
+```
+
+block scoping 구현 중 **AST 노드 레이아웃 오분류** 버그를 발견했다. `object_property`, `export_default_declaration`, `jsx_fragment` 노드의 자식 오프셋이 잘못 계산되고 있었다. 이것은 block scoping과 무관한 근본적인 AST 인프라 버그였다:
+
+```
+b24ad9f fix(ast): object_property 노드 레이아웃 오분류 수정 (#790)
+31e9934 fix(ast): export_default_declaration, jsx_fragment 노드 레이아웃 오분류 수정
+7e54430 refactor(ast): comptime 노드 레이아웃 인프라 — Tag.dataKind/extraChildOffsets/extraListOffsets
+```
+
+### AST 통합: old_ast/new_ast → 단일 AST
+
+트랜스포머가 노드를 추가하면 `new_ast`에 들어가고, 기존 노드는 `old_ast`에 남는 이중 구조였다. 이것은 linker와 emitter에서 "이 노드가 어디에 있는지" 항상 확인해야 하는 복잡성을 만들었다.
+
+```
+dbc78e9 refactor: old_ast/new_ast 분리 → 단일 AST (append-only) 통합
+```
+
+append-only 방식으로 통합. 새 노드는 기존 AST의 끝에 추가된다. 기존 인덱스는 변하지 않으므로 모든 참조가 유효하다. **이 리팩터링으로 linker와 emitter의 분기문이 대폭 감소했다.**
+
+### ES5 다운레벨링 — 나머지 변환들
+
+```
+c6390a0 feat(transformer): tagged template literal 다운레벨링 구현
+50f229e feat(transformer): new.target 다운레벨링 구현
+c01f566 fix(transformer): spread in new expression에서 괄호 누락 수정 (#783)
+a443b9c fix(transformer): template literal 변환에서 보간 표현식 괄호 추가 (#782)
+78c2812 refactor: ES2015 params lowering을 2-pass로 전환 (Phase 4)
+```
+
+**ES2015 params lowering 2-pass 전환**: destructuring/rest params를 처리할 때, 1-pass에서는 함수 본문 앞에 임시 변수를 선언하면서 기존 파라미터를 수정해야 했다. 2-pass로 바꾸면 첫 번째 패스에서 파라미터를 분석하고, 두 번째 패스에서 변환한다. 코드가 훨씬 안정적.
+
+arrow function, class method, setter, constructor, async, generator — 모든 함수 유형에서 destructuring/rest params ES5 lowering이 누락되는 버그들을 **일괄 수정**:
+
+```
+5b4361b fix(transformer): 화살표 함수 destructuring/rest params ES5 lowering 누락
+c92bc13 fix(transformer): class method/setter destructuring/rest params ES5 lowering 누락
+c5461f6 fix(transformer): constructor/async/generator ES5 destructuring lowering 누락 일괄 수정
+a7043ff fix(transformer): buildStandaloneFunc ES5 params lowering 누락
+```
+
+### Flow 개선
+
+React Native 생태계는 Flow를 사용한다. 폴리필부터 코어 라이브러리까지 Flow 타입 구문이 들어가 있다.
+
+```
+c96f427 refactor(flow): component ref 변환을 파서로 이동 (Phase 3)
+b6ced85 fix(flow): component 문법의 ref 파라미터를 React.forwardRef로 래핑
+254cdea fix(semantic): Flow component syntax body의 symbol_id 미설정 수정
+```
+
+Flow의 `component` 선언 문법에서 `ref` 파라미터가 있으면 `React.forwardRef`로 자동 래핑해야 한다. 이것은 Flow 스펙이 아니라 React Native가 사용하는 비표준 확장이다.
+
+### 추가 번들러 수정들
+
+```
+3f1d6f4 fix(bundler): TLA scope-hoisted IIFE를 async function으로 감싸기 (#779)
+48301a5 fix(transformer): optional chaining 변환 시 괄호 추가 (#732)
+36d78dd fix(codegen): export default <identifier> mangling 시 할당문 누락 수정
+```
+
+Top-Level Await(TLA)이 있는 모듈이 scope hoisting되면, 해당 IIFE가 `async function`으로 감싸져야 한다. 그렇지 않으면 `await`이 함수 바깥에 위치하게 되어 SyntaxError가 발생한다.
+
+## 4/7: kangax 99% + SWC 비교 CI — 마무리
+
+### kangax compat-table 테스트 러너
+
+kangax/compat-table은 브라우저와 트랜스파일러의 ES 기능 지원 현황을 측정하는 표준 테스트다.
+
+```
+2538be4 feat(transformer): kangax compat-table 테스트 러너 + ES5 다운레벨링 99% 달성
+```
+
+237개 서브테스트, ES5~ES2022 전체를 커버한다.
+
+| Target | Pass | Total | Rate |
+|--------|------|-------|------|
+| **ES5** | **257** | **259** | **99%** |
+| ES2015 | 17 | 17 | 100% |
+| ES2016 | 14 | 14 | 100% |
+| ES2017 | 14 | 14 | 100% |
+| ES2018 | 12 | 12 | 100% |
+| ES2019 | 10 | 10 | 100% |
+| ES2020 | 9 | 9 | 100% |
+
+ES5 미통과 2건: `GeneratorFunction` 생성자(polyfill 불가), `yield*` iterator throw(테스트 헬퍼 의존) — 트랜스파일러의 한계가 아니라 런타임 폴리필 영역이다.
+
+### SWC 비교 테스트
+
+```
+bd47164 feat(test): ZTS vs SWC ES5 다운레벨링 비교 테스트 + CI
+```
+
+29개 테스트 케이스 × 9개 타겟(ES5~ES2022). ZTS와 SWC의 출력을 나란히 비교하여 동작 동등성을 검증한다. CI에서 자동 실행.
+
+### 주요 ES5 변환기 수정들
+
+| 문제 | 커밋 | 설명 |
+|------|------|------|
+| class field _this 캡처 | 8802bce | 화살표 함수 내 `this` → `_this` 치환 누락 |
+| let → var void 0 | d5320d0 | `let x;` → `var x = void 0;` 초기화 필수 (TDZ 에뮬레이션) |
+| __rest Symbol | ed2ff3d | `{...rest}` 변환에서 Symbol 프로퍼티 복사 누락 |
+| tagged template literal | c6390a0 | `` tag`str${x}` `` → `tag(_templateObject(), x)` 변환 |
+| new.target | 50f229e | `new.target` → `this instanceof Constructor ? this.constructor : void 0` |
+| for-loop closure | fd8d0d3 | for 루프 let/const 클로저 캡처 IIFE 추출 |
+| spread in new | c01f566 | `new Foo(...args)` → `new (Function.prototype.bind.apply(Foo, [null].concat(args)))` |
+| template literal 보간 | a443b9c | `` `a${b+c}` `` → `"a" + (b + c)` 괄호 추가 |
+| class accessor dangling ptr | d56fbd2 | extra_data dangling pointer 크래시 수정 (#788) |
+
+### class → IIFE 패턴 (SWC 호환)
+
+ES5에서 `class`는 존재하지 않는다. SWC와 동일한 IIFE 패턴으로 변환:
+
+```javascript
+// 원본
+class Animal extends Base {
+  constructor(name) { super(name); }
+  speak() { return this.name; }
+}
+
+// ES5 변환
+var Animal = /*#__PURE__*/ function(_super) {
+  __extends(Animal, _super);
+  function Animal(name) { _super.call(this, name); }
+  Animal.prototype.speak = function() { return this.name; };
+  return Animal;
+}(Base);
+```
+
+## 이 시기의 핵심: "ES5까지 내려가야 RN이 된다"
+
+React Native의 JavaScript 엔진인 Hermes는 ES6+ 일부 기능을 네이티브로 지원하지만, ES5까지 내려가야 **모든 디바이스에서 안전하게 동작**한다. 특히 구형 Android에서는 Hermes가 아닌 JSC(JavaScriptCore)가 사용될 수 있다.
+
+12일간의 작업을 요약하면:
+
+```
+3/26~27: tree-shaking 고도화 (svelte 72% 감소)
+3/28:    번들러 옵션 22개 일괄 추가
+3/29~30: 플러그인 API + Flow 파서 + 증분 빌드 + config (142커밋!)
+3/31:    RN resolve + 엔진 타겟 + scan 파이프라인 15%↑
+4/1~2:   emit -80% + resolve -30% + fixpoint 100→2회 + jsx-dev
+4/3~4:   증분 빌드 + RN 플랫폼 프리셋 + Hermes 호환
+4/5:     JSX 리팩터링 + Rolldown 런타임 + 번들 소스맵
+4/6:     block scoping + AST 통합 + ES5 변환 완성
+4/7:     kangax 99% + SWC 비교 CI
+```
+
+이것이 ES5 다운레벨링이 "있으면 좋은 기능"이 아니라 **필수 기능**인 이유다. kangax 99%라는 수치는 ZTS가 Metro + Babel 조합을 대체할 수 있는 기반이 된다.
