@@ -148,3 +148,4 @@ CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과
 
 340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-267 - 2026-04-16 11:30 PM (Asia/Seoul) - CRD 30분마다 실행 (현재)
 340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-269 - 2026-04-16 04:00 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
+340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-270 - 2026-04-17 02:00 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
