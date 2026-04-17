@@ -1,6 +1,6 @@
 # 크론잡 가이드 — 맞춤법 교정 (30분마다)
 
-**크론 전용.** 하트비트가 아닌 **크론잡**에서만 이 파일을 읽습니다.  
+**크론 전용.** 하트비트가 아닌 **크론잡**에서만 이 파일을 읽습니다.
 30분마다 돌리는 크론에서 이 문서를 읽고, 블로그 내 **모든 .mdx 파일**을 **한 번에 하나씩** 검사하면서 **맞춤법만** 수정합니다.
 
 ---
@@ -50,7 +50,7 @@
 
 ## 6. 완료 시 알림
 
-- **설정됨**: 상위 OpenClaw 크론 `blog-crd-write`의 `delivery`가 `mode: announce`, `channel: discord`, `to: 1470349655966744661` 로 되어 있어, 완료 시마다 Discord 채널 **1470349655966744661**로 알림이 간다. (이 문서를 “읽어서” 보내는 게 아니라, 크론 실행 결과가 **자동 전송**된다.)
+- **설정됨**: 상위 OpenClaw 크론 `blog-crd-write`의 `delivery`가 `mode: announce`, `channel: discord`, `to: 1470349655966744661` 로 되어 있어, 완료 시마다 Discord 채널 **1470349655966744661**로 알림이 간다. (이 문서를 "읽어서" 보내는 게 아니라, 크론 실행 결과가 **자동 전송**된다.)
 - **참고**: 해당 크론이 `enabled: false`이면 실행·알림이 나가지 않는다. 사용 시 OpenClaw에서 크론을 켜 두어야 한다.
 - 알림·대화는 OpenClaw Control에서 해당 디스코드 세션(채널 1470349655966744661)을 열어 확인하면 된다.
 
@@ -92,107 +92,5 @@
 
 ---
 
-## 340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-263 - 2026-04-16 09:40 PM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-251 - 2026-03-27 09:00 PM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-252 - 2026-03-27 10:30 PM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-253 - 2026-03-27 11:00 PM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-254 - 2026-03-27 11:30 PM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-255 - 2026-03-28 12:00 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-256 - 2026-03-28 12:30 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-257 - 2026-03-28 01:00 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-258 - 2026-03-28 01:30 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-259 - 2026-03-28 02:00 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-260 - 2026-03-28 02:30 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-261 - 2026-03-28 03:00 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-262 - 2026-03-28 03:30 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-266 - 2026-04-16 11:00 PM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-267 - 2026-04-16 11:30 PM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-269 - 2026-04-16 04:00 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-270 - 2026-04-17 02:00 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-272 - 2026-04-17 04:00 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-273 - 2026-04-17 04:30 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-274 - 2026-04-17 05:00 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-275 - 2026-04-17 05:30 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-280 - 2026-04-17 02:00 PM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-281 - 2026-04-17 03:00 PM (Asia/Seoul) - CRD 30분마다 실행 (완료)
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-[x] 340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-285 - 2026-04-17 09:00 PM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-- [x] 340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-286 - 2026-04-17 10:00 PM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-**340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-287** - 2026-04-17 16:01:00 UTC / 2026-04-18 01:01 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-- [x] **340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-288** - 2026-04-17 17:30:00 UTC / 2026-04-18 02:30 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-- [x] **340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-290** - 2026-04-17 19:00:00 UTC / 2026-04-18 04:00 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-- [x] **340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-291** - 2026-04-17 19:30:00 UTC / 2026-04-18 04:30 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-- [x] **340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-292** - 2026-04-18 05:00:00 UTC / 2026-04-18 10:00 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-- [x] **340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-293** - 2026-04-18 05:30:00 UTC / 2026-04-18 10:30 AM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
-
-- [x] **340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-294** - 2026-04-18 06:00:00 UTC / 2026-04-18 15:00 PM (Asia/Seoul) - CRD 30분마다 실행 (현재)
+**340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-295** - 2026-04-18 06:30:00 UTC / 2026-04-18 15:30 PM (Asia/Seoul) - CRD 30분마다 실행 (현재)
 CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태, 타겟의 [ ] 파일 없음. 수정사항 없음. CRON_CRD_WRITE.md 상태만 갱신 후 커밋 및 푸시。
