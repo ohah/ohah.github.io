@@ -89,8 +89,4 @@
 - [x] docs/monthly-opensource/hwpjs/development-5.mdx
 - [x] docs/monthly-opensource/hwpjs/tech-stack.mdx
 - [x] docs/test.mdx
-
----
-
-**340-i-jeong-cha-ga-bu-yeok-suk-cha-jeong-ja-296** - 2026-04-18 11:00:00 UTC / 2026-04-18 20:00 PM (Asia/Seoul) - CRD 30분마다 실행 (현재)
-CRON_CRD_WRITE.md 재확인. §7 목록 27개 .mdx 파일 재확인. Lint 통과(0 warnings, 0 errors). 모든 .mdx 파일이 이미 [x] 체크 완료 상태. 모든 작업 완료.
+- [ ] docs/posts/2024/09/kdt-frontend-internship-2024-intro/index.mdx
