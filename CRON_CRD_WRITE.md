@@ -89,4 +89,5 @@
 - [x] docs/monthly-opensource/hwpjs/development-5.mdx
 - [x] docs/monthly-opensource/hwpjs/tech-stack.mdx
 - [x] docs/test.mdx
-- [ ] docs/posts/2024/09/kdt-frontend-internship-2024-intro/index.mdx
+- [x] docs/posts/2024/09/kdt-frontend-internship-2024-intro/index.mdx
+- [x] docs/today-commit/_meta.json
