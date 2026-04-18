@@ -90,6 +90,6 @@
 - [x] docs/monthly-opensource/hwpjs/tech-stack.mdx
 - [x] docs/test.mdx
 - [x] docs/posts/2024/09/kdt-frontend-internship-2024-intro/index.mdx
-- [ ] docs/today-commit/_meta.json
+- [x] docs/today-commit/_meta.json
 
 **모든 mdx 파일 검사 완료**
