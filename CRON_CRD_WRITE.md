@@ -91,3 +91,5 @@
 - [x] docs/test.mdx
 - [x] docs/posts/2024/09/kdt-frontend-internship-2024-intro/index.mdx
 - [x] docs/today-commit/_meta.json
+
+**모든 mdx 파일 검사 완료**
