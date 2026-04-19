@@ -60,45 +60,45 @@
 
 아래 순서대로 한 턴에 하나씩 검사하고, **끝날 때마다** 해당 파일 행만 `[ ]` → `[x]`로 바꾼다.
 
-- [✓] docs/index.mdx
-- [✓] docs/monthly-opensource/index.mdx
-- [✓] docs/monthly-opensource/craby/background.mdx
-- [✓] docs/monthly-opensource/chromium/background.mdx
-- [✓] docs/monthly-opensource/chromium/code-review.mdx
-- [✓] docs/monthly-opensource/chromium/first-contribution.mdx
-- [✓] docs/monthly-opensource/chromium/merge.mdx
-- [✓] docs/monthly-opensource/chromium/setup.mdx
-- [✓] docs/monthly-opensource/crd/background.mdx
-- [✓] docs/monthly-opensource/crd/development.mdx
-- [✓] docs/monthly-opensource/crd/development-1.mdx
-- [✓] docs/monthly-opensource/crd/development-2.mdx
-- [✓] docs/monthly-opensource/crd/development-3.mdx
-- [✓] docs/monthly-opensource/crd/development-4.mdx
-- [✓] docs/monthly-opensource/crd/development-5.mdx
-- [✓] docs/monthly-opensource/crd/development-6.mdx
-- [✓] docs/monthly-opensource/crd/development-7.mdx
-- [✓] docs/monthly-opensource/crd/development-8.mdx
-- [✓] docs/monthly-opensource/crd/development-9.mdx
-- [✓] docs/monthly-opensource/crd/tech-stack.mdx
-- [✓] docs/monthly-opensource/hwpjs/background.mdx
-- [✓] docs/monthly-opensource/hwpjs/development.mdx
-- [✓] docs/monthly-opensource/hwpjs/development-1.mdx
-- [✓] docs/monthly-opensource/hwpjs/development-2.mdx
-- [✓] docs/monthly-opensource/hwpjs/development-3.mdx
-- [✓] docs/monthly-opensource/hwpjs/development-4.mdx
-- [✓] docs/monthly-opensource/hwpjs/development-5.mdx
-- [✓] docs/monthly-opensource/hwpjs/tech-stack.mdx
-- [✓] docs/test.mdx
-- [✓] docs/posts/2024/09/kdt-frontend-internship-2024-intro/index.mdx
-- [✓] docs/today-commit/_meta.json
+- [x] docs/index.mdx
+- [x] docs/monthly-opensource/index.mdx
+- [x] docs/monthly-opensource/craby/background.mdx
+- [x] docs/monthly-opensource/chromium/background.mdx
+- [x] docs/monthly-opensource/chromium/code-review.mdx
+- [x] docs/monthly-opensource/chromium/first-contribution.mdx
+- [x] docs/monthly-opensource/chromium/merge.mdx
+- [x] docs/monthly-opensource/chromium/setup.mdx
+- [x] docs/monthly-opensource/crd/background.mdx
+- [x] docs/monthly-opensource/crd/development.mdx
+- [x] docs/monthly-opensource/crd/development-1.mdx
+- [x] docs/monthly-opensource/crd/development-2.mdx
+- [x] docs/monthly-opensource/crd/development-3.mdx
+- [x] docs/monthly-opensource/crd/development-4.mdx
+- [x] docs/monthly-opensource/crd/development-5.mdx
+- [x] docs/monthly-opensource/crd/development-6.mdx
+- [x] docs/monthly-opensource/crd/development-7.mdx
+- [x] docs/monthly-opensource/crd/development-8.mdx
+- [x] docs/monthly-opensource/crd/development-9.mdx
+- [x] docs/monthly-opensource/crd/tech-stack.mdx
+- [x] docs/monthly-opensource/hwpjs/background.mdx
+- [x] docs/monthly-opensource/hwpjs/development.mdx
+- [x] docs/monthly-opensource/hwpjs/development-1.mdx
+- [x] docs/monthly-opensource/hwpjs/development-2.mdx
+- [x] docs/monthly-opensource/hwpjs/development-3.mdx
+- [x] docs/monthly-opensource/hwpjs/development-4.mdx
+- [x] docs/monthly-opensource/hwpjs/development-5.mdx
+- [x] docs/monthly-opensource/hwpjs/tech-stack.mdx
+- [x] docs/test.mdx
+- [x] docs/posts/2024/09/kdt-frontend-internship-2024-intro/index.mdx
+- [x] docs/today-commit/_meta.json
 
 **모든 mdx 파일 검사 완료**
 
-- [✓] 이 워크스페이스 내 모든 .mdx 파일(33개)에 대한 맞춤법·띄어쓰기·오타 검사가 완료되었습니다.
+- [x] 이 워크스페이스 내 모든 .mdx 파일(33개)에 대한 맞춤법·띄어쓰기·오타 검사가 완료되었습니다.
 
 **CRD 스텝 완료 (All done)**
 
-- [✓] CRON_CRD_WRITE.md 체크리스트 전체 완료 후 업데이트 및 커밋/푸시
+- [x] CRON_CRD_WRITE.md 체크리스트 전체 완료 후 업데이트 및 커밋/푸시
 
 ---
 
