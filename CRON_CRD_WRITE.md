@@ -111,20 +111,20 @@
 - [x] docs/monthly-opensource/react-wasm-table/development-2.mdx
 - [x] docs/monthly-opensource/react-wasm-table/development-3.mdx
 - [x] docs/monthly-opensource/react-wasm-table/tech-stack.mdx
-- [ ] docs/monthly-opensource/zts/background.mdx
-- [ ] docs/monthly-opensource/zts/development.mdx
-- [ ] docs/monthly-opensource/zts/development-1.mdx
-- [ ] docs/monthly-opensource/zts/development-2.mdx
-- [ ] docs/monthly-opensource/zts/development-3.mdx
-- [ ] docs/monthly-opensource/zts/development-4.mdx
-- [ ] docs/monthly-opensource/zts/development-5.mdx
-- [ ] docs/monthly-opensource/zts/development-6.mdx
-- [ ] docs/monthly-opensource/zts/development-7.mdx
-- [ ] docs/monthly-opensource/zts/development-8.mdx
-- [ ] docs/monthly-opensource/zts/development-9.mdx
-- [ ] docs/monthly-opensource/zts/development-10.mdx
-- [ ] docs/monthly-opensource/zts/tech-stack.mdx
-- [ ] docs/monthly-opensource/cheolsu-proxy/background.mdx
+- [x] docs/monthly-opensource/zts/background.mdx
+- [x] docs/monthly-opensource/zts/development.mdx
+- [x] docs/monthly-opensource/zts/development-1.mdx
+- [x] docs/monthly-opensource/zts/development-2.mdx
+- [x] docs/monthly-opensource/zts/development-3.mdx
+- [x] docs/monthly-opensource/zts/development-4.mdx
+- [x] docs/monthly-opensource/zts/development-5.mdx
+- [x] docs/monthly-opensource/zts/development-6.mdx
+- [x] docs/monthly-opensource/zts/development-7.mdx
+- [x] docs/monthly-opensource/zts/development-8.mdx
+- [x] docs/monthly-opensource/zts/development-9.mdx
+- [x] docs/monthly-opensource/zts/development-10.mdx
+- [x] docs/monthly-opensource/zts/tech-stack.mdx
+- [x] docs/monthly-opensource/cheolsu-proxy/background.mdx
 - [ ] docs/monthly-opensource/cheolsu-proxy/development.mdx
 - [ ] docs/monthly-opensource/cheolsu-proxy/development-1.mdx
 - [ ] docs/monthly-opensource/cheolsu-proxy/development-2.mdx
