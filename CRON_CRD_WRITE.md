@@ -98,7 +98,7 @@
 - [ ] docs/monthly-opensource/hwpjs/development-4.mdx
 - [ ] docs/monthly-opensource/hwpjs/development-5.mdx
 - [ ] docs/monthly-opensource/hwpjs/tech-stack.mdx
-- [ ] docs/monthly-opensource/index.mdx
+- [x] docs/monthly-opensource/index.mdx
 - [ ] docs/monthly-opensource/react-native-mcp/background.mdx
 - [ ] docs/monthly-opensource/react-native-mcp/development.mdx
 - [ ] docs/monthly-opensource/react-native-mcp/development-1.mdx
