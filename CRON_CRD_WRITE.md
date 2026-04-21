@@ -125,7 +125,7 @@
 - [x] docs/monthly-opensource/zts/development-10.mdx
 - [x] docs/monthly-opensource/zts/tech-stack.mdx
 - [x] docs/monthly-opensource/cheolsu-proxy/background.mdx
-- [ ] docs/monthly-opensource/cheolsu-proxy/development.mdx
+- [x] docs/monthly-opensource/cheolsu-proxy/development.mdx
 - [ ] docs/monthly-opensource/cheolsu-proxy/development-1.mdx
 - [ ] docs/monthly-opensource/cheolsu-proxy/development-2.mdx
 - [ ] docs/monthly-opensource/cheolsu-proxy/development-3.mdx
