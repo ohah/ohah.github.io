@@ -62,7 +62,7 @@
 
 - [x] docs/index.mdx
 - [x] docs/monthly-opensource/index.mdx
-- [ ] docs/monthly-opensource/craby/background.mdx
+- [x] docs/monthly-opensource/craby/background.mdx
 - [ ] docs/monthly-opensource/craby/development.mdx
 - [ ] docs/monthly-opensource/craby/development-1.mdx
 - [ ] docs/monthly-opensource/craby/development-2.mdx
