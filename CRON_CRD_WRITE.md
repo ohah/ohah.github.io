@@ -132,17 +132,14 @@
 - [x] docs/test.mdx
 - [x] docs/posts/2024/09/kdt-frontend-internship-2024-intro/index.mdx
 - [x] docs/today-commit/_meta.json
-- [x] docs/test.mdx
-- [x] docs/posts/2024/09/kdt-frontend-internship-2024-intro/index.mdx
-- [x] docs/today-commit/_meta.json
 
 **모든 mdx 파일 검사 완료**
 
 - [x] 이 워크스페이스 내 모든 .mdx 파일(33개)에 대한 맞춤법·띄어쓰기·오타 검사가 완료되었습니다.
 
-**CRD 스텝 완료 (All done)**
+**CRON_CRD_WRITE.md 체크리스트 완료**
 
-- [x] CRON_CRD_WRITE.md 체크리스트 전체 완료 후 업데이트 및 커밋/푸시
+- [x] 이 파일의 전체 목록 및 최종 상태 업데이트 완료
 
 ---
 
