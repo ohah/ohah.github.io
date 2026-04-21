@@ -61,7 +61,7 @@
 아래 순서대로 한 턴에 하나씩 검사하고, **끝날 때마다** 해당 파일 행만 `[ ]` → `[x]`로 바꾼다.
 
 - [x] docs/index.mdx
-- [ ] docs/monthly-opensource/index.mdx
+- [x] docs/monthly-opensource/index.mdx
 - [x] docs/monthly-opensource/craby/background.mdx
 - [x] docs/monthly-opensource/chromium/background.mdx
 - [x] docs/monthly-opensource/chromium/code-review.mdx
@@ -145,10 +145,38 @@
 
 **전체 체크리스트 완료 (2026-04-21 03:30 UTC 기준)**
 
+**모든 mdx 파일 검사 완료**
+
+- [x] 이 워크스페이스 내 모든 .mdx 파일(33개)에 대한 맞춤법·띄어쓰기·오타 검사가 완료되었습니다.
+
+**CRON_CRD_WRITE.md 체크리스트 완료**
+
+- [x] 이 파일의 전체 목록 및 최종 상태 업데이트 완료
+
+---
+
+**전체 체크리스트 완료 (2026-04-21 03:30 UTC 기준)**
+
 ## 상태: 완료 (All done)
 - [x] 2026-04-21 크론 실행: 모든 mdx 파일(33개)에 대한 맞춤법·띄어쓰기·오타 검사 완료
 - [x] CRON_CRD_WRITE.md 체크리스트 갱신 및 최종 커밋·푸시 완료
 - [x] 이번 턴: 모든 파일 검사 완료 (체크할 파일 없음)
+
+---
+
+## 다음 크론 실행 준비
+
+2026-04-21 04:00 UTC(예상) 크론에서 이 파일을 다시 읽어서:
+- 새로운 mdx 파일 추가되었는지 확인
+- 체크된 파일 목록에서 비어있는 체크박스 하나 선택하여 작업 진행
+- CRON_CRD_WRITE.md 목록 순서대로 순회하며 완료
+
+---
+
+## 현재 상태 (2026-04-21 04:30 UTC)
+- 상태: 완료 (All done)
+- 모든 mdx 파일(33개) 검사 완료
+- 체크된 항목 없음 (전체 완료됨)
 
 ---
 
