@@ -87,7 +87,7 @@
 - [x] docs/monthly-opensource/electron-mcp-server/background.mdx
 - [x] docs/monthly-opensource/electron-mcp-server/development.mdx
 - [x] docs/monthly-opensource/electron-mcp-server/development-1.mdx
-- [ ] docs/monthly-opensource/electron-mcp-server/development-2.mdx
+- [x] docs/monthly-opensource/electron-mcp-server/development-2.mdx
 - [ ] docs/monthly-opensource/electron-mcp-server/development-3.mdx
 - [ ] docs/monthly-opensource/electron-mcp-server/tech-stack.mdx
 - [ ] docs/monthly-opensource/hwpjs/background.mdx
