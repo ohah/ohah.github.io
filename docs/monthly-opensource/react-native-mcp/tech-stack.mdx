@@ -4,7 +4,7 @@ date: 2026-02-19
 ---
 
 
-# 2. 기술 스택
+## 2. 기술 스택
 
 > "네이티브 모듈 안 쓴다. 순수 JS로 간다."
 
@@ -12,13 +12,13 @@ date: 2026-02-19
 
 가장 큰 기술적 결정은 앱에 런타임을 어떻게 주입할 것인가였다.
 
-선택지는 세 가지:
+선택지는 세 가지다.
 
 1. **네이티브 모듈** — 안정적이지만 설치가 복잡하고 앱 재빌드 필요
 2. **Metro 플러그인** — 번들러 레벨에서 코드 주입 가능하지만 Metro 내부 API에 의존
-3. **Babel 프리셋** — 빌드 타임에 코드를 변환하는 표준적인 방법
+3. **Babel 프리셋** — 빌드 타임에 코드를 변환하는 표준 방법
 
-Babel 프리셋으로 결정했다. 이유:
+Babel 프리셋으로 결정했다. 이유는 다음과 같다.
 
 - React Native는 이미 Babel을 필수로 쓴다. 추가 도구가 필요 없다
 - `babel.config.js`에 한 줄만 추가하면 된다
@@ -29,17 +29,17 @@ Babel 프리셋으로 결정했다. 이유:
 module.exports = {
   presets: [
     'module:@react-native/babel-preset',
-    '@ohah/react-native-mcp-server/babel-preset' // 이 한 줄
+    '@ohah/react-native-mcp-server/babel-preset', // 이 한 줄
   ],
 };
 ```
 
 ### Babel 플러그인 3종
 
-실제로는 3개의 Babel 플러그인이 포함되어 있다:
+실제로는 3개의 Babel 플러그인이 포함되어 있다.
 
-1. **babel-plugin-app-registry** — `AppRegistry.registerComponent` 호출을 감지해서 런타임 초기화 코드를 앱 시작점에 주입
-2. **babel-plugin-inject-testid** — 컴포넌트에 `testID` prop이 없으면 자동으로 컴포넌트명 기반 testID를 주입. AI가 요소를 찾을 때 유용
+1. **babel-plugin-app-registry** — `AppRegistry.registerComponent` 호출을 감지해서 런타임 초기화 코드를 앱 시작점에 주입하는 플러그인
+2. **babel-plugin-inject-testid** — 컴포넌트에 `testID` prop이 없으면 자동으로 컴포넌트명 기반 `testID`를 주입하는 플러그인. AI가 요소를 찾을 때 유용
 3. **babel-preset** — 위 두 플러그인을 묶은 프리셋
 
 ## WebSocket 통신
@@ -52,7 +52,7 @@ module.exports = {
 
 모바일 앱은 백그라운드로 가거나, 핫 리로드가 되거나, 크래시가 날 수 있다. 연결이 끊어질 때마다 수동으로 재시작하면 DX가 최악이다.
 
-런타임에 지수 백오프(exponential backoff) 재연결을 구현했다. 연결이 끊어지면 1초 → 2초 → 4초 → ... 간격으로 재연결을 시도한다. 앱이 핫 리로드되면 자동으로 다시 연결된다.
+런타임에 지수 백오프(Exponential Backoff) 재연결을 구현했다. 연결이 끊어지면 1초 → 2초 → 4초 → ... 간격으로 재연결을 시도한다. 앱이 핫 리로드되면 자동으로 다시 연결된다.
 
 ## 네이티브 디바이스 제어: adb + idb
 
