@@ -110,7 +110,7 @@
 - [x] docs/monthly-opensource/react-wasm-table/development-1.mdx
 - [x] docs/monthly-opensource/react-wasm-table/development-2.mdx
 - [x] docs/monthly-opensource/react-wasm-table/development-3.mdx
-- [ ] docs/monthly-opensource/react-wasm-table/tech-stack.mdx
+- [x] docs/monthly-opensource/react-wasm-table/tech-stack.mdx
 - [ ] docs/monthly-opensource/zts/background.mdx
 - [ ] docs/monthly-opensource/zts/development.mdx
 - [ ] docs/monthly-opensource/zts/development-1.mdx
