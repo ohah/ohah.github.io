@@ -135,9 +135,13 @@
 - [x] docs/monthly-opensource/cheolsu-proxy/development-7.mdx
 - [x] docs/monthly-opensource/cheolsu-proxy/development-8.mdx
 - [x] docs/monthly-opensource/cheolsu-proxy/development-9.mdx
-- [ ] docs/monthly-opensource/cheolsu-proxy/development-10.mdx
-- [ ] docs/monthly-opensource/cheolsu-proxy/development-11.mdx
-- [ ] docs/monthly-opensource/cheolsu-proxy/tech-stack.mdx
-- [ ] docs/test.mdx
-- [ ] docs/posts/2024/09/kdt-frontend-internship-2024-intro/index.mdx
-- [ ] docs/today-commit/_meta.json
+- [x] docs/monthly-opensource/cheolsu-proxy/development-10.mdx
+- [x] docs/monthly-opensource/cheolsu-proxy/development-11.mdx
+- [x] docs/monthly-opensource/cheolsu-proxy/tech-stack.mdx
+- [x] docs/test.mdx
+- [x] docs/posts/2024/09/kdt-frontend-internship-2024-intro/index.mdx
+- [x] docs/today-commit/_meta.json
+---
+**All .mdx files have been checked.**
+
+(All 60 files in the checklist are marked as completed.)
