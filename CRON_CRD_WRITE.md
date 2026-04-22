@@ -146,3 +146,5 @@
 *(All 60 files in the checklist are marked as completed.)*
 
 - [x] docs/monthly-opensource/development.mdx
+
+**Note:** The checklist above covers 60 files that were previously tracked. There are currently 81 .mdx files in the docs/ directory. The checklist should be updated when a new file is added to the workspace.
