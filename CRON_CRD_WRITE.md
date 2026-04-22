@@ -134,7 +134,7 @@
 - [x] docs/monthly-opensource/cheolsu-proxy/development-6.mdx
 - [x] docs/monthly-opensource/cheolsu-proxy/development-7.mdx
 - [x] docs/monthly-opensource/cheolsu-proxy/development-8.mdx
-- [ ] docs/monthly-opensource/cheolsu-proxy/development-9.mdx
+- [x] docs/monthly-opensource/cheolsu-proxy/development-9.mdx
 - [ ] docs/monthly-opensource/cheolsu-proxy/development-10.mdx
 - [ ] docs/monthly-opensource/cheolsu-proxy/development-11.mdx
 - [ ] docs/monthly-opensource/cheolsu-proxy/tech-stack.mdx
