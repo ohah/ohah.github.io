@@ -141,7 +141,6 @@
 - [x] docs/test.mdx
 - [x] docs/posts/2024/09/kdt-frontend-internship-2024-intro/index.mdx
 - [x] docs/today-commit/_meta.json
----
-**All .mdx files have been checked.**
+- [x] **All .mdx files checked (60 files total)**
 
 (All 60 files in the checklist are marked as completed.)
