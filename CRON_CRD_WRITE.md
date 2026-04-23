@@ -81,7 +81,7 @@
 - [x] docs/monthly-opensource/chromium/merge.mdx
 - [x] docs/monthly-opensource/chromium/setup.mdx
 - [x] docs/monthly-opensource/craby/background.mdx
-- [ ] docs/monthly-opensource/craby/development.mdx
+- [x] docs/monthly-opensource/craby/development.mdx
 - [ ] docs/monthly-opensource/craby/development-1.mdx
 - [ ] docs/monthly-opensource/craby/development-2.mdx
 - [ ] docs/monthly-opensource/craby/development-3.mdx
