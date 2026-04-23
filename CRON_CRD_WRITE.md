@@ -87,16 +87,16 @@
 - [x] docs/monthly-opensource/craby/development-3.mdx
 - [x] docs/monthly-opensource/crd/background.mdx
 - [x] docs/monthly-opensource/crd/development.mdx
-- [ ] docs/monthly-opensource/crd/development-1.mdx
-- [ ] docs/monthly-opensource/crd/development-2.mdx
-- [ ] docs/monthly-opensource/crd/development-3.mdx
-- [ ] docs/monthly-opensource/crd/development-4.mdx
-- [ ] docs/monthly-opensource/crd/development-5.mdx
-- [ ] docs/monthly-opensource/crd/development-6.mdx
+- [x] docs/monthly-opensource/crd/development-1.mdx
+- [x] docs/monthly-opensource/crd/development-2.mdx
+- [x] docs/monthly-opensource/crd/development-3.mdx
+- [x] docs/monthly-opensource/crd/development-4.mdx
+- [x] docs/monthly-opensource/crd/development-5.mdx
+- [x] docs/monthly-opensource/crd/development-6.mdx
 - [x] docs/monthly-opensource/crd/development-7.mdx
-- [ ] docs/monthly-opensource/crd/development-8.mdx
-- [ ] docs/monthly-opensource/crd/development-9.mdx
-- [ ] docs/monthly-opensource/crd/tech-stack.mdx
+- [x] docs/monthly-opensource/crd/development-8.mdx
+- [x] docs/monthly-opensource/crd/development-9.mdx
+- [x] docs/monthly-opensource/crd/tech-stack.mdx
 - [ ] docs/monthly-opensource/development.mdx
 - [ ] docs/monthly-opensource/electron-mcp-server/background.mdx
 - [ ] docs/monthly-opensource/electron-mcp-server/development.mdx
