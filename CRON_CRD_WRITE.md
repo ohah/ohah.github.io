@@ -77,7 +77,7 @@
 - [x] docs/monthly-opensource/cheolsu-proxy/tech-stack.mdx
 - [x] docs/monthly-opensource/chromium/background.mdx
 - [x] docs/monthly-opensource/chromium/code-review.mdx
-- [ ] docs/monthly-opensource/chromium/first-contribution.mdx
+- [x] docs/monthly-opensource/chromium/first-contribution.mdx
 - [ ] docs/monthly-opensource/chromium/merge.mdx
 - [ ] docs/monthly-opensource/chromium/setup.mdx
 - [ ] docs/monthly-opensource/craby/background.mdx
