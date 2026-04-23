@@ -75,7 +75,7 @@
 - [x] docs/monthly-opensource/cheolsu-proxy/development-10.mdx
 - [x] docs/monthly-opensource/cheolsu-proxy/development-11.mdx
 - [x] docs/monthly-opensource/cheolsu-proxy/tech-stack.mdx
-- [ ] docs/monthly-opensource/chromium/background.mdx
+- [x] docs/monthly-opensource/chromium/background.mdx
 - [x] docs/monthly-opensource/chromium/code-review.mdx
 - [ ] docs/monthly-opensource/chromium/first-contribution.mdx
 - [ ] docs/monthly-opensource/chromium/merge.mdx
