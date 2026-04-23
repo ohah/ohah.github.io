@@ -72,7 +72,7 @@
 - [x] docs/monthly-opensource/cheolsu-proxy/development-7.mdx
 - [x] docs/monthly-opensource/cheolsu-proxy/development-8.mdx
 - [x] docs/monthly-opensource/cheolsu-proxy/development-9.mdx
-- [ ] docs/monthly-opensource/cheolsu-proxy/development-10.mdx
+- [x] docs/monthly-opensource/cheolsu-proxy/development-10.mdx
 - [ ] docs/monthly-opensource/cheolsu-proxy/development-11.mdx
 - [ ] docs/monthly-opensource/cheolsu-proxy/tech-stack.mdx
 - [ ] docs/monthly-opensource/chromium/background.mdx
