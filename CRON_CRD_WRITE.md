@@ -61,90 +61,84 @@
 아래 순서대로 한 턴에 하나씩 검사하고, **끝날 때마다** 해당 파일 행만 `[ ]` → `[x]`로 바꾼다.
 
 - [x] docs/index.mdx
-- [x] docs/monthly-opensource/index.mdx
-- [x] docs/monthly-opensource/craby/background.mdx
-- [x] docs/monthly-opensource/craby/development.mdx
-- [x] docs/monthly-opensource/craby/development-1.mdx
-- [x] docs/monthly-opensource/craby/development-2.mdx
-- [x] docs/monthly-opensource/craby/development-3.mdx
-- [x] docs/monthly-opensource/chromium/background.mdx
-- [x] docs/monthly-opensource/chromium/code-review.mdx
-- [x] docs/monthly-opensource/chromium/first-contribution.mdx
-- [x] docs/monthly-opensource/chromium/merge.mdx
-- [x] docs/monthly-opensource/chromium/setup.mdx
-- [x] docs/monthly-opensource/crd/background.mdx
-- [x] docs/monthly-opensource/crd/development.mdx
-- [x] docs/monthly-opensource/crd/development-1.mdx
-- [x] docs/monthly-opensource/crd/development-2.mdx
-- [x] docs/monthly-opensource/crd/development-3.mdx
-- [x] docs/monthly-opensource/crd/development-4.mdx
-- [x] docs/monthly-opensource/crd/development-5.mdx
-- [x] docs/monthly-opensource/crd/development-6.mdx
-- [x] docs/monthly-opensource/crd/development-7.mdx
-- [x] docs/monthly-opensource/crd/development-8.mdx
-- [x] docs/monthly-opensource/crd/development-9.mdx
-- [x] docs/monthly-opensource/crd/tech-stack.mdx
-- [x] docs/monthly-opensource/electron-mcp-server/background.mdx
-- [x] docs/monthly-opensource/electron-mcp-server/development.mdx
-- [x] docs/monthly-opensource/electron-mcp-server/development-1.mdx
-- [x] docs/monthly-opensource/electron-mcp-server/development-2.mdx
-- [x] docs/monthly-opensource/electron-mcp-server/development-3.mdx
-- [x] docs/monthly-opensource/electron-mcp-server/tech-stack.mdx
-- [x] docs/monthly-opensource/hwpjs/background.mdx
-- [x] docs/monthly-opensource/hwpjs/development.mdx
-- [x] docs/monthly-opensource/hwpjs/development-1.mdx
-- [x] docs/monthly-opensource/hwpjs/development-2.mdx
-- [x] docs/monthly-opensource/hwpjs/development-3.mdx
-- [x] docs/monthly-opensource/hwpjs/development-4.mdx
-- [x] docs/monthly-opensource/hwpjs/development-5.mdx
-- [x] docs/monthly-opensource/hwpjs/tech-stack.mdx
-- [x] docs/monthly-opensource/index.mdx
-- [x] docs/monthly-opensource/react-native-mcp/background.mdx
-- [x] docs/monthly-opensource/react-native-mcp/development.mdx
-- [x] docs/monthly-opensource/react-native-mcp/development-1.mdx
-- [x] docs/monthly-opensource/react-native-mcp/development-2.mdx
-- [x] docs/monthly-opensource/react-native-mcp/development-3.mdx
-- [x] docs/monthly-opensource/react-native-mcp/tech-stack.mdx
-- [x] docs/monthly-opensource/react-wasm-table/background.mdx
-- [x] docs/monthly-opensource/react-wasm-table/development.mdx
-- [x] docs/monthly-opensource/react-wasm-table/development-1.mdx
-- [x] docs/monthly-opensource/react-wasm-table/development-2.mdx
-- [x] docs/monthly-opensource/react-wasm-table/development-3.mdx
-- [x] docs/monthly-opensource/react-wasm-table/tech-stack.mdx
-- [x] docs/monthly-opensource/zts/background.mdx
-- [x] docs/monthly-opensource/zts/development.mdx
-- [x] docs/monthly-opensource/zts/development-1.mdx
-- [x] docs/monthly-opensource/zts/development-2.mdx
-- [x] docs/monthly-opensource/zts/development-3.mdx
-- [x] docs/monthly-opensource/zts/development-4.mdx
-- [x] docs/monthly-opensource/zts/development-5.mdx
-- [x] docs/monthly-opensource/zts/development-6.mdx
-- [x] docs/monthly-opensource/zts/development-7.mdx
-- [x] docs/monthly-opensource/zts/development-8.mdx
-- [x] docs/monthly-opensource/zts/development-9.mdx
-- [x] docs/monthly-opensource/zts/development-10.mdx
-- [x] docs/monthly-opensource/zts/tech-stack.mdx
-- [x] docs/monthly-opensource/cheolsu-proxy/background.mdx
-- [x] docs/monthly-opensource/cheolsu-proxy/development.mdx
-- [x] docs/monthly-opensource/cheolsu-proxy/development-1.mdx
-- [x] docs/monthly-opensource/cheolsu-proxy/development-2.mdx
-- [x] docs/monthly-opensource/cheolsu-proxy/development-3.mdx
-- [x] docs/monthly-opensource/cheolsu-proxy/development-4.mdx
-- [x] docs/monthly-opensource/cheolsu-proxy/development-5.mdx
-- [x] docs/monthly-opensource/cheolsu-proxy/development-6.mdx
-- [x] docs/monthly-opensource/cheolsu-proxy/development-7.mdx
-- [x] docs/monthly-opensource/cheolsu-proxy/development-8.mdx
-- [x] docs/monthly-opensource/cheolsu-proxy/development-9.mdx
-- [x] docs/monthly-opensource/cheolsu-proxy/development-10.mdx
-- [x] docs/monthly-opensource/cheolsu-proxy/development-11.mdx
-- [x] docs/monthly-opensource/cheolsu-proxy/tech-stack.mdx
-- [x] docs/test.mdx
-- [x] docs/posts/2024/09/kdt-frontend-internship-2024-intro/index.mdx
-- [x] docs/today-commit/_meta.json
-- [x] **All .mdx files checked (66 files total)** - completed
-
-*(All 66 files in the docs/monthly-opensource directory are marked as completed.)*
-
-- [x] docs/monthly-opensource/development.mdx
-
-**Note:** The checklist above covers 60 files that were previously tracked. There are currently 81 .mdx files in the docs/ directory. The checklist should be updated when a new file is added to the workspace.
+- [ ] docs/monthly-opensource/cheolsu-proxy/background.mdx
+- [ ] docs/monthly-opensource/cheolsu-proxy/development.mdx
+- [ ] docs/monthly-opensource/cheolsu-proxy/development-1.mdx
+- [ ] docs/monthly-opensource/cheolsu-proxy/development-2.mdx
+- [ ] docs/monthly-opensource/cheolsu-proxy/development-3.mdx
+- [ ] docs/monthly-opensource/cheolsu-proxy/development-4.mdx
+- [ ] docs/monthly-opensource/cheolsu-proxy/development-5.mdx
+- [ ] docs/monthly-opensource/cheolsu-proxy/development-6.mdx
+- [ ] docs/monthly-opensource/cheolsu-proxy/development-7.mdx
+- [ ] docs/monthly-opensource/cheolsu-proxy/development-8.mdx
+- [ ] docs/monthly-opensource/cheolsu-proxy/development-9.mdx
+- [ ] docs/monthly-opensource/cheolsu-proxy/development-10.mdx
+- [ ] docs/monthly-opensource/cheolsu-proxy/development-11.mdx
+- [ ] docs/monthly-opensource/cheolsu-proxy/tech-stack.mdx
+- [ ] docs/monthly-opensource/chromium/background.mdx
+- [ ] docs/monthly-opensource/chromium/code-review.mdx
+- [ ] docs/monthly-opensource/chromium/first-contribution.mdx
+- [ ] docs/monthly-opensource/chromium/merge.mdx
+- [ ] docs/monthly-opensource/chromium/setup.mdx
+- [ ] docs/monthly-opensource/craby/background.mdx
+- [ ] docs/monthly-opensource/craby/development.mdx
+- [ ] docs/monthly-opensource/craby/development-1.mdx
+- [ ] docs/monthly-opensource/craby/development-2.mdx
+- [ ] docs/monthly-opensource/craby/development-3.mdx
+- [ ] docs/monthly-opensource/crd/background.mdx
+- [ ] docs/monthly-opensource/crd/development.mdx
+- [ ] docs/monthly-opensource/crd/development-1.mdx
+- [ ] docs/monthly-opensource/crd/development-2.mdx
+- [ ] docs/monthly-opensource/crd/development-3.mdx
+- [ ] docs/monthly-opensource/crd/development-4.mdx
+- [ ] docs/monthly-opensource/crd/development-5.mdx
+- [ ] docs/monthly-opensource/crd/development-6.mdx
+- [ ] docs/monthly-opensource/crd/development-7.mdx
+- [ ] docs/monthly-opensource/crd/development-8.mdx
+- [ ] docs/monthly-opensource/crd/development-9.mdx
+- [ ] docs/monthly-opensource/crd/tech-stack.mdx
+- [ ] docs/monthly-opensource/development.mdx
+- [ ] docs/monthly-opensource/electron-mcp-server/background.mdx
+- [ ] docs/monthly-opensource/electron-mcp-server/development.mdx
+- [ ] docs/monthly-opensource/electron-mcp-server/development-1.mdx
+- [ ] docs/monthly-opensource/electron-mcp-server/development-2.mdx
+- [ ] docs/monthly-opensource/electron-mcp-server/development-3.mdx
+- [ ] docs/monthly-opensource/electron-mcp-server/tech-stack.mdx
+- [ ] docs/monthly-opensource/hwpjs/background.mdx
+- [ ] docs/monthly-opensource/hwpjs/development.mdx
+- [ ] docs/monthly-opensource/hwpjs/development-1.mdx
+- [ ] docs/monthly-opensource/hwpjs/development-2.mdx
+- [ ] docs/monthly-opensource/hwpjs/development-3.mdx
+- [ ] docs/monthly-opensource/hwpjs/development-4.mdx
+- [ ] docs/monthly-opensource/hwpjs/development-5.mdx
+- [ ] docs/monthly-opensource/hwpjs/development-6.mdx
+- [ ] docs/monthly-opensource/hwpjs/development-7.mdx
+- [ ] docs/monthly-opensource/hwpjs/development-8.mdx
+- [ ] docs/monthly-opensource/hwpjs/tech-stack.mdx
+- [ ] docs/monthly-opensource/index.mdx
+- [ ] docs/monthly-opensource/react-native-mcp/background.mdx
+- [ ] docs/monthly-opensource/react-native-mcp/development.mdx
+- [ ] docs/monthly-opensource/react-native-mcp/development-1.mdx
+- [ ] docs/monthly-opensource/react-native-mcp/development-2.mdx
+- [ ] docs/monthly-opensource/react-native-mcp/development-3.mdx
+- [ ] docs/monthly-opensource/react-native-mcp/tech-stack.mdx
+- [ ] docs/monthly-opensource/react-wasm-table/background.mdx
+- [ ] docs/monthly-opensource/react-wasm-table/development.mdx
+- [ ] docs/monthly-opensource/react-wasm-table/development-1.mdx
+- [ ] docs/monthly-opensource/react-wasm-table/development-2.mdx
+- [ ] docs/monthly-opensource/react-wasm-table/development-3.mdx
+- [ ] docs/monthly-opensource/react-wasm-table/tech-stack.mdx
+- [ ] docs/monthly-opensource/zts/background.mdx
+- [ ] docs/monthly-opensource/zts/development.mdx
+- [ ] docs/monthly-opensource/zts/development-1.mdx
+- [ ] docs/monthly-opensource/zts/development-2.mdx
+- [ ] docs/monthly-opensource/zts/development-3.mdx
+- [ ] docs/monthly-opensource/zts/development-4.mdx
+- [ ] docs/monthly-opensource/zts/development-5.mdx
+- [ ] docs/monthly-opensource/zts/development-6.mdx
+- [ ] docs/monthly-opensource/zts/development-7.mdx
+- [ ] docs/monthly-opensource/zts/development-8.mdx
+- [ ] docs/monthly-opensource/zts/development-9.mdx
+- [ ] docs/monthly-opensource/zts/development-10.mdx
+- [ ] docs/monthly-opensource/zts/tech-stack.mdx
+- [ ] docs/today-commit/_meta.json
