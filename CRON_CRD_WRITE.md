@@ -97,7 +97,7 @@
 - [x] docs/monthly-opensource/crd/development-8.mdx
 - [x] docs/monthly-opensource/crd/development-9.mdx
 - [x] docs/monthly-opensource/crd/tech-stack.mdx
-- [ ] docs/monthly-opensource/development.mdx
+- [x] docs/monthly-opensource/development.mdx
 - [ ] docs/monthly-opensource/electron-mcp-server/background.mdx
 - [ ] docs/monthly-opensource/electron-mcp-server/development.mdx
 - [ ] docs/monthly-opensource/electron-mcp-server/development-1.mdx
