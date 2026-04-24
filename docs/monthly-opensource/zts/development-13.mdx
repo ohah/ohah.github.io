@@ -1,0 +1,405 @@
+---
+title: "3-13. Metro 경계 확정과 근본 수정 원칙"
+date: 2026-04-18
+---
+
+# 3-13. Metro 경계 확정과 근본 수정 원칙
+
+> **기간**: 2026년 4월 15일 ~ 4월 18일 (4일)
+> **커밋**: zts 약 79개
+> **핵심**: Symbol Table SoA 이행, Bun 스타일 crash report, watchFolders, "zts vs 번개" 역할 분리, namespace re-export 재귀 getter 근본 수정, 친절한 에러(miette급) 방향, CLAUDE.md ↔ docs 참조 역전, "근본 수정" CLAUDE 규칙 명문화, Zig 0.16 업그레이드 검토, Svelte 번들 트리쉐이킹 에픽 시작
+
+## 이 편의 위치
+
+[3-12](development-12)에서 `function_params` 정규화와 ESTree 어댑터 채택이 끝나자, AST 안정화의 다음 단계가 떠올랐다 — **심볼 테이블 구조**. 그리고 동시에 번들러의 외부 접점이 커질 대로 커지면서, **어디까지가 zts의 책임이고 어디까지가 번개(RN 얇은 래퍼)의 책임인가**라는 경계 문제가 바닥부터 올라왔다.
+
+이 4일은 그 질문에 답하는 구간이다.
+
+## 4/15 — Symbol Table AoS → SoA
+
+### "API 시그니처 유지"라는 관행 의심
+
+새벽:
+
+```
+01:23 > "API 시그니쳐 유지용이 무슨 뜻이야?"
+01:23 > "그냥 처음부터 설계했으면 그게 유지되는게 맞아?? 아님 바꾸는게 맞는거야?"
+01:37 > "근데 코드 일관성이나 가독성을 하면 페이즈3 하는게 낫다는거죠?"
+01:37 > "estree에도 낫다는건가?"
+```
+
+"API 시그니처 유지"라는 **내부 관행 자체**를 의심한다. 외부 사용자가 없는 내부 API에 어제의 시그니처를 지키는 건 종종 **잘못된 리팩터링 중단**의 이유가 된다. Phase 3까지 밀고 가기로.
+
+### AoS vs SoA
+
+아침:
+
+```
+05:28 > "어떤식으로 작업하실건데요? 설계 어떻게 할지 보여주세요"
+05:29 > "Oxc는 심볼아이디 어떻게 했는데요?"
+05:30 > "SoA과 AoS가 뭔지 설명해주세요"
+05:31 > "장기적으로 유지보수는 어느게 나은데요"
+```
+
+심볼 테이블 설계 결정.
+
+- **AoS** (Array of Structs, 현재 zts) — `[]Symbol`, 각 Symbol이 flags/name/scope_id 등을 한 덩어리로 보유
+- **SoA** (Structure of Arrays, oxc 방식) — `flags: []u32`, `names: []StringIndex`, `scope_ids: []u32` 등을 **별도 배열로 분리**
+
+SoA의 이점:
+1. **캐시 지역성** — mangler가 flags만 돌 때 name을 같은 캐시라인에 끌고 올 필요 없음
+2. **estree 인덱스화** — 각 배열이 자연스럽게 인덱스 테이블이 됨
+3. **장기 유지보수** — 필드 추가/제거가 한 배열에만 영향
+
+Phase 4c-1 ~ 4c-4 PR 시리즈로 이행 시작.
+
+### cjs_wrap 분리 + single source of truth
+
+```
+07:39 > "cjs_warp으로 파일 분리 하는건 어떄? 이왕이면 다 전환 하게"
+07:45 > "single source of truth인게 유지보수에 유리하지 않아요?"
+```
+
+CJS wrapping 로직을 `cjs_wrap.zig`로 분리. transformer/linker/codegen 세 곳에 흩어진 CJS interop 규칙을 한 곳에서 결정.
+
+### 스트링 필드 물리 제거 논쟁
+
+```
+13:22
+> "string 필드(local_name/imported_name/exported_name) 물리 제거: ~140개 read site에서 SymbolRef → 모듈 → ExportBinding 역탐색 비용 발생. ... 이라고 했는데 다른 번들러들은 어떻게 하는데요?"
+```
+
+"stringly-typed" 필드를 떼어내면 **140곳의 역탐색 비용이 생긴다**. 경쟁 구현 조사 후 판단.
+
+### 워크플로우 — 시리즈 PR은 직렬화
+
+```
+11:05 > "계속 pr 나눠서 진행해주세요 CI 기다리지말고 그냥 로컬에서 확인 끝나면 바로 바로 머지"
+```
+
+속도 우선. 로컬 통과 시 선머지, CI는 후행.
+
+### Crash Report — Bun 스타일
+
+오후에 SIGBUS 크래시 처리 정책:
+
+```
+19:12 > "테스트 케이스는 추가 했어요?"
+19:14 > "SIGBUS시 에러 잘 던져줄 수 없나요??"
+19:16 > "프리플라잇 AST 검증은 대체 뭐예요?"
+```
+
+Zig의 panic handler를 붙잡아서 **Bun 스타일 crash report**로 변환:
+
+```
+panic: reached unreachable code
+---------------------------------
+Please report this crash at:
+  https://github.com/ohah/zts/issues/new?template=crash.md
+```
+
+사용자에게 깃헙 이슈 URL을 바로 제시. `feat(diagnostics): Bun 스타일 crash report — panic handler + 신고 안내`.
+
+### watchFolders 실작업
+
+저녁:
+
+```
+20:22 > "watchFolders는 ZTS Zig 작업 필요로 보류 ... 우리도 와치 폴더 구현 안되어있어?"
+20:32 > "와치폴더 진행하자"
+```
+
+Metro 호환 기능 중 **watchFolders 옵션** 직접 구현. 이 결정이 다음날의 Metro API 감사로 이어진다.
+
+### WASM 공개 시점
+
+```
+15:38 > "WASM은 이제 공개할만한가?"
+15:41 > "transpile WASM은 이미 문서 사이트엔 빌드되서 제공되고 있지 않아?"
+```
+
+WASM 공개 시점 재검토. AST API 안정화와 세트.
+
+## 4/16 — "zts와 번개는 어디까지 해야 하는가"
+
+이 편 전체에서 가장 큰 결정 하나가 이날 오후에 있었다.
+
+### Metro API 표면적 감사
+
+```
+01:13 > "strictExecutionOrder 이 옵션 타입스크립트에서 누락된거 같은데 NAPI, CLI 다 있지만"
+01:25 > "resolver.resolveRequest / extraNodeModules / transformer.getTransformOptions / assetPlugins / minifierPath / serializer.customSerializer / processModuleFilter / createModuleIdFactory 메트로에 호환 되려면 이것도 다 필요할거같은데"
+```
+
+이 목록을 보면서 당연한 질문이 따라왔다:
+
+### 플러그인 훅으로 외화하는가
+
+```
+01:34 > "플러그인으로 구현이라니 무슨말일까여"
+01:34 > "우리도 플러그인이 나을까요? 웹번들러까지 고려하고 있는데"
+01:58 > "웹도 주고 RN도 줘야하는데 둘다 옵션이 에셋이면 애매한데"
+```
+
+웹과 RN이 같은 번들러를 공유하면서, 옵션 네이밍만 "assetPlugins"로 공유해선 안 된다. 각 플랫폼의 훅으로 내려야 한다.
+
+### 에셋·OTA·CJS 변환
+
+```
+02:14 > "cjs로 변환해야만 해??"
+02:17 > "webp가 돼?? 브라우저에"
+02:17 > "아니 RN에선 돼?"
+18:43 > "OTA 도구 어떻게 호환해 그럼??"
+18:45 > "코드푸시 구조가 어떻길래 꼭 그런 구조여야 하는거야??"
+```
+
+에셋 포맷 호환성, CodePush(OTA) 호환, 이미지 변환 경로를 모두 이날 정리.
+
+### 결정 — 번개는 "RN만" 지원하는 얇은 레이어
+
+저녁 7시:
+
+```
+19:00 > "근데 이렇게 라이브러리 2개로 제공하는게 맞을까요??"
+19:00 > "zts만 쓸꺠에요 최종적으로 번개는"
+19:17 > "그럼 번개는 정확히 어디까지 해야하는거야?"
+19:25 > "좋아요 그럼 그렇게 가시죠 번개가 RN만 지원할거예요 성능상 최고기준으로 번개도 최대한 얇은 레이어로"
+```
+
+**경계가 확정됐다**:
+
+| | 역할 |
+|---|---|
+| **zts** | 통합 번들러. 웹·Node·RN·Deno·Bun 모두 타겟. `onResolve`/`onLoad`/`onResolveContext` 같은 훅을 풍부하게 제공. |
+| **번개** | **"RN만" 지원하는 최소 얇은 레이어.** Metro 특유 API — watchFolders, extraNodeModules 매핑 정책, RN 에셋 디스패치, Expo 연동 — 만 담당. |
+
+자연스럽게 zts 쪽에 훅들이 추가되고, 번개는 그 훅을 쓰는 얇은 래퍼로 수렴했다.
+
+### namespace re-export 재귀 getter 회귀
+
+밤 10시:
+
+```
+22:07 > "https://github.com/ohah/zts/issues/1425 이거보고 재현 해보고 파악해서 수정해줘 테스트코드로 재현"
+23:47 > "지금 번개 데브서버 직접 키시고 보시면 __export(exports_react_native_Libraries_Image_AssetRegistry, { registerAsset: function() { return exports_react_native_Libraries_Image_AssetRegistry.registerAsset; } ... 이런 여전히 재귀함수 보이거든요??"
+23:56 > "근데 이거 모듈 리팩토링 하기전에는 이런 에러 발생 안했었는데?? 레퍼런스는 어떻게 학 ㅗ있어??"
+```
+
+namespace re-export가 **자기 자신을 참조하는 getter**를 만들어내는 회귀. 사용자는 번개 dev 서버를 직접 띄우고 **생성된 번들을 직접 읽으면서** 문제를 지목했다.
+
+## 4/17 — 근본 수정, 친절한 에러, 24바이트 제약 재평가
+
+### "이게 정말 우리만의 문제인가?"
+
+하루의 결정적 질문:
+
+```
+00:08 > "아니 멈추고 우리 고민좀 하자 롤다운에서나 esbuild에선 저 코드가 에러 나는건 맞아?"
+00:08 > "그리고, 레퍼런스는 롤다운을 쓰는데 어떻게 이 에러를 해결했지?"
+```
+
+확인 결과 — **esbuild/rolldown도 동일한 입력에서 동일한 재귀 getter를 만든다**. 즉 원본 코드가 애초에 잘못된 경우. 레퍼런스가 우회했던 방식은 **에러 리포팅**. zts도 파싱 단계에서 에러를 던지는 쪽으로 전환.
+
+```
+00:16 > "그럼 zts에선 그런 코드의 경우 에러처리를 해야해?"
+00:16 > "번개쪽 작업해서 결과 확인해봐 정말 레퍼런스처럼 결과 나오는지"
+```
+
+rolldown 쪽에서 찍히는 동작과 동등하게 맞추는 선에서 정리.
+
+### miette급 에러
+
+```
+03:43 > "근데 에러처리가 어떤건 뜨고 안뜨고 모듈화(공통화)가 제대로 안된거 같은데 원인이 뭐야?"
+03:50 > "oxc 에러가 더 친절하네?"
+03:51 > "라벨은 어떤 에러야? miette급까지 가는게 사용자한테 좋은거 아니야? 에러는 무조건 친절해야하는데"
+```
+
+목표를 rust의 **miette 수준** — 에러 코드 체계(`ZTS0xxx`) + 소스 포인터 + help + 관련 링크 — 로 잡음:
+
+```
+error[ZTS0300]: 'import' declaration is only allowed in module code
+   ╭─[src/foo.ts:10:5]
+10 │     import { foo } from "./bar";
+   ·     ^^^^^^
+   ·     │
+   ·     top-level import statement outside of a module
+   ╰─
+   help: mark the file as a module by adding `export {}`, or remove this import
+```
+
+이 수준으로 가는 작업은 장기 에픽으로 등록.
+
+### CLAUDE.md ↔ docs 참조 역전
+
+```
+11:15 > "문서 정리좀하려고해 메인에 있는거 다 docs로 옮겨주고 최신화 안된 부분 최신화 해줘"
+11:20 > "클로드 참조가 아니라 클로드.md가 문서를 참조하는 형태로 바뀌어야 하는데"
+```
+
+기존 구조: **CLAUDE.md가 진실의 근원. docs는 부차적.**
+새 구조: **docs가 진실의 근원. CLAUDE.md는 얇은 인덱스**로 docs를 가리킨다.
+
+장기적으로 docs는 웹사이트로 공개될 후보이고, CLAUDE.md는 세션 부트스트랩용이므로 **중복을 유지할 이유가 없다**.
+
+### 24바이트 고정 AST 재평가
+
+오후에 3-9/3-10의 자랑거리였던 "24바이트 고정 AST"가 도마에 올랐다:
+
+```
+14:24 > "Zig switch arm 구조는 개선을 못해요? 어떻게 하는게 나을까요?"
+14:33 > "근데 우린 24바이트 픽스라 엑스트라 써야 한다메 이게 유지보수에 괜찮아?"
+14:38 > "wasm AST때문에 24바이트 제약 가져간거 아니였어?"
+14:41 > "속도개선보단 유지보수에 유리핟나ㅡㄴ거지?"
+14:44 > "하긴 해야한다는거지?"
+14:47 > "그럼 지금 하죠 이슈 등록 해주고 나서"
+```
+
+24바이트 고정은 **캐시 라인 최적화에는 유리**하지만, 일부 노드는 extra_data 포인터로 우회해야 하고(메모리 추적 비용), AST 안정화/ESTree 어댑터 측면에선 불리하다. oxc 방식의 **per-kind 가변 페이로드**로 갈 여지 확인.
+
+### 이성 회복
+
+몇 시간 뒤:
+
+```
+15:46 > "AST 안정화, estree, 유지보수 등을 위해 하는건데 정말 유리한지?"
+15:47 > "큰 아키텍쳐 변경할 이유 있을까요?"
+15:49 > "네 좋아요 그럼 폐기 하시죠"
+```
+
+과투자 회피. 24바이트 제약 완전 폐기는 보류. 대신 필요한 노드만 `payload_kind`로 확장 여지 남김.
+
+### "근본 수정" CLAUDE 규칙 명문화
+
+하루의 마무리:
+
+```
+17:14 > "근본적 수정으로 바꿔주시죠 그리고 클로드 개발 규칙에 근본 수정을 한다를 무조건 넣어주세여"
+```
+
+CLAUDE.md 개발 규칙에 명문화:
+
+> **근본 수정 원칙.** 밴드에이드로 현상을 숨기지 말고, 원인을 구조로 고친다.
+> 테스트 실패 시: 기댓값을 구현에 맞추지 말고, 구현을 사양에 맞춘다.
+> 회귀 발생 시: 회피 플래그가 아니라 구조적 수정.
+> PR 범위를 벗어나는 구조적 문제가 보이면: 별도 PR로라도 근본을 고친다.
+
+### const enum / private field / optional chain 다운레벨
+
+이 날 연쇄적으로 고쳐진 ES5 다운레벨링 버그들:
+
+- const enum 재설계 — 표현식 평가기, shadowing, computed key 지원
+- `parameter property this.x = x` ES5 class lowering
+- private field compound assignment (`#x += 1`) (#1468)
+- optional chain private field read (`obj?.#x`) (#1492)
+- destructuring assignment target 허용 (#1485)
+- `#x **= n`를 Math.pow로 변환 (#1486)
+- generator 내부 unlabeled break/continue state machine 변환
+- variable declarator의 yield* delegate op 5 누락
+
+## 4/18 — Zig 0.16, Svelte 트리쉐이킹 에픽
+
+### Zig 0.16 + async/await 검토
+
+새벽:
+
+```
+02:59 > "근데 지그 0.16이 나왔다는데 버전업하고 싶은데 괜찮을까?"
+03:01 > "우리가 지원해야하는 os 지원 가능한거야? 그리고 업그레이드 했을때 성능 개선이 얼마나 이뤄질까?"
+03:07 > "그리고 지그에 async await 추가 되었는데 이거 쓸만할까?"
+```
+
+Zig 0.16 업그레이드는 **백로그 이슈**로. async/await은 Producer-Consumer 파이프라인에 일부 적용 가능하지만 ROI 확인 필요. 구현은 추후.
+
+### package.json exports 우선순위
+
+```
+12:20 > "https://github.com/ohah/zts/pull/1459 이거 이후로 깃헙 댓글보면 axios fail인데 확인해줘"
+12:21 > "아마 package.json 우선순위 문제인듯"
+12:27 > "롤다운 rspack 어느게 더 안정적?"
+12:28 > "rspack으로 가자"
+```
+
+`package.json`의 `exports` 해석 우선순위. axios 같은 패키지가 import 실패. 롤다운·rspack 중 **rspack 구현 기준**으로 맞춤.
+
+### tree_shaker 리팩토링
+
+이날 대규모 tree_shaker 구조 개선:
+
+- **BFS를 fixpoint 내부로 통합** — 기존엔 outer BFS + inner fixpoint의 이중 루프. 불필요한 재방문 발생
+- `StmtInfo` 구축을 fixpoint 전으로 이동 — 한 번만 build
+- `reference_count` 신호를 **완전 제거** — stmt-level references로 대체 (다음 편 #1634 RFC의 복선)
+
+### tsconfig paths 재설계
+
+- paths/baseUrl + CLI `--alias` **병합 지원**
+- 자동 발견 + paths wildcard 경고
+- **paths를 TS 공식 스펙에 맞게 재설계** — wildcard anywhere + 다중 후보
+
+### decorator 후속
+
+- Stage 3 decorator + ES5 private backing WeakMap lowering
+- `@decorator export [default] class` 보존
+- `--target=es5` 재방문 활성화 (decorator가 emit한 코드도 ES5로 다시 내려감)
+
+### minify_syntax
+
+- boolean 리터럴 `!0`/`!1` 축약
+- 자동 define로 optional chaining + globalThis root 매칭
+- E2E dangling 복구
+
+### 에러 UX와 성능을 같은 PR에 넣을 것인가
+
+```
+16:25 > "https://github.com/ohah/zts/issues/1512 이거 하면 성능 얼마나 좋아져?"
+16:35 > "좀 더 부드러운 처리? 1389는 뭔데요?"
+16:36 > "다른 번들러들은 어떻게 에러남?"
+17:16 > "'import' declaration is only allowed in module code 이 에러 기대하는데 왜 저 에러 나와요??"
+17:21 > "근본 수정하면 B는 날 일이 없는거죠?"
+```
+
+에러 UX와 성능은 같은 PR로 묶지 않는다. 근본 수정하면 애초에 B안이 필요 없다.
+
+### Svelte 트리쉐이킹 에픽 시작
+
+저녁:
+
+```
+19:49 > "그럼 하나 더, 깃헙 액션에서 스벨트 비교표 보면 알겠지만 esbuild, rolldown에 비해 왜 크고? Rspack은 왜 우리보다 더 큰지?"
+19:55 > "근데 ci로 돌린 댓글 용량은 뭐야? 실측한거랑 차이가 큰데?"
+19:57 > "풀세트일때도 개선해야하고, 트리쉐이킹도 개선해야하는 맞는것 같아"
+```
+
+CI 댓글에서 **Svelte 번들이 esbuild/rolldown보다 크다**는 것을 확인. 여기서 **트리쉐이킹 개선 에픽**이 시작된다. 롤다운을 직접 레퍼런스로 클론:
+
+```
+22:30 > "레퍼런스 폴더에 롤다운이 없어? 그럼 클론해와서 확인해"
+23:13 > "그럼 우리도 statement-level symbol graph 완벽히 구현되면 필요 없다는거 아니예요?"
+```
+
+3-9에서 구현한 `StmtInfo`에 **중복**이 많다는 인식. 같은 정보를 stmt_referenced·reference_count·mangler liveness가 각자 들고 있다. 다음 편 RFC #1634로 직결된다.
+
+## 4일간 관통한 것들
+
+| 축 | 귀결 |
+|---|---|
+| **심볼 테이블** | AoS → SoA 이행 (Phase 4c-1~4c-4) |
+| **zts vs 번개 경계** | zts = 통합 번들러, 번개 = RN 얇은 어댑터 |
+| **근본 수정 원칙** | CLAUDE.md 명문화. "우리만의 문제인가?" 먼저 묻기. |
+| **에러 UX** | Bun 스타일 crash report, miette급 에러 방향성 |
+| **문서 구조** | CLAUDE.md → docs 참조 역전 |
+| **tree_shaker 리팩토링** | BFS를 fixpoint에 통합, reference_count 제거 |
+| **트리쉐이킹 에픽 시작** | Svelte 번들 회귀 → References RFC의 복선 |
+
+## 이어서 — 3-14에서
+
+4/18 저녁 `"statement-level symbol graph 완벽히 구현되면 필요 없다는거 아니예요?"`가 다음 편의 주제를 정했다.
+
+- **References 배열화 RFC #1634** — stmt_info의 관계 정보를 References 배열 하나로 유도
+- **RFC #1672 — oxc 스타일 AST 재설계** — old_ast/new_ast 분리 → 단일 in-place mutation
+- **transformer epic + debug infra**
+- **HMR 성능 분해** — detect / emit 단위로 프로파일
+- **require.context** — Expo Router를 위한 RN 특유 API
+- **Expo virtual-metro-entry 파싱 실패** 대응
+
+다음 편 [3-14. RFC 시리즈 — References·AST 재설계·HMR 프로파일](development-14)로 이어진다.

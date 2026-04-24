@@ -73,7 +73,31 @@
   {
     "type": "file",
     "name": "development-10",
-    "label": "3-10. React Native 플랫폼과 최종 성능",
+    "label": "3-10. React Native 플랫폼과 4/7 시점 성능",
     "tag": "26.04.07"
+  },
+  {
+    "type": "file",
+    "name": "development-11",
+    "label": "3-11. Metro 동등성 — RN HMR 재설계",
+    "tag": "26.04.10"
+  },
+  {
+    "type": "file",
+    "name": "development-12",
+    "label": "3-12. 호환성 겹층 — 워클렛·Stage 3 decorator·ESTree",
+    "tag": "26.04.14"
+  },
+  {
+    "type": "file",
+    "name": "development-13",
+    "label": "3-13. Metro 경계 확정과 근본 수정 원칙",
+    "tag": "26.04.18"
+  },
+  {
+    "type": "file",
+    "name": "development-14",
+    "label": "3-14. RFC 시리즈 — References·AST 재설계·HMR 프로파일",
+    "tag": "26.04.23"
   }
 ]

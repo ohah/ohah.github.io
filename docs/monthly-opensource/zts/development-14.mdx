@@ -1,0 +1,523 @@
+---
+title: "3-14. RFC 시리즈 — References·AST 재설계·HMR 프로파일"
+date: 2026-04-23
+---
+
+# 3-14. RFC 시리즈 — References·AST 재설계·HMR 프로파일
+
+> **기간**: 2026년 4월 19일 ~ 4월 23일 (5일)
+> **커밋**: zts 약 142개
+> **핵심**: References RFC #1634 (PR1~4), oxc 스타일 AST 재설계 RFC #1672 승인, transformer epic + debug infra, HMR #1727 에픽 — lazy sourcemap·mtime cache·profile 계층화, ModuleGraph accessor 리팩터 #1779 (Phase 1a~3), require.context #1579 (Phase 1~3), Expo virtual-metro-entry 우회, RegExp lookaround → JSC 위임, test262 162 회귀 복구, single unified mangler
+> **진행 중** — 이 편이 담는 대부분은 **에픽으로 오픈된 상태**다. 머지 완료된 phase들과 아직 리뷰 중인 phase들이 섞여 있다.
+
+## 이 편의 위치
+
+[3-13](development-13)의 마지막 — 트리쉐이킹 에픽 시작 + "statement-level symbol graph 완벽히 구현되면 필요 없다"는 인식 — 이 이 편의 출발점이다. 같은 정보를 여러 자료구조가 중복 보관하는 현재 구조를 정리하고, AST 자체를 oxc 스타일로 재설계하는 쪽으로 방향이 잡혀 있다.
+
+동시에 HMR 성능을 detect/emit 단위까지 쪼개 보기 시작했고, RN의 require.context/Expo 같은 **생태계 깊은 곳**의 문제로 진입한다.
+
+## 4/19 — References 배열화 RFC #1634 (PR1~4)
+
+### 매직 상수 수색
+
+새벽:
+
+```
+00:47 > "attribution: 커밋/PR 메시지의 Co-Authored-By 문구 조정 이건 뭐라고 조정할 수 있는데?"
+01:53 > "또 그렇게 상수로 박혀있는거 있어??"
+02:00 > "일단 올라와있는 PR 다 머지해주고 올리고 -> 머지하고 -> 올리고 -> 머지하고 지금처럼 여러개 올리지말고"
+```
+
+`"*"` 같은 문자열 센티넬, 매직 넘버를 상수로 치환. 시리즈 PR은 **직렬**로만 — 동시에 여러 PR을 열면 리뷰 컨텍스트가 튀어서 금지.
+
+### `--minify`가 결과를 바꾸면 안 된다
+
+```
+02:44 > "근데 궁금한게 미니파이 플래그 한다고 해서 결과가 바뀌면 안되는거 아니야??"
+```
+
+**`--minify`는 출력 크기만 바꿀 뿐, 동작은 바꾸지 않는다.** 이 원칙은 이후 dead code elimination·const promotion 설계 모두의 기반이 된다.
+
+### mangler 축약 전략
+
+```
+03:58 > "머지하고 후속 바로 진행해줘"
+04:04 > "축약이 맞네 그럼 나머지도 다 해주고 테스트코드 빡세게 작성해서 회귀테스트 막아줘"
+```
+
+mangler가 `_default$3` 같은 접미사를 더 짧게 — 전반적인 축약 전략 확대.
+
+### RFC #1634 — References 배열 하나로
+
+```
+15:29 > "이제 이번에 할건 다 한건가요? 다음은 https://github.com/ohah/zts/issues/1604 이거인지?"
+16:43 > "https://github.com/ohah/zts/issues/1608 이거 이슈 해결 하고 싶은데 새로운 아키텍쳐 구축이 필요하다고 하는데 어떤 구축을 해야하는거야?"
+16:45 > "그럼 전역 확장 안하고 방법은 없어??"
+16:53 > "oxc rolldown 방식은 뭔데?"
+16:59 > "네 좋아요 C로 가시죠"
+```
+
+이전 구조에서 stmt_info는 **mangler liveness**·**stmt_referenced**·`is_exported` 플래그 등을 중복 보관하고 있었다. 이게 동기화 버그의 원천이었다. RFC #1634:
+
+- **per-reference 배열**을 재도입 (PR1/4 — #1636)
+- **mangler liveness**를 References 데이터로 이전 (PR2/4 — #1637)
+- **`stmt_referenced`** 중간 캐시를 References에서 재구성 (PR3/4 — #1638)
+- 문서 반영 (PR4/4 — #1639)
+
+### 측정에 대한 의심
+
+저녁:
+
+```
+18:51
+> "oxc, esbuild를 잘못 분석 한거 아니야? 그리고 Property mangling 까지 하면 속도 더 느려지는거 아닌지? 메모리나 속도도 유지되어야 하는데"
+```
+
+레퍼런스 구현 분석 자체를 의심. 근거 재검증 후 진행.
+
+### 런타임 헬퍼 축약과 tslib
+
+```
+22:14
+> "- ZTS minified: __commonJS, __create, __getProtoOf, __defProp ... 긴 이름 유지 이것도 일단 글자 줄이는걸로 해주시죠"
+22:38
+> "tslib는 왜 하면 안돼요?"
+```
+
+런타임 헬퍼(`__commonJS` 등)를 짧게 축약 + `tslib` 외부화 검토. 4/22에 `importHelpers` 옵션 구현으로 실현.
+
+### statusLine 커스터마이즈
+
+작업 환경 튜닝도 이날:
+
+```
+00:50 > "statusLine은 오퍼스모델을 젤 뒤로 옮겨주고 5h, 7d는 리셋시간까지 보여줄 수 있나?"
+00:55 > "테이블 형태로 안되나? 그리고 종료날짜 말고 시간까지 적어줬으면 좋겠는데 -> 로 해서 그리고 요일까지"
+01:03 > "아 근데, 금요일 오전 5시가 한국시간인데, 한국시간으로 한거야??"
+01:08 > "그리고 정확히는 브랜치 링크보다 그 브랜치로 올린 PR 링크로 가고 싶은거임"
+```
+
+Opus 주간 쿼터 리셋을 KST 요일/시간 테이블로, 브랜치 → PR 링크로. 프로덕트는 아니지만 **매일 쳐다보는 것**이라 이게 결정 속도에 직접 영향을 준다.
+
+## 4/20 — test262 회귀 복구, 단일 AST 대논쟁, RFC #1672 승인
+
+### 데드 플래그 발견
+
+새벽:
+
+```
+01:35
+> "is_exported / is_default_export 플래그는 현재 코드베이스에서 단 한 번도 true로 설정되지 않는 죽은 플래그입니다. 라면 이거 아예 안 쓰인다고?"
+01:58
+> "그럼 하는게 낫다는거야? 장기적으로? 성능에는 영향이 어떤지?"
+```
+
+전혀 설정되지 않는 플래그가 존재. RFC #1634의 References 이전과 맞물려 제거.
+
+### "나중에 하자"를 의심하기
+
+```
+02:44
+> "왜 먼저하면 안되는건지?? 투자가치 확인은 왜 하는거야? 언젠간 해야되는데"
+```
+
+"나중에 하자"는 관성을 공격. 어차피 해야 할 거면 지금.
+
+### test262 회귀 복구
+
+```
+14:22 > "test262 원래 다 통과헀었는데요?? 최근 CI 한번 확인해서 언제부터 실패 케이스 늘었는지 확인해주실래요??"
+14:25 > "그럼 왜 161개 실패로 늘었지?"
+14:46 > "지금 메인기준으로 test262 통과 못하는것들이 무엇무엇인지 알려주실 수 있나요"
+14:48 > "다 파악해서 수정해주시죠"
+```
+
+test262가 161~162건 실패 중. 원인은 **directive prologue parser 변경**. 커밋 범위를 찾아내 근본 수정. 3-3(Test262 100%)의 결과가 유지되어야 한다는 기준선 재확인.
+
+### 단일 AST 대논쟁
+
+이 편 최대 전환:
+
+```
+21:05 > "우리도 단일 AST로는 못 가는지?"
+21:09 > "단일 AST로 가면 HMR 어떻게 되는데??"
+21:14 > "그럼 oxc, rolldown, swc, rspack은 어떻게 하는거야?"
+21:46 > "우리도 단일 인플레이스뮤테이션으로 바꾼다면??"
+21:49 > "근데 단일 AST 아니라며, 다른 번들러들도 왜 근데 우리만 HMR 영향 받는거야??"
+21:53 > "근데 단일 AST로 안가면 최적화 전략에서 계속 부딪힌다며??"
+21:58 > "그래 그럼 AST 재설계 들어가자 oxc 베이스로"
+```
+
+현재 zts의 AST는 `old_ast` / `new_ast`로 분리된 **불변 AST**. Transformer는 새 노드를 만들어 `new_ast`에 append한다.
+
+| | 장점 | 단점 |
+|---|---|---|
+| **현재 (분리 AST)** | 경계 명확, 디버깅 쉬움, 롤백 쉬움 | 노드 복제 비용, identity preservation 어려움, stmt-level 최적화에서 매핑 테이블 필요 |
+| **oxc 방식 (단일 in-place)** | identity preservation, cache locality, 복제 비용 0 | 리팩터 비용, 테스트 난이도, 디버깅 추적 복잡 |
+
+HMR에서 모듈 재파싱 시 **identity가 유지되지 않으면** 캐시 무효화가 커진다. 다른 번들러가 HMR에서 더 빠른 이유 중 하나가 이것이다.
+
+### RFC #1672 승인
+
+```
+23:50
+> "RFC 1672는 뭐야? 승인 해"
+```
+
+**transformer epic RFC #1672** 오픈 + 승인. Phase A/B/C/D로 구획:
+
+- **Phase A** — RFC 문서 + 설계 확정
+- **Phase B** — 선행 최적화 (compiled_cache, NAPI/CLI 통합 profile)
+- **Phase C** — visit 함수들의 identity return (자식 unchanged 시 노드 재생성 스킵)
+- **Phase D** — 실제 in-place mutation (D1a/b/c → D2 ...)
+
+## 4/21 — Transformer epic, debug infra, HMR 병목 분해
+
+### soak test
+
+```
+00:12 > "soak가 뭐예요"
+```
+
+**soak test** 개념 도입 — 동일 코드베이스에서 **HMR 루프를 오래 돌리며** 누수·누적 오류·메모리 증가를 관측.
+
+### 디버그 인프라 선행
+
+```
+14:13 > "머지하고 이제 원래 계획했던 AST 진행가시죠"
+14:16 > "지금 처럼 사전분석 및 테스트 해서 확인해주세요 테스트케이스랑 회귀테스트 빡세게해야하고 단일 뿐만 아니라 여러모듈 번들 됐을때도 확인이 필요합니다"
+15:27 > "D1이 우리 설계에 핵심 아니예요??"
+15:41 > "좋아요 디버그 인프라 준비 하시죠"
+```
+
+D1 구현 전에 debug infra 선행:
+
+- `feat(log): category-toggleable debug log infrastructure` — 카테고리별(transformer/linker/emitter) on/off
+- **AST lifetime 디버그 인프라** — 각 노드의 생성/변환/소멸을 추적. D1 재진입을 위한 안전장치
+
+### Phase B/C 구현
+
+Phase B (선행 최적화):
+
+- **B3** — first-build `compiled_cache` 재사용. 불변일 때 recompile 스킵
+- **CompiledOutputCache** stats log 분리 + resolved module path를 stable 키로
+- NAPI watch worker에 compiled_cache wire
+
+Phase C (identity return):
+
+- **C2a** — `copyNodeDirect` identity 반환
+- **C2b** — `visitUnary`/`visitBinary` 자식 unchanged 시 identity
+- **C2c** — `visitListNode`/`visitExtraList` identity
+
+### Phase D 진입
+
+- **D1a** — boundary/root 필드 활성화 (clone 경로부터)
+- **D1b-1** — `Transformer.ast`를 `*Ast` 포인터로 전환
+- **D1b-2** — single-bundle **in-place mutation**
+- **D1c** — splitting 경로도 in-place + `AstHandling` enum 정리
+- `test(transformer): initInPlace 4종 유닛 테스트 추가`
+
+### "일단 바벨은 제외하고"
+
+```
+18:15 > "Phase 3 general-expression 하면 어떤 이득이 있지요?"
+18:26 > "근데 지금 갈아 엎은게 estree 에는 유리해진게 마짖?"
+18:40 > "화이트리스트가 뭐예요? 설명부터"
+18:42 > "다른 번들러들도 화이트리스트 있어요?"
+20:46 > "identifier mangling 개선 (메모리: 72% gap, 가장 큰 갭)이 뭔데?"
+20:47 > "그리고 메트로 hmr은 얼마나 차이나는데"
+20:56 > "메트로가 hmr이 빠른 이유는 뭐예요??"
+20:59 > "그럼 번개 쪽 레퍼런스 번들러도 그렇게 느려?"
+21:32 > "일단 바벨은 제외하고 디텍트랑 에밋을 개선해보고 싶어"
+```
+
+HMR 루프를 **detect**(변경 감지)와 **emit**(재번들)로 쪼개서 각각 프로파일 타깃팅.
+
+## 4/22 — HMR breakdown, lazy sourcemap, CLI/NAPI profile 통합
+
+### D1 리버트 + 방어선
+
+새벽:
+
+```
+00:18 > "지금 메인기준으로 내가 테스트해도 크래쉬 난다는거지?"
+00:44 > "네 원인부터 밝혀주시죠"
+01:44 > "근데 D를 함으로써 얻는 이득, 그리고 포기함으로써 얻는 이득 손해 등 다 정리해줘"
+01:51 > "그래 그럼 D1 리버트하고 확실히 테스트코드로 방어하고 다시 진행하자"
+```
+
+D 리팩터 직후 OOB 크래시. **D1 리버트 + 회귀 방어 테스트 선행**. `test(transformer): initInPlace 4종 유닛 테스트 추가 (RFC #1672 D1b-2/D1c 검증)`.
+
+### Metro HMR이 빠른 진짜 이유
+
+```
+02:38 > "이제 HMR 잘 되긴 하네요 남은 후속 이슈 해결 가시죠 유지보수에 유리하게 oxc 형태로 가는게 맞나여?"
+02:46 > "persistent_store가 뭐야?"
+02:50 > "persistent_store가 뭐고 oxc식 per-build가 무엇인지 설명해주세요"
+02:51 > "그리고 메트로 hmr은 왜 우리보다 빠른지>"
+02:54 > "근데 HMR은 다 모듈레벨로 하고 잇지않아?"
+02:55 > "그리고 ES5로 변환하더라도 딱 변환된 코드만 변화시키는 구조인데 왜 모든걸 ES5로 변환해야한다는건지??"
+02:57 > "지금 추론일뿐이고 실제 측정은 이전 데이터인데? 측정 한번 다시 해볼래? 그리고 다시 확인해볼래?"
+```
+
+추론 위주 설명 거부 + 실측 요구. 아침에 결론:
+
+```
+09:56 > "궁금한거 메트로는 바벨인데 왜 빨라?"
+10:36 > "hmr시 왜 빠르냐고 물어본건데"
+10:39 > "바벨 캐시처엄 우리도 적용시키려면 어떻게 해야할까?"
+10:40 > "일단 파서 최적화부터 하자"
+```
+
+**바벨이 느린 게 아니라 Metro가 모듈 단위 캐시를 쥐고 있을 뿐.** HMR 재번들 시 변경된 모듈만 Babel을 돌린다. 즉 **파서 자체**보다 **모듈 단위 캐시 전략**이 더 크게 효과를 낸다 — 하지만 일단 파서 최적화부터.
+
+### 통합 프로파일
+
+```
+03:01 > "디버그모드가 있는걸로 아는데 그거 확장해서 디버그 모드로 일단 성능 측정을 명확하게 하는법부터 작업시작하는게 좋지 않을까?"
+03:04 > "가능한건 다했으면 좋겠어요 NPAI, CLI 등 다 디버깅 가능해야하는데 각각 옵션별로 특정파트만 측정 가능할 수 있고, 그리고 전체도 할 수있고 이런식"
+```
+
+프로파일 시스템 계층화 (#1716 ~ #1726):
+
+- `Scanner.scan` 타이머 (lex 시간 분리 측정)
+- `ResolveCache.resolve` 타이머
+- graph discover / finalize sub-phase
+- emit_output 4단계 sub-phase (emit_prepare / emit_modules / emit_concat / emit_finalize)
+- **NAPI와 CLI가 동일한 profile 필드**를 노출
+- `BREAKING: phaseDurations` 레거시 이름 정리 (#1719)
+
+부산물로 발견된 버그들:
+- lightningcss optional dep를 any로 선언 — tsc 빌드 회복 (#1723)
+- Zig 0.15.2 x86_64 `@memset` encoder 버그 workaround (#1715)
+- wasm `clock_time_get` WASI stub (#1717)
+
+### Lazy Sourcemap
+
+```
+13:28 > "어떻게 개선할 수 있을까요?"
+13:30 > "메트로 소스맵 응답은 어떻게 하고 있어요??"
+13:33 > "근데 메트로도 HMR 하면 소스맵 업데이트는 하지 않아요?"
+13:42 > "실행계획 여기서 레이지 소스맵 부터 먼저 구현해주시죠 3번은 진행할 생각 없으니 취소선 그어주세요"
+```
+
+Metro는 HMR 시 **소스맵을 파일로 안 내려보낸다**. `sourceMappingURL`만 주고, DevTools가 요청하면 그때 빌드.
+
+**#1727 Phase B — lazy sourcemap 인프라**:
+
+- **Bundler**: lazy sourcemap 인프라 + `SourceMapOptions` (#1728)
+- **Core (NAPI)**: lazy sourcemap getter + handle cache (#1729)
+- **Emitter**: HMR per-module code에 `//# sourceURL=<mod_id>` 주석 (#1730)
+- **Bungae**: HMR update에 sourceMappingURL만 부착 (#69)
+- **Bungae**: lazy sourcemap 라우트 + build 단위 cache (#68)
+
+### HMR breakdown 가시화
+
+```
+16:41 > "좋아요 잘 되는데 원래 메트로에서는 핫 리로드 돌면 핫리로드라고 위에 뜨잖아요? 그거 안 뜨는데"
+```
+
+성능이 돌아왔으니 UX 디테일 — Metro의 "Hot Reloading" 토스트를 재현.
+
+bungae의 HMR breakdown 로그 개선 (#63 ~ #67):
+- `ZTS profile sync` — 새 필드 반영
+- `(event as any)` 캐스트 제거 (WatchRebuildEvent 타입 사용)
+- **HMR breakdown 멀티라인** + graph/emit sub-phase 출력
+- `formatHmrBreakdown` 헬퍼 추출, `SUB_KEYS` 단일 소스
+
+### Linker/Graph 레벨 최적화
+
+```
+18:24 > "스모크 테스트 깃헙 액션에서 date-fns OK 36KB 160ms / effect OK 259KB 162ms 이 라이브러리는 다른 번들러보다 유독 느린데 병목 일어나는 구간이 어딜까요? 디버그로 확인해주세요"
+18:33 > "esbuild, oxc, rolldown은 왜 괜찮은거예요?"
+```
+
+특정 라이브러리에서 **유독 느린 원인** 추적:
+
+- `ns_export_cache`를 **Linker 필드로 승격** (thread-safe) (#1739)
+- link / metadata subpass profile scopes (#1738)
+- `NamespaceAccessIndex` share across namespace imports (#1740)
+- graph discover parallel/serial split profile (#1741)
+- `side_effects_cache` + `pkg_type_cache` → `pkg_info_cache` 통합 (#1745)
+- `package.json` `type` 필드 **캐시** → date-fns 13× → 4× (#1743)
+
+### watcher-driven mtime cache
+
+**#1732**: `fs.stat` 호출 자체가 HMR 루프의 세금이었다. watch가 쥔 mtime을 이용해 **변경 안 된 모듈은 stat 스킵**.
+
+### emit_concat pre-size
+
+**#1731**: `emit_concat`의 `module_output` 버퍼를 pre-size로 allocation 횟수 감소.
+
+### importHelpers (tslib)
+
+```
+22:08 > "https://github.com/ohah/zts/issues/1621 이거 진행해줄래?"
+22:37 > "importHelpers가 뭐야?"
+22:41 > "RN에도 제공할거라 다운그레이드가 거의 반필수야 걍 해줘"
+```
+
+런타임 헬퍼를 번들에 인라인하지 않고 `tslib`에서 import. 여러 번들이 같은 tslib을 공유하면 중복 제거.
+
+### Windows CI
+
+**#1746**: Debug build + tests를 **skip**. LLVM OOM on GitHub runner. 이 문제는 upstream Zig/LLVM 이슈라 워크어라운드.
+
+## 4/23 — Mangler 정리, require.context, Expo, lookaround
+
+### mangler 메모리 릭 + single unified mangler
+
+```
+00:22 > "mangler memory leak at linker.zig:1452 analyzeNamespaceAccessWithIndex (GPA warning, crash 아님) 메모리릭 확인해주세여"
+01:22 > "남은 follow-up: mangler → semantic 계층 역전 (canonical_name 을 mangler 가 소비) — single unified mangler refactor 로 해결 가능. 이거 설명해주세요"
+```
+
+GPA 경고 기반 누수. 원인은 **`canonical_name` 계층 역전** — mangler가 semantic에 있는 canonical_name을 소비하는 구조였다. 단일 unified mangler 리팩터로 해결:
+
+```
+05:46 > "리팩토링은 완성한거고 정리만 하면 되는건가요?"
+06:16 > "canonical_name 제거는 무슨 소리예여?"
+06:17 > "어느게 최종골에는 이상적인데요? 유지보수는 어느게 낫나요?"
+```
+
+mangler 내부에서 canonical 이름을 **자체 관리**. semantic은 건드리지 않음.
+
+### ModuleGraph 재설계 #1779 (Phase 1a~3)
+
+현재 `ModuleGraph.modules`는 `[]Module` slice. 이 slice가 여러 곳에서 읽히면서 **모듈 집합 변경 시점이 암묵적**이다. HMR/incremental 빌드에서 문제가 된다.
+
+- **#1780 (Phase 1a)**: ModuleGraph phase-tagged **accessor 뼈대** — `modules.items` 직접 접근 금지, 단계별 허용된 접근자만
+- **#1781 (Phase 1b)**: `modules.items` call site를 accessor 경유로 교체 (prod + test)
+- **#1782 (Phase 2)**: `[]Module` slice API 완전 제거 — `Module.addDependency` → `ModuleGraph.linkDependency`
+- **#1783 (Phase 3)**: `ModuleGraph.modules`를 `std.SegmentedList`로 교체 — 삽입 시 재할당 없음, pointer 안정성
+- **#1784**: SegmentedList 타입을 `ModuleList` 상수로 추출
+- **#1785**: ModuleGraph invariants 문서화
+
+### require.context / require.resolveWeak — RN Expo
+
+```
+07:51 > "https://github.com/ohah/zts/issues/1582 https://github.com/ohah/zts/issues/1579 이거 해야되는데 두개중에 어떻게 어떤식으로 어떤형태로 접근하는게 좋을까?"
+09:40 > "1번은 TS 파서 문제인거예요?"
+11:05 > "웹팩은 지원하는거예요? 웹펙 babel-plugin-transform-require-context 이 케이스 따라가면 되는건지?"
+11:06 > "따라가면 안 됨 (권장)은 뭔말이에요?"
+```
+
+`require.context` — 디렉토리를 런타임에 glob하는 webpack/Metro API. **Expo Router가 이걸로 라우트를 만든다.**
+
+웹팩의 `babel-plugin-transform-require-context`는 너무 초기 파이프라인에서 치환해서 tree-shake가 어려워진다. zts는 **번들 그래프 레벨**에서 처리:
+
+- **Phase 1 (#1770)**: `feat(bundler): require.context AST detection + literal eval` — `require.context("./pages", true, /\.tsx?$/)`의 인자 3개를 리터럴 평가
+- **Phase 2 (#1772)**: host plugin hook + graph processing — `onResolveContext` 훅으로 외부 plugin에 위임 가능
+- **Phase 2.5 (#1773)**: `feat(core): NAPI bridge for onResolveContext plugin hook` — NAPI로 JS plugin 연결
+- **Phase 2.6 (#1774)**: `feat(parser): define table evaluator for require.context (process.env.X)` — define 테이블을 같이 평가
+- **Phase 3 (#1775)**: `feat(codegen): require.context webpackContext IIFE emit` — 런타임 IIFE로 webpack 호환
+- **번개 #70**: `feat(zts-bundler): require.context 지원 — onResolveContext plugin + Expo Router define entries`
+
+### zts vs 번개 경계 재점검
+
+```
+11:51 > "zts랑 번개랑 경계가 애매한것 같은데."
+11:52 > "저 리콰이어컨텍스트는 그냥 웹에선 쓸일이 없나??"
+11:57 > "일부만 플러그인 훅으로 빠지는게 좋은걸까요?"
+```
+
+4/16에 그었던 경계를 재점검. **`require.context` 자체는 zts에 구현**하되, **RN 특유의 entry 정책**은 번개의 onResolveContext 플러그인에 둔다.
+
+### RegExp lookaround — JSC 위임
+
+```
+11:58 > "regex executor가 큰 작업일나ㅡㄴ게 이해가 안되어서 설명해주세요"
+11:59 > "esbuild가 구현되어있나요?? C++ JavaScriptCore는 그냥 우리가 가져올 수 있지 않아요?"
+12:00 > "lookaround가 뭔지 정확히 설명해주세요"
+12:01 > "PCRE2로 구현 가능해요??"
+12:03 > "일단 B에 위임하고, 나중에 PCRE로 가시죠 이슈탭에 자세히 최대한 적어주실래요??"
+```
+
+RegExp lookaround(`(?<=)`, `(?!)`) — 단기엔 **JavaScriptCore regex wrapper**에 위임, 장기엔 PCRE2 통합. 이슈에 자세히 기록하고 백로그.
+
+### Expo virtual-metro-entry 파싱 실패
+
+저녁:
+
+```
+16:08
+> "[runtime not ready]: Error: Non-js exception: Compiling JS failed: 89420:10:':' expected in property initialization, sourceURL: http://localhost:8081/.expo/.virtual-metro-entry.bundle..."
+16:27 > "수정했는데 또 동일한 에러 뜨는거 같은데"
+16:46 > "메트로는 어떻게 하고 있어요?"
+16:53 > "바벨 프리셋 엑스포를 직접 구현하는건??"
+16:55 > "오버스펙인 이유와 그렇게 치환하면 괜찮은이유? 엑스포는 AST로 하고 있어??"
+16:59 > "바벨 프리셋 엑스포 그대로 구현하면 안되는지?"
+17:24 > "메트로는 55, 54, 56마다 변화가 있나요??"
+17:27 > "엑스포는 계속 바뀐다고?"
+17:28 > "그럼 바벨 프리셋 엑스포로 일단 세팅해줘 번개쪽에"
+```
+
+Expo 번들의 virtual entry가 Hermes 파싱에 실패. Expo는 버전마다 `babel-preset-expo`가 달라진다. zts가 직접 포팅하면 버전 따라잡기 지옥.
+
+**당분간 번개 레벨에서 babel-preset-expo 사용** + 이슈화. 장기엔 Expo 플러그인 레이어로 빠진다.
+
+### transformer 세부 수정
+
+같은 날 24 커밋 + PR 29건 속에서:
+- JSX attribute 이름이 non-identifier 면 `string_literal`로 lower
+- `esm_wrap` Codegen init에 `import_records` 전파 — require.context IIFE emit
+- `stable compiled_cache key via resolved module path`
+
+### 다음 세션으로의 승계
+
+```
+19:14 > "컨텍스트 너무 많은데 다음세션에서 어떻게 해야할까요??"
+```
+
+**메모리 파일 + 부트스트랩 문구**로 다음 세션에 승계. 이 패턴이 이제 정착됐다.
+
+## 5일간 관통한 것들
+
+| 축 | 귀결 |
+|---|---|
+| **References 통합 RFC #1634** | stmt_info 중복 제거, mangler liveness를 References로 (PR1~4 머지) |
+| **AST 재설계 RFC #1672** | old_ast/new_ast 분리 → 단일 in-place mutation. Phase B/C 머지, D는 리버트 후 debug infra 위에서 재진행 |
+| **HMR #1727** | lazy sourcemap, mtime cache, profile 계층화. NAPI/CLI 통합 profile |
+| **ModuleGraph accessor #1779** | slice 직접 접근 금지, phase-tagged accessor, SegmentedList로 pointer stability |
+| **RN 생태계 깊숙이** | require.context (Expo Router), lookaround (JSC), Expo (babel-preset-expo 경유) |
+| **"우리만의 문제인가?"** | mangler canonical_name 역전도, Expo 파싱 실패도, 다른 번들러 사례 먼저 조사 |
+| **근본 수정 + 방어선** | D1 리버트 + initInPlace 4종 테스트 + 재진입 |
+
+## 4/23 시점에 진행 중인 에픽
+
+| 에픽 | 상태 |
+|---|---|
+| **RFC #1672 (oxc 스타일 AST)** | B/C 머지, D1 리버트 후 debug infra 위에서 재진행 |
+| **트리쉐이킹 개선 에픽** | Svelte/effect/date-fns 프로파일. StmtInfo 중복 제거와 맞물림 |
+| **HMR #1727** | lazy sourcemap/mtime cache 머지. 남은 것은 emit pre-build 캐시, 파서 자체 최적화 |
+| **require.context Phase 4** | #1778 open, graph dep + tree-shake root로 연결 중 |
+| **에러 UX miette급** | ZTS0xxx 코드 체계 + 소스 포인터 + help. 에픽 등록 |
+| **ESTree 어댑터** | function_params 정규화 완료. 나머지 노드 정규화 + wasm 공개 API |
+| **Expo 대응** | 번개 레벨 babel-preset-expo 임시 경로. 장기 자체 해법 미정 |
+| **CSS 번들링 (Lightning CSS)** | 방향만. 구현 미착수 |
+| **Zig 0.16 업그레이드** | 백로그 |
+| **Windows CI Debug build** | LLVM OOM. skip으로 워크어라운드 중 |
+| **RegExp lookaround** | JSC 위임 단기, PCRE2 장기 |
+| **mangleProps** | 구현 진행 |
+| **Vite/Rollup 어댑터 Phase 4** | Vite 호환 스모크 테스트 확대 중 |
+
+## "완성"은 아직
+
+[3-10](development-10)의 문구 `"Zig로 만든 JS/TS 트랜스파일러는 빠르고, React Native 번들러로 쓸 수 있다"`는 4/23 시점에도 여전히 참이다. 다만 4/8~4/23의 16일이 증명한 것은 다음이다:
+
+1. **"Hermes 구문 통과"와 "실제 RN 앱이 돈다"는 다르다** — 전자는 4/7, 후자는 4/16 전후
+2. **"번들러"의 경계는 시장이 정해준다** — Metro 호환이라는 말은 의외로 많은 표면(resolveRequest/extraNodeModules/assetPlugins/customSerializer/CodePush/Expo)을 요구한다
+3. **성능은 한 번 측정하고 끝이 아니라 프로파일을 계속 쪼개야 보인다** — HMR 루프는 9일 지나서야 Scanner/Resolve/graph/emit 4단계로 분해됐다
+4. **AST 설계는 2주짜리 프로젝트에서도 한 번 더 갈아엎게 된다** — `old_ast/new_ast` 분리 → 단일 in-place mutation. 커밋이 쌓일수록 구조 비용이 드러난다
+5. **"구조적이라 스코프 밖"이라는 핑계는 금지** — PR 범위보다 근본 수정을 우선한다. 이게 CLAUDE.md 규칙이 된 이유
+
+```
+3/18 ~ 4/07 ████████████████████ 3-1 ~ 3-10 (20일 — 기준선 확보)
+4/08 ~ 4/10 ████                 3-11 (3일 — RN HMR 재설계 + NAPI 전환)
+4/11 ~ 4/14 █████                3-12 (4일 — 호환성 겹층)
+4/15 ~ 4/18 █████                3-13 (4일 — Metro 경계 확정)
+4/19 ~ 4/23 ██████               3-14 (5일 — RFC 시리즈)
+4/24 ~        →→→→→→→→→→→→→      계속 진행 중
+```
+
+3-12 같은 다음 편은 **RFC #1672 Phase D2 이후**, **트리쉐이킹 에픽 결과**, 그리고 "Expo가 실전에서 도는가"에 대한 답이 쌓이면 써질 것 같다. 아직 "완성"이라는 단어를 쓸 때가 아니다.

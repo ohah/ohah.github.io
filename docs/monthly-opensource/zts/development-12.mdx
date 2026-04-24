@@ -1,0 +1,381 @@
+---
+title: "3-12. 호환성 겹층 — 워클렛·Stage 3 decorator·ESTree 어댑터"
+date: 2026-04-14
+---
+
+# 3-12. 호환성 겹층 — 워클렛·Stage 3 decorator·ESTree 어댑터
+
+> **기간**: 2026년 4월 11일 ~ 4월 14일 (4일)
+> **커밋**: zts 약 122개
+> **핵심**: Reanimated 워클렛 Phase 6, TC39 Stage 3 decorator(TS 스타일), UMD/AMD/HTTPS dev server, `#x in obj` Ergonomic Brand Check, RSC directive 보존, per-module sourcemap, ESTree 어댑터 채택, function params Phase 0~2, TS declaration emit, mangleProps 구현 시작
+
+## 이 편의 위치
+
+[3-11](development-11)에서 플러그인 스택이 NAPI로 전환되고 HMR 기본 구조가 잡히자, 즉시 **호환성의 겹층**이 드러났다 — 단순 JS가 아니라 **Reanimated 워클렛, Stage 3 decorator, UMD/AMD, RSC directive**. 겹겹이 쌓인 생태계 규약을 번들러가 하나씩 수용해야 한다.
+
+## 4/11 — Stage 3 decorator·UMD/AMD·HTTPS
+
+하루에 **28커밋** — 전부 실전 호환성 메꾸기.
+
+### 빌드 환경 정비와 서브모듈 재편
+
+```
+00:04 > "롤다운 서브모듈은 지워주고 zts 서브모듈 만들어줘 그럼"
+00:48 > "bun i ... /bin/bash: zig: command not found"
+00:49 > "mise.toml에 넣어주면 되는거 아냐?"
+```
+
+번개 모노레포가 가지고 있던 **롤다운 서브모듈을 zts 서브모듈로 교체**. 외부 개발자의 postinstall 실패는 `mise.toml`에 zig 설치를 명시해서 해결. 원격 CI도 이 형태로 일원화.
+
+### NAPI 전환 회귀
+
+```
+01:30 > "napi로 바꾸기전엔 됐었는데 왜 됐던거야 그럼?"
+```
+
+이전엔 CLI 경로로 **우회**되고 있었다. NAPI로 통일하자 실경로가 드러남. 이후 디버깅 원칙:
+
+```
+02:00 > "근본 수정 하는게 어떄?"
+02:00 > "그리고 비교해야할건 레퍼런스야"
+```
+
+### Reanimated 파싱 실패
+
+오전 내내 RN에서 `react-native-reanimated` 포함 번들이 `";' expected`로 실패:
+
+```
+03:55 > "es5 다운레벨링에서 문제인거지?"
+03:58 > "일단 깃헙이슈에 최대한 자세히적어주시고 비교군은 롤다운이라고 적어주시죠"
+```
+
+- 공식 비교군은 **롤다운**으로 통일
+- 이슈에 Metro·롤다운·zts 결과물 라인 번호까지 비교 첨부
+
+### Stage 3 decorator — TS 스타일로
+
+저녁 핵심 결정:
+
+```
+17:53 > "Stage 3 decorators (TC39 최신) 이건 지금 구현 가자"
+18:16 > "왜 esbuild 스타일로 한거야??"
+18:19 > "그래 타입스크립트 스타일로 가자"
+```
+
+esbuild는 **레거시 TS decorator**를 기준으로 변환한다. 하지만 최신 TS 컴파일러는 이미 TC39 Stage 3로 넘어갔다. zts는 **TS 공식 런타임과 일치시킨다**:
+
+- field decorator per-field initializer
+- `access: { get, set, has }` 프로퍼티 생성
+- TC39 decorator 변환 + `@decorator export [default] class` 보존
+- `--target=es5`에서는 decorator + private backing WeakMap lowering
+
+decorator 테스트 중 흔들린 원칙:
+
+```
+20:14 > "기댓값에 맞게 바꾸면 안되지 않아요? 저렇게 순서 꼬였을때 결과도 달라지나요?"
+20:18 > "구조적 개선이 필요하다면 근본적으로 고쳐"
+```
+
+**테스트를 구현에 맞추는 게 아니라 구조를 맞춘다.** 며칠 뒤 CLAUDE.md 글로벌 규칙으로 박히게 된다.
+
+### CSS 번들링 방향 정리
+
+밤:
+
+```
+21:56 > "러스트 바이너리 의존성이 뭐야?"
+21:58 > "옵션 A로 가자"
+```
+
+Lightning CSS vs 자체 구현. Rust 바이너리 의존을 감수하는 쪽 A 선택. 구현은 백로그.
+
+### Vite 호환 범위 확정
+
+```
+22:54 > "Vite 호환 안되는게 뭐 있나요"
+22:58 > "vite/plugin swc가 잇엇던거처럼 이정도만 있으면 되는데"
+```
+
+Vite 호환을 `@vitejs/plugin-swc` 수준 — **"zts를 Vite 플러그인으로 꽂아 쓸 수 있다"** 수준으로 국한. 번들러 전체 교체가 아니라 transpile 교체.
+
+### UMD/AMD / HTTPS dev server / 그 외
+
+같은 날 축약 작업:
+
+- namespace 변수 충돌 회귀 테스트 (scope hoisting 시 모듈 스코프 변수와 전역 충돌)
+- TS enum hoisting — ESM factory 안의 enum이 안 올라가던 문제
+- UMD/AMD external 의존성 처리 + 실제 React E2E 테스트
+- HTTPS dev server (`--certfile`, `--keyfile`) + 통합 테스트 3개
+- `import.meta.glob` eager/import 옵션 + glob E2E 4개
+
+## 4/12 — 짧은 하루, 스모크 CI 확장, 워클렛 해시 추적
+
+```
+15:18 > "새 세션 시작하면 시스템 프롬포트로 6.3k인데 불필요한 부분 뭐뭐 있어?"
+15:20 > "클로드엠디 절약해줘 메모리도 정리"
+```
+
+CLAUDE.md·메모리 슬림화.
+
+```
+15:25 > "스타일 컴포넌트랑 이런거 다 테스트 된거 아니예요? 메인이랑 비교해봐주실래요 최신꺼?"
+15:28 > "이모션 리엑트 테일윈드 css도 CI에 추가해주세요 다 버전업 postinstall은 삭제가 맞아요"
+```
+
+emotion / styled-components / tailwind / MobX 스모크 CI 확장.
+
+### 워클렛 해시·initData 차이 추적
+
+밤:
+
+```
+22:50 > "https://github.com/ohah/zts/issues/1169 이 이슈 해결해주실래요? ... 번개 빌드 개발계 서버 실행시켜서 비교해보면서 진행해주세요"
+23:23 > "워클렛해시랑 이닛데이타가 뭐길래 차이가 나는거예요?"
+23:24 > "initData는 왜 우리는 왜이리 적어요?"
+```
+
+reanimated의 Babel plugin은 워클렛으로 마킹된 함수에 `__workletHash`/`__initData` 메타데이터를 삽입한다. zts 생성값이 **롤다운 기반 레퍼런스의 값과 달랐다**. 원인은 여러 층이었다.
+
+### "공유 헬퍼는 구조적이라 스코프 밖" 기각
+
+```
+23:38
+> "공유 헬퍼 추출은 구조적 변경이라 버그픽스 PR 범위를 벗어남 이라고 했는데 하는게 낫지 않아요?"
+```
+
+"PR 범위"라는 이유 자체를 기각하고 근본으로 끌고 갔다.
+
+```
+23:47
+> "바벨 워클렛 플러그인의 테스트 169개 그대로 다 작성해주시고"
+```
+
+babel-plugin-reanimated의 테스트 169개 전수 포팅 지시. 다음 날 이것들이 워클렛 Phase 6 완성의 근거가 된다.
+
+## 4/13 — 워클렛 Phase 2~6, 드래그 사건, AST 안정화의 싹
+
+하루 **32커밋 + PR 16건 머지**. 워클렛 버그픽스를 Phase로 나눠 연달아 정리.
+
+### 훅 외의 확장점
+
+오전:
+
+```
+09:10 > "그전에 훅 말고 또 다른개념없어?"
+09:11 > "바벨이나 롤다운은 어떻게 하는데"
+```
+
+plugin hook 이외의 확장점(preset / phase stack) 조사. 구현은 보류, 설계 문서로.
+
+### core-js 옵션
+
+```
+12:24 > "이제 궁금한게 core-js가 필요한 경우 있자나 하위 버전에서?"
+12:25 > "swc로 해도 코어 js 코드가 바로 들어가지 않고 core-js 설치해서 import 해야했던걸로 기억하는데 맞나요?"
+12:29 > "좋아요 우리도 그 옵션 넣죠"
+```
+
+`--core-js=3` 옵션 도입. swc·babel과 동일한 UX.
+
+### "드래그가 안 된다" 사건
+
+오후 2시:
+
+```
+14:13 > "좋아요 잘 되네요 리애니메이티드 예제 더 추가해주실 수 있나요?"
+14:44 > "드래그 예제는 왜 드래그가 안되지??"
+14:49 > "메트로에선 드래그 되네요"
+14:52 > "드래그 자체가 안돼 걍 코드 비교해보면 안돼??"
+```
+
+Metro 번들 vs zts 번들 라인 대조.
+
+```
+16:45
+> "확정! default property는 getter function인데 undefined 반환. ZTS가 export default Animated 처리에서 getter는 만들었는데 body가 undefined를 반환."
+17:00
+> "이제 드래그 잘 되네요"
+17:00
+> "그런식으로 또 누락 된거 한번 더 점검해볼 수 있을까요?"
+```
+
+한 건 고쳐서 비슷한 누락을 전수 조사 — 이 구간의 일관된 루틴. linker의 `export default` getter body가 비어있던 케이스 외에:
+
+- shorthand destructuring + sourceMap 필드를 `__initData.code`에 추가
+- ES5 class lowering + Babel-style anonymous names
+- implicit context + globals + CJS dehoist
+
+### 워클렛 핵심 버그들
+
+4/12~13에 누적된 워클렛 원인들:
+
+- traverse 시 directive stripping 유실
+- closure analysis shadowing 버그
+- `assignment_expression`이 `collectBindingNames`에서 누락
+- `if_statement`/`try_statement`/`for_in`이 ternary data를 사용 안 함
+- JS_GLOBALS를 pre-visit body에서 확장 안 해줌
+- TS/Flow node stripping이 worklet 변환 전에 돌아야 함
+- known function callee 자동 워클릿화 (`useAnimatedStyle` 등 호출 인자)
+- original `binding_identifier` span을 scope hoisting rename에 사용
+- object method/getter/setter body를 closure analysis에 순회
+- `__stackDetails`를 `global.Error()`와 함께 emit — Babel plugin과 호환
+
+### Babel plugin 브리지
+
+```
+18:02 > "zts에서 바벨 플러그인 못 쓰나요?"
+18:03 > "플러그인 이름이 바벨 브릿지 인가요?"
+```
+
+**Babel plugin bridge** 구현 착수. Reanimated처럼 Babel 생태계에 깊이 의존한 플러그인을 zts에서 얇게 수용.
+
+`PluginState` 구조체가 이날 `worklet`과 `refresh`로 분리됐다. object-hook property values의 auto-workletization도 같이.
+
+### MCP·RSC — 장기 백로그
+
+```
+18:07 > "https://rollipop.dev/docs/features/mcp ... 이런것도 우리가 지원하면 좋을것 같은데"
+18:10 > "zig도 mcp 관련 라이브러리가 있나여?"
+```
+
+MCP/SSE는 장기 백로그.
+
+RSC는 즉시 작업:
+
+```
+21:48 > "왜 RSC도 테스트 할 수 잇지 않아??"
+21:49 > "use client, use sever 이거 롤업이나 롤다운 swc 등은 하는건가?"
+```
+
+`"use client"`/`"use server"` directive 보존 (#1223). multi-entry CLI, `WatchRebuildEvent`, per-module standalone sourcemap, Metro `x_facebook_sources` per-source function map도 같이 들어갔다.
+
+AST import attributes / import defer-source / TS type param modifiers 보존은 이 과정에서 "AST가 생각보다 많은 걸 잃어버리고 있다"는 인식으로 이어졌다.
+
+### "AST는 안정화 어떻게 하는데요?"
+
+이 편에서 가장 결정적인 저녁 발화:
+
+```
+23:27
+> "이제 아까 이야기 한 코드젠 룰 넣죠 근데 코드젠이 정확히 어떻게 하고 어떻게 쓰는건지 설명좀"
+23:31
+> "AST는 안정화 어떻게하는데요?"
+23:35
+> "4개 다 해주시죠. 그리고 테스트코드 및 e2e 다 최대한 하고 테스트케이스 레퍼런스에서 참고할게 있으면 가져와서 구현해주세요"
+```
+
+이 발화가 다음 주 전체를 결정한다.
+
+## 4/14 — ESTree 어댑터 채택, `#x in obj`, mangleProps
+
+아침 첫 발화:
+
+```
+00:07 > "estree 어댑터 가자 우리도"
+00:17 > "좋아 그럼 가자 근데 그러면 wasm이나 AST API도 안정화 되는거지?"
+00:17 > "그럼 AST API가 먼저해야하는지? ESTree를 먼저해야하는지?"
+```
+
+zts의 내부 AST(24바이트 고정)를 그대로 공개하는 대신, **외부에 ESTree 호환 어댑터**를 노출한다. wasm API·AST API 안정화와 한 묶음.
+
+### function params 리팩터 Phase 0~2
+
+같은 날 **function params를 `formal_parameters` NodeList로 통일**. arrow / function / class method / constructor 모두 동일한 표현.
+
+이 정규화의 결과:
+- ESTree 어댑터에서 FormalParameter 배열로 바로 매핑 가능
+- transformer가 공통 유틸 (`visitExtraList`)로 한 번만 visit
+- per-param rename/destructure lowering의 호출부 단일화
+
+### Hermes와 `#x in obj`
+
+```
+13:01 > "근본해결책으로 가는게 낫지 않아요?"
+13:06 > "밴드에이드는 제끼고 1->2가 나은거예요? 바로 2로 가는게 별로?"
+13:25 > "transform-private-property-in-object도 해야하지 않아?"
+13:27 > "react-native 하면 알아서 다운레벨링할꺼 선택하는 형태로 가죠 es 옵션 입력해도 무시하게, 그리고 타입스크립트에서도 입력 못하게 할 수 있나요??"
+```
+
+ES2022 Ergonomic Brand Check(`#x in obj`)는 Hermes가 지원하지 않는다. 임시 우회 대신 **파서 레벨 다운레벨링**. 더 나아가 RN 플랫폼에서는 **사용자 ES target을 무시하고 강제 오버라이드**. 설정 미스로 Hermes에서 크래시가 나는 것을 원천 차단.
+
+```
+14:05 > "그럼 C로 가시죠"
+```
+
+워클렛 안에서 해결 못 하는 문제는 파서 레벨 lowering(C안) 선택.
+
+### arrow 정규화
+
+```
+16:18 > "레퍼런스도 화살표 함수 다 바꾼다는거죠?"
+16:21 > "그럼 어떨떄 화살표 쓰고 어떨때 function인지는 구분해주실 수 있나요?"
+```
+
+arrow ↔ function 변환 규칙을 일반화. RN 프리셋에서 `block_scoping(let/const → var)`와 `arrow → function` 다운레벨도 같이.
+
+### mangleProps
+
+```
+05:03 > "mangleProps 이거 구현 어렵나? 지금 구현할때 문제가 되는것들은?"
+05:12 > "mangling 이거 지금 없죠 옵션 저희?"
+05:13 > "rolldown, rspack 전략을 우선으로 처리"
+```
+
+`mangleProps` — 프라이빗으로 간주되는 프로퍼티(보통 `_`/`$` 프리픽스)를 압축. rolldown/rspack 전략 기준.
+
+### TypeScript declaration emit + browserslist
+
+같은 날:
+- `.d.ts` 자동 생성
+- browserslist를 **optional 의존성**으로 전환 (없어도 zts가 돈다)
+- `build API` 인터페이스 구현 (`zts.build({ entryPoints, outfile, ... })`)
+
+### Hermes 버전 매트릭스
+
+```
+06:06
+> "hermes 버전 더 최신 없어요? 각각 버전 확인해주시고 그게 문제라면 어떻게 해야하는지 확인해주세여"
+```
+
+Hermes 버전별 미지원 기능 매트릭스 정리. RN preset이 이 매트릭스를 기반으로 다운레벨 target을 **강제 오버라이드**한다.
+
+### AST 정규화 미비 전수조사
+
+```
+20:44
+> "AST 안정화 하고 싶은데, 오늘 작업 PR도 보면 알겠지만 안정화 덜된게 있었거든? 확인해주고 AST 또 그런형태가 있는지 확인해봐"
+20:47
+> "애로우 패턴이 제대로 정규화 안되있었거든요 그런식으로 정규화 덜된거 있는지?"
+```
+
+arrow 처럼 **표면적으로 구분되지만 내부적으로는 동일해야 하는 노드들**을 전수조사. 이후 3일간 AST epic의 재료.
+
+### 세션 승계 방식
+
+```
+22:28 > "project_function_params_phase2.md 메모리 보고 Phase 2 wire 변경 진행"
+```
+
+긴 에픽은 메모리 파일(`project_function_params_phase2.md`) + 부트스트랩 문구로 세션 사이에 승계. 이 방식이 이후 RFC #1672, #1634에도 그대로 쓰인다.
+
+## 4일간 관통한 것들
+
+| 축 | 귀결 |
+|---|---|
+| **생태계 규약 수용** | Stage 3 decorator (TS 스타일), UMD/AMD external, HTTPS dev, RSC directive |
+| **레퍼런스 라인 대조(2차)** | 워클렛 해시/initData, default getter body, `__stackDetails` |
+| **Hermes 매트릭스** | `#x in obj` 강제 다운레벨, RN preset이 target 덮어씀, arrow→function |
+| **AST 안정화의 시작** | function_params Phase 0~2, ESTree 어댑터 채택, 정규화 미비 전수조사 |
+| **Babel 생태계 접붙이기** | PluginState 분리 (worklet/refresh), Babel plugin bridge |
+
+## 이어서 — 3-13에서
+
+4/14 저녁 "AST 정규화 덜된 거 있는지 전수조사"가 끝나자 다음 질문이 바로 나왔다:
+- 심볼 테이블 — AoS(현재) vs SoA(oxc 방식). 어느 쪽이 장기 유지보수에 유리한가
+- SIGBUS로 크래시 나는 상황을 어떻게 친절한 에러로 바꿀 수 있는가
+- Metro 호환 API 표면적(watchFolders, extraNodeModules, resolveRequest, ...) 감사
+
+그리고 이 모든 질문의 배경에 있는 더 큰 질문:
+- **"zts와 번개는 어디까지 해야 하는가?"**
+
+다음 편 [3-13. Metro 경계 확정과 근본 수정 원칙](development-13)로 이어진다.
