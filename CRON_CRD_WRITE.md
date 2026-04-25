@@ -141,4 +141,4 @@
 - [ ] docs/monthly-opensource/zts/development-9.mdx
 - [ ] docs/monthly-opensource/zts/development-10.mdx
 - [ ] docs/monthly-opensource/zts/tech-stack.mdx
-- [ ] docs/today-commit/_meta.json
+- [x] docs/today-commit/_meta.json
