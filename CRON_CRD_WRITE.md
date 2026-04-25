@@ -115,19 +115,19 @@
 - [x] docs/monthly-opensource/hwpjs/development-7.mdx
 - [x] docs/monthly-opensource/hwpjs/development-8.mdx
 - [x] docs/monthly-opensource/hwpjs/tech-stack.mdx
-- [ ] docs/monthly-opensource/index.mdx
-- [ ] docs/monthly-opensource/react-native-mcp/background.mdx
-- [ ] docs/monthly-opensource/react-native-mcp/development.mdx
-- [ ] docs/monthly-opensource/react-native-mcp/development-1.mdx
-- [ ] docs/monthly-opensource/react-native-mcp/development-2.mdx
-- [ ] docs/monthly-opensource/react-native-mcp/development-3.mdx
-- [ ] docs/monthly-opensource/react-native-mcp/tech-stack.mdx
-- [ ] docs/monthly-opensource/react-wasm-table/background.mdx
-- [ ] docs/monthly-opensource/react-wasm-table/development.mdx
-- [ ] docs/monthly-opensource/react-wasm-table/development-1.mdx
-- [ ] docs/monthly-opensource/react-wasm-table/development-2.mdx
-- [ ] docs/monthly-opensource/react-wasm-table/development-3.mdx
-- [ ] docs/monthly-opensource/react-wasm-table/tech-stack.mdx
+- [x] docs/monthly-opensource/index.mdx
+- [x] docs/monthly-opensource/react-native-mcp/background.mdx
+- [x] docs/monthly-opensource/react-native-mcp/development.mdx
+- [x] docs/monthly-opensource/react-native-mcp/development-1.mdx
+- [x] docs/monthly-opensource/react-native-mcp/development-2.mdx
+- [x] docs/monthly-opensource/react-native-mcp/development-3.mdx
+- [x] docs/monthly-opensource/react-native-mcp/tech-stack.mdx
+- [x] docs/monthly-opensource/react-wasm-table/background.mdx
+- [x] docs/monthly-opensource/react-wasm-table/development.mdx
+- [x] docs/monthly-opensource/react-wasm-table/development-1.mdx
+- [x] docs/monthly-opensource/react-wasm-table/development-2.mdx
+- [x] docs/monthly-opensource/react-wasm-table/development-3.mdx
+- [x] docs/monthly-opensource/react-wasm-table/tech-stack.mdx
 - [ ] docs/monthly-opensource/zts/background.mdx
 - [ ] docs/monthly-opensource/zts/development.mdx
 - [ ] docs/monthly-opensource/zts/development-1.mdx
