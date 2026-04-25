@@ -111,9 +111,9 @@
 - [x] docs/monthly-opensource/hwpjs/development-3.mdx
 - [x] docs/monthly-opensource/hwpjs/development-4.mdx
 - [x] docs/monthly-opensource/hwpjs/development-5.mdx
-- [ ] docs/monthly-opensource/hwpjs/development-6.mdx
-- [ ] docs/monthly-opensource/hwpjs/development-7.mdx
-- [ ] docs/monthly-opensource/hwpjs/development-8.mdx
+- [x] docs/monthly-opensource/hwpjs/development-6.mdx
+- [x] docs/monthly-opensource/hwpjs/development-7.mdx
+- [x] docs/monthly-opensource/hwpjs/development-8.mdx
 - [x] docs/monthly-opensource/hwpjs/tech-stack.mdx
 - [ ] docs/monthly-opensource/index.mdx
 - [ ] docs/monthly-opensource/react-native-mcp/background.mdx
