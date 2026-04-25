@@ -104,17 +104,17 @@
 - [x] docs/monthly-opensource/electron-mcp-server/development-2.mdx
 - [x] docs/monthly-opensource/electron-mcp-server/development-3.mdx
 - [x] docs/monthly-opensource/electron-mcp-server/tech-stack.mdx
-- [ ] docs/monthly-opensource/hwpjs/background.mdx
-- [ ] docs/monthly-opensource/hwpjs/development.mdx
-- [ ] docs/monthly-opensource/hwpjs/development-1.mdx
-- [ ] docs/monthly-opensource/hwpjs/development-2.mdx
-- [ ] docs/monthly-opensource/hwpjs/development-3.mdx
-- [ ] docs/monthly-opensource/hwpjs/development-4.mdx
-- [ ] docs/monthly-opensource/hwpjs/development-5.mdx
+- [x] docs/monthly-opensource/hwpjs/background.mdx
+- [x] docs/monthly-opensource/hwpjs/development.mdx
+- [x] docs/monthly-opensource/hwpjs/development-1.mdx
+- [x] docs/monthly-opensource/hwpjs/development-2.mdx
+- [x] docs/monthly-opensource/hwpjs/development-3.mdx
+- [x] docs/monthly-opensource/hwpjs/development-4.mdx
+- [x] docs/monthly-opensource/hwpjs/development-5.mdx
 - [ ] docs/monthly-opensource/hwpjs/development-6.mdx
 - [ ] docs/monthly-opensource/hwpjs/development-7.mdx
 - [ ] docs/monthly-opensource/hwpjs/development-8.mdx
-- [ ] docs/monthly-opensource/hwpjs/tech-stack.mdx
+- [x] docs/monthly-opensource/hwpjs/tech-stack.mdx
 - [ ] docs/monthly-opensource/index.mdx
 - [ ] docs/monthly-opensource/react-native-mcp/background.mdx
 - [ ] docs/monthly-opensource/react-native-mcp/development.mdx
