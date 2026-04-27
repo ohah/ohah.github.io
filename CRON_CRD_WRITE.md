@@ -150,5 +150,6 @@
 - [x] docs/monthly-opensource/cheolsu-proxy/development-11.mdx
 - [x] docs/monthly-opensource/zts/development-12.mdx
 - [x] (all mdx files completed)
+- [x] **CRON_CRD_WRITE.md - all tasks completed**
 - [x] docs/monthly-opensource/zts/development-13.mdx
 - [x] docs/monthly-opensource/zts/development-14.mdx
