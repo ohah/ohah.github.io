@@ -148,3 +148,4 @@
 - [x] docs/today-commit/2026-04-27.md
 - [x] docs/today-commit/2026-04-27.md
 - [x] docs/monthly-opensource/zts/development-11.mdx
+- [x] docs/monthly-opensource/cheolsu-proxy/development-11.mdx
