@@ -149,6 +149,5 @@
 - [x] docs/monthly-opensource/zts/development-11.mdx
 - [x] docs/monthly-opensource/cheolsu-proxy/development-11.mdx
 - [x] docs/monthly-opensource/zts/development-12.mdx
-- [x] docs/today-commit/2026-04-28.md
-- [x] docs/monthly-opensource/zts/development-13.mdx
-- [x] docs/monthly-opensource/zts/development-14.mdx
+- [x] docs/today-commit/2026-04-29.md
+- [x] (all mdx files completed)
