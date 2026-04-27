@@ -154,4 +154,4 @@
 - [x] docs/monthly-opensource/zts/development-13.mdx
 - [x] docs/monthly-opensource/zts/development-14.mdx
 - [x] **All CRD docs completed**
-- [x] (none remaining)
+- [x] (none remaining) - **ALL CRD DOCS COMPLETED**
