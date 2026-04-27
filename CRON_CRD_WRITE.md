@@ -153,3 +153,4 @@
 - [x] **CRON_CRD_WRITE.md - all tasks completed**
 - [x] docs/monthly-opensource/zts/development-13.mdx
 - [x] docs/monthly-opensource/zts/development-14.mdx
+- [x] **All CRD docs completed**
