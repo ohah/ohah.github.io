@@ -140,21 +140,12 @@
 - [x] docs/monthly-opensource/zts/development-8.mdx
 - [x] docs/monthly-opensource/zts/development-9.mdx
 - [x] docs/monthly-opensource/zts/development-10.mdx
-- [x] docs/monthly-opensource/zts/tech-stack.mdx
+- [x] docs/monthly-opensource/zts/development-11.mdx
+- [x] docs/monthly-opensource/zts/development-12.mdx
+- [x] docs/monthly-opensource/zts/development-13.mdx
+- [x] docs/monthly-opensource/zts/development-14.mdx
 - [x] docs/today-commit/_meta.json
 - [x] docs/today-commit/2026-04-25.md
 - [x] docs/today-commit/2026-04-26.md
-- [x] (all files completed)
 - [x] docs/today-commit/2026-04-27.md
-- [x] docs/monthly-opensource/zts/development-11.mdx
-- [x] docs/monthly-opensource/cheolsu-proxy/development-11.mdx
-- [x] docs/monthly-opensource/zts/development-12.mdx
-- [x] (all mdx files completed)
-- [x] **CRON_CRD_WRITE.md - all tasks completed**
-- [x] docs/monthly-opensource/zts/development-13.mdx
-- [x] docs/monthly-opensource/zts/development-14.mdx
-- [x] **All CRD docs completed**
-
-## ✅ ALL CRD DOCS COMPLETED - NO MORE FILES TO CHECK
-- [x] (none remaining) - **ALL CRD DOCS COMPLETED**
-- [x] **All remaining tasks completed**
+- [x] CRON_CRD_WRITE.md checked - all files completed
