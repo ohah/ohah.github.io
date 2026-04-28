@@ -174,3 +174,4 @@
 - [x] docs/monthly-opensource/electron-mcp-server/index.mdx
 - [x] docs/monthly-opensource/craby/development-3.mdx
 - [x] All mdx files completed (2026-04-29)
+- [x] All files checked - no remaining mdx files (2026-04-29)
