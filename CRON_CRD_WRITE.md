@@ -149,3 +149,4 @@
 - [x] docs/today-commit/2026-04-26.md
 - [x] docs/today-commit/2026-04-27.md
 - [x] CRON_CRD_WRITE.md checked - all files completed (2026-04-28)
+- [x] docs/monthly-opensource/crd/development-2.mdx
