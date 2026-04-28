@@ -170,3 +170,6 @@
 - [x] docs/monthly-opensource/electron-mcp-server/development-2.mdx
 - [x] docs/monthly-opensource/electron-mcp-server/development-1.mdx
 - [x] docs/monthly-opensource/electron-mcp-server/tech-stack.mdx
+- [x] docs/monthly-opensource/electron-mcp-server/development.mdx
+- [x] docs/monthly-opensource/electron-mcp-server/index.mdx
+- [x] docs/monthly-opensource/craby/development-3.mdx
