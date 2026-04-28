@@ -159,3 +159,14 @@
 - [x] docs/monthly-opensource/chromium/merge.mdx
 - [x] docs/monthly-opensource/chromium/setup.mdx
 - [x] docs/monthly-opensource/hwpjs/development-3.mdx
+- [x] docs/monthly-opensource/hwpjs/development-2.mdx
+- [x] docs/monthly-opensource/hwpjs/development-1.mdx
+- [x] docs/monthly-opensource/hwpjs/background.mdx
+- [x] docs/monthly-opensource/hwpjs/tech-stack.mdx
+- [x] docs/monthly-opensource/hwpjs/development.mdx
+- [x] docs/monthly-opensource/hwpjs/index.mdx
+- [x] docs/monthly-opensource/electron-mcp-server/development-3.mdx
+- [x] docs/monthly-opensource/electron-mcp-server/background.mdx
+- [x] docs/monthly-opensource/electron-mcp-server/development-2.mdx
+- [x] docs/monthly-opensource/electron-mcp-server/development-1.mdx
+- [x] docs/monthly-opensource/electron-mcp-server/tech-stack.mdx
