@@ -151,3 +151,5 @@
 - [x] CRON_CRD_WRITE.md checked - all files completed
 
 *All .mdx files in the workspace have been processed and checked.*
+
+*Next: Remove this line when resetting the task list.*
