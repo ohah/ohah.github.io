@@ -151,3 +151,11 @@
 - [x] CRON_CRD_WRITE.md checked - all files completed (2026-04-28)
 - [x] docs/monthly-opensource/crd/development-2.mdx
 - [x] CRON_CRD_WRITE.md checked - all files completed (2026-04-29)
+- [x] docs/monthly-opensource/crd/development-3.mdx
+- [x] docs/monthly-opensource/cheolsu-proxy/development-10.mdx
+- [x] docs/monthly-opensource/cheolsu-proxy/development-11.mdx
+- [x] docs/monthly-opensource/chromium/first-contribution.mdx
+- [x] docs/monthly-opensource/chromium/code-review.mdx
+- [x] docs/monthly-opensource/chromium/merge.mdx
+- [x] docs/monthly-opensource/chromium/setup.mdx
+- [x] docs/monthly-opensource/hwpjs/development-3.mdx
