@@ -175,3 +175,4 @@
 - [x] docs/monthly-opensource/craby/development-3.mdx
 - [x] CRON_CRD_WRITE.md checked - all files completed (2026-04-29)
 - [x] CRON_CRD_WRITE.md checked - all files completed (2026-05-02)
+- [x] docs/monthly-opensource/zts/development-14.mdx
