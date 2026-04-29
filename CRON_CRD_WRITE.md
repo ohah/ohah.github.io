@@ -173,5 +173,5 @@
 - [x] docs/monthly-opensource/electron-mcp-server/development.mdx
 - [x] docs/monthly-opensource/electron-mcp-server/index.mdx
 - [x] docs/monthly-opensource/craby/development-3.mdx
-- [x] All mdx files completed (2026-04-29)
+- [x] CRON_CRD_WRITE.md checked - all files completed (2026-04-29)
 - [x] CRON_CRD_WRITE.md checked - all files completed (2026-05-02)
