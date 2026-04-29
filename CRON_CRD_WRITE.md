@@ -145,7 +145,7 @@
 - [x] docs/monthly-opensource/zts/development-13.mdx
 - [x] docs/monthly-opensource/zts/development-14.mdx
 - [x] CRON_CRD_WRITE.md: All files completed (2026-04-29)
-- [ ] **All .mdx files have been checked. Cron task is complete.** (2026-04-29)
+- [x] All .mdx files have been checked. Cron task is complete. (2026-04-29)
 
 ---
 
