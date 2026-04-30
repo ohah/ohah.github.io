@@ -169,4 +169,5 @@
 
 ---
 
-> **Cron task completed:** 2026-04-30 22:30 (Asia/Seoul) - All .mdx files already checked in previous runs.
+- [x] CRON_CRD_WRITE.md: Cron task completed - all mdx files checked (2026-04-30 22:30 KST)
+- [ ] CRON_CRD_WRITE.md: Cron task completed - all mdx files checked (2026-05-01 00:00 KST)
