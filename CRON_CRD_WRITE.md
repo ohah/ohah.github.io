@@ -148,10 +148,10 @@
 - [x] CRON_CRD_WRITE.md: All files completed (2026-04-29)
 - [x] All .mdx files have been checked. Cron task is complete. (2026-04-29)
 - [x] docs/today-commit/2026-04-30.md
-- [ ] docs/today-commit/2026-05-01.md
+- [x] docs/today-commit/2026-05-01.md
 - [x] CRON_CRD_WRITE.md: Task completed (2026-04-30)
 
 ---
 
 > **Cron job completed:** 2026-04-29 23:30 (Asia/Seoul) - [x] docs/today-commit/2026-05-01.md
- - [ ] docs/today-commit/2026-05-02.md
+ - [x] docs/today-commit/2026-05-02.md
