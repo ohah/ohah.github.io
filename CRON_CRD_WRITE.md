@@ -157,4 +157,4 @@
 
 ---
 
-> **Cron job completed:** 2026-04-30 17:30 (Asia/Seoul)
+> **Cron task completed:** 2026-04-30 20:00 (Asia/Seoul) - All .mdx files already checked in previous runs.
