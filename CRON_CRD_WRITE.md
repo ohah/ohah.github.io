@@ -187,4 +187,4 @@
 ---
 
 - [x] CRON_CRD_WRITE.md: Final status - no unchecked .mdx files remaining (2026-05-01 15:00 KST)
-- [x] CRON_CRD_WRITE.md: All .mdx files checked - task complete (2026-05-01 18:00 KST)
+- [x] CRON_CRD_WRITE.md: Final status - all files checked (2026-05-01 18:00 KST)
