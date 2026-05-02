@@ -241,4 +241,4 @@
 
 ### 2026-05-02 20:30 KST (Final)
 - [x] CRON_CRD_WRITE.md: All tasks completed — no remaining .mdx files to check (2026-05-02 20:30 KST)
-- [ ] docs/monthly-opensource/zts/tech-stack.mdx
+- [x] docs/monthly-opensource/zts/tech-stack.mdx
