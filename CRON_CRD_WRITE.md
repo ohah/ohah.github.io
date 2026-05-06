@@ -369,4 +369,4 @@
 ### 2026-05-06 14:00 KST (Current)
 - [x] CRON_CRD_WRITE.md: Cron task completed at 14:00 KST — all mdx files already checked (2026-05-06)
 - [x] CRON_CRD_WRITE.md: Final status — all files checked (2026-05-06 14:00 KST)
-- [ ] docs/index.mdx
+- [x] docs/index.mdx
