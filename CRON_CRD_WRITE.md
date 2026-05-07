@@ -77,7 +77,7 @@
 - [x] docs/monthly-opensource/cheolsu-proxy/tech-stack.mdx
 - [x] docs/monthly-opensource/chromium/background.mdx
 - [x] docs/monthly-opensource/chromium/code-review.mdx
-- [x] docs/monthly-opensource/chromium/first-contribution.mdx
+- [ ] docs/monthly-opensource/chromium/first-contribution.mdx
 - [x] docs/monthly-opensource/chromium/merge.mdx
 - [x] docs/monthly-opensource/chromium/setup.mdx
 - [x] docs/monthly-opensource/craby/background.mdx
@@ -451,8 +451,8 @@
 - **상태**: ✅ 완전 종료 (크론 작업 완료)
 - [x] CRON_CRD_WRITE.md: ✅ CRON TASK FINALIZED — All 85 .mdx files verified, no remaining tasks (2026-05-07 14:00 UTC)
 
-### 2026-05-08 02:00 KST (Current)
-- [x] CRON_CRD_WRITE.md: All tasks completed — no remaining .mdx files to check (2026-05-08 02:00 KST)
+### 2026-05-08 03:00 KST (Current)
+- [x] CRON_CRD_WRITE.md: All tasks completed — no remaining .mdx files to check (2026-05-08 03:00 KST)
 
 ## ✅ CRON TASK COMPLETED (2026-05-08 02:00 KST)
 
