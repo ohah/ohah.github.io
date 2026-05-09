@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-04-25T17:26:24.036Z",
+  "updatedAt": "2026-05-09T17:00:43.582Z",
   "entries": {
     "memory:memory/.dreams/session-corpus/2026-04-19.txt:1:1": {
       "key": "memory:memory/.dreams/session-corpus/2026-04-19.txt:1:1",
@@ -25319,18 +25319,20 @@
       "endLine": 282,
       "source": "memory",
       "snippet": "- Candidate: Assistant: **수정 완료 파일:** `docs/monthly-opensource/react-wasm-table/tech-stack.mdx` **요약:** - 맞춤법·띄어쓰기·오타 검사 완료 - 수정 사항 없음 - `CRON_CRD_WRITE.md` 체크박스를 `[x]`로 변경 후 커밋·푸시 - confidence: 0.58 - evidence: memory/.dreams/session-corpus/2026-04-22.txt:123-123 - recalls: 0 - status: staged - Candidate: Assistant: I'll read the CRON_CRD_WRITE.md file and follow its instructions. - confidence: 0.58 - evidence: memory/.dreams/session-corpus/2026-04-22.txt:125-125 - recalls: 0 - status: staged - Candidate: Assistant: I found the first unchecked file: `docs/monthly-opensource/cheolsu-proxy/development-8.mdx`. Let me read it to check for spelling, punctuation, and typos. - co",
-      "recallCount": 1,
+      "recallCount": 2,
       "dailyCount": 0,
       "groundedCount": 0,
-      "totalScore": 1,
+      "totalScore": 1.6764734273222466,
       "maxScore": 1,
       "firstRecalledAt": "2026-04-25T04:04:42.438Z",
-      "lastRecalledAt": "2026-04-25T04:04:42.438Z",
+      "lastRecalledAt": "2026-05-09T17:00:43.582Z",
       "queryHashes": [
-        "de4acf81d509"
+        "de4acf81d509",
+        "d9f364ef7f4d"
       ],
       "recallDays": [
-        "2026-04-25"
+        "2026-04-25",
+        "2026-05-10"
       ],
       "conceptTags": [
         "cron-crd-write.md",
@@ -25854,18 +25856,20 @@
       "endLine": 205,
       "source": "memory",
       "snippet": "- Candidate: Assistant: I've read `docs/monthly-opensource/crd/development-2.mdx`. Scanning for spelling, spacing, and typos: **Result:** No spelling or spacing corrections needed. The file is clean. Now I'll update the checklist and commit: - confidence: 0.58 - evidence: memory/.dreams/session-corpus/2026-04-21.txt:42-42 - recalls: 0 - status: staged - Candidate: Assistant: ## Summary Checked `docs/monthly-opensource/crd/development-2.mdx`. No spelling/spacing/typos found. Updated checklist and pushed commit. - confidence: 0.58 - evidence: memory/.dreams/session-corpus/2026-04-21.txt:43-43 - recalls: 0 - status: staged - Candidate: Assistant: I'll read the CRON_CRD_WRITE.md",
-      "recallCount": 1,
+      "recallCount": 2,
       "dailyCount": 0,
       "groundedCount": 0,
-      "totalScore": 1,
+      "totalScore": 1.6786794176554454,
       "maxScore": 1,
       "firstRecalledAt": "2026-04-25T15:29:32.189Z",
-      "lastRecalledAt": "2026-04-25T15:29:32.189Z",
+      "lastRecalledAt": "2026-05-09T17:00:43.582Z",
       "queryHashes": [
-        "050b15256a7e"
+        "050b15256a7e",
+        "d9f364ef7f4d"
       ],
       "recallDays": [
-        "2026-04-26"
+        "2026-04-26",
+        "2026-05-10"
       ],
       "conceptTags": [
         "0.58",
@@ -25876,6 +25880,130 @@
         "candidate",
         "assistant",
         "i've"
+      ]
+    },
+    "memory:memory/2026-04-21.md:210:232": {
+      "key": "memory:memory/2026-04-21.md:210:232",
+      "path": "memory/2026-04-21.md",
+      "startLine": 210,
+      "endLine": 232,
+      "source": "memory",
+      "snippet": "- evidence: memory/.dreams/session-corpus/2026-04-19.txt:72-72 - recalls: 0 - status: staged - Candidate: Assistant: Let me check one of the checked files that still exists to see if there are any spelling errors. - confidence: 0.58 - evidence: memory/.dreams/session-corpus/2026-04-19.txt:73-73 - recalls: 0 - status: staged - Candidate: Assistant: No spelling errors found in `docs/monthly-opensource/hwpjs/development-3.mdx`. Let me update the tracking file. - confidence: 0.58 - evidence: memory/.dreams/session-corpus/2026-04-19.txt:74-74 - recalls: 0 - status: staged - Candidate: Assistant: ## Summary All mdx files in the CRON_CRD_WRITE.md list are already marked as che",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.6790082532353269,
+      "maxScore": 0.6790082532353269,
+      "firstRecalledAt": "2026-05-09T17:00:43.582Z",
+      "lastRecalledAt": "2026-05-09T17:00:43.582Z",
+      "queryHashes": [
+        "d9f364ef7f4d"
+      ],
+      "recallDays": [
+        "2026-05-10"
+      ],
+      "conceptTags": [
+        "72-72",
+        "0.58",
+        "73-73",
+        "74-74",
+        "cron-crd-write.md",
+        "evidence",
+        "dreams",
+        "corpus"
+      ]
+    },
+    "memory:memory/2026-04-22.md:156:181": {
+      "key": "memory:memory/2026-04-22.md:156:181",
+      "path": "memory/2026-04-22.md",
+      "startLine": 156,
+      "endLine": 181,
+      "source": "memory",
+      "snippet": "- recalls: 0 - status: staged - Candidate: Assistant: docs/index.mdx 맞춤법 검사 완료. 수정 내용 없음 (CRON_CRD_WRITE.md 체크 표시 및 커밋·푸시 완료). - confidence: 0.58 - evidence: memory/.dreams/session-corpus/2026-04-21.txt:36-36 - recalls: 0 - status: staged - Candidate: Assistant: Checked `docs/monthly-opensource/chromium/setup.mdx` (currently empty). No spelling/spacing changes needed. Updated CRON_CRD_WRITE.md checklist and pushed. - confidence: 0.58 - evidence: memory/.dreams/session-corpus/2026-04-21.txt:38-38 - recalls: 0 - status: staged - Candidate: User: [cron:a1b2c3d4-0002-4002-8003-000000000002 blog-crd-write] Read CRON_CRD_WRITE.md in this workspace and follow it. Do one CRD doc,",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.6782999620094787,
+      "maxScore": 0.6782999620094787,
+      "firstRecalledAt": "2026-05-09T17:00:43.582Z",
+      "lastRecalledAt": "2026-05-09T17:00:43.582Z",
+      "queryHashes": [
+        "d9f364ef7f4d"
+      ],
+      "recallDays": [
+        "2026-05-10"
+      ],
+      "conceptTags": [
+        "docs/index.mdx",
+        "cron-crd-write.md",
+        "0.58",
+        "36-36",
+        "spelling/spacing",
+        "38-38",
+        "blog-crd-write",
+        "recalls"
+      ]
+    },
+    "memory:memory/2026-04-23.md:30:52": {
+      "key": "memory:memory/2026-04-23.md:30:52",
+      "path": "memory/2026-04-23.md",
+      "startLine": 30,
+      "endLine": 52,
+      "source": "memory",
+      "snippet": "- evidence: memory/.dreams/session-corpus/2026-04-22.txt:59-59 - recalls: 0 - status: staged - Candidate: Assistant: I'll read the first unchecked file from the list to perform spelling and spacing corrections. - confidence: 0.58 - evidence: memory/.dreams/session-corpus/2026-04-22.txt:60-60 - recalls: 0 - status: staged - Candidate: Assistant: I've read the file `docs/monthly-opensource/cheolsu-proxy/development-1.mdx`. After checking for spelling, spacing, and typos, I found **no corrections needed** in this file. All Korean and technical terms appear to be correctly written. - confidence: 0.58 - evidence: memory/.dreams/session-corpus/2026-04-22.txt:61-61 - recalls: 0",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.6752444099628157,
+      "maxScore": 0.6752444099628157,
+      "firstRecalledAt": "2026-05-09T17:00:43.582Z",
+      "lastRecalledAt": "2026-05-09T17:00:43.582Z",
+      "queryHashes": [
+        "d9f364ef7f4d"
+      ],
+      "recallDays": [
+        "2026-05-10"
+      ],
+      "conceptTags": [
+        "59-59",
+        "0.58",
+        "60-60",
+        "61-61",
+        "evidence",
+        "dreams",
+        "corpus",
+        "recalls"
+      ]
+    },
+    "memory:memory/2026-04-21.md:185:216": {
+      "key": "memory:memory/2026-04-21.md:185:216",
+      "path": "memory/2026-04-21.md",
+      "startLine": 185,
+      "endLine": 216,
+      "source": "memory",
+      "snippet": "- evidence: memory/.dreams/session-corpus/2026-04-19.txt:63-63 - recalls: 0 - status: staged - Candidate: Assistant: CRON heartbeat completed. Checked CRON_CRD_WRITE.md; all 33 mdx files marked complete; updated checklist and pushed. - confidence: 0.58 - evidence: memory/.dreams/session-corpus/2026-04-19.txt:66-66 - recalls: 0 - status: staged - Candidate: Assistant: I'll read the next unchecked file from the list and check for spelling errors. - confidence: 0.58 - evidence: memory/.dreams/session-corpus/2026-04-19.txt:69-69 - recalls: 0 - status: staged - Candidate: Assistant: All files in the list appear to be checked. Let me verify which .mdx files actually exist in",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.6752422810221786,
+      "maxScore": 0.6752422810221786,
+      "firstRecalledAt": "2026-05-09T17:00:43.582Z",
+      "lastRecalledAt": "2026-05-09T17:00:43.582Z",
+      "queryHashes": [
+        "d9f364ef7f4d"
+      ],
+      "recallDays": [
+        "2026-05-10"
+      ],
+      "conceptTags": [
+        "63-63",
+        "cron-crd-write.md",
+        "0.58",
+        "66-66",
+        "69-69",
+        "evidence",
+        "dreams",
+        "corpus"
       ]
     }
   }
