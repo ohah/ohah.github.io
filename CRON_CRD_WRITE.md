@@ -1,5 +1,5 @@
 ### 2026-05-10 06:00 KST (Current)
-- [ ] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-10 06:00 KST)
+- [x] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-10 06:00 KST)
 
 ## ✅ CRON TASK COMPLETED - ONE FILE VERIFIED (2026-05-10 06:00 KST)
 
@@ -7,4 +7,4 @@
 - **완료일자**: 2026-05-10
 - **마지막 실행**: 2026-05-10 06:00 (Asia/Seoul) = 2026-05-09 21:00 UTC
 - **검사 파일 수**: 1개 파일 (docs/index.mdx)
-- **상태**: ✅ 검사 완료 (오타 없음)
+- **상태**: ✅ 검사 완료 (오타 없음, 린트 통과)
