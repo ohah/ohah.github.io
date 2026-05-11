@@ -1,0 +1,360 @@
+---
+title: "3-16. binding-lite·메모리 오염·패키지 분리, 그리고 이름이 바뀐 날"
+date: 2026-05-07
+---
+
+# 3-16. binding-lite·메모리 오염·패키지 분리, 그리고 이름이 바뀐 날
+
+> **기간**: 2026년 5월 1일 ~ 5월 7일 (7일)
+> **커밋**: zts/zntc 약 412개 (5/1 58 · 5/2 73 · 5/3 71 · 5/4 43 · 5/5 57 · 5/6 64 · 5/7 36)
+> **핵심**: esbuild 스타일 `tsconfigRaw` 통합 (A1 시리즈), binding-lite 트랜스파일 fast path (#2352), **메모리 오염 근본 수정** — `import_record` specifier use-after-free(`#raw-require`)·var hoisting의 `0xAA` slice UAF가 ~12개 형제 사이트로 fan-out, stack-overflow hardening (스택 버퍼 → ArrayList, #2475/#2484), AST intern-map perf, numeric cross-module const folding, RN codegen rn-0.78~0.84 골든 매트릭스 (#2462), **Flow 파서를 "ts처럼" — type-level 정보 보존**, core-js 자동 폴리필 에픽 (`runtimePolyfills: auto`, RuntimeTarget ios12/hermes0.7), **`@zntc/*` 모노레포 패키지 분리** (core/web/server/react-native/vite-plugin/wasm), BoringSSL dev TLS, **번개(bungae) RN 데브서버 흡수 + 번개 폐기**, dev 에러 오버레이(Shadow DOM), 그리고 **2026-05-07 15:40 KST — 프로젝트 이름이 `zts`에서 `zntc`로 바뀜**
+> **진행 중** — 패키지 분리·core-js·RN codegen 매트릭스·번개 흡수 모두 이 7일에 머지됐지만 후속 phase가 줄줄이 열려 있다.
+
+## 이 편의 위치
+
+[3-15](development-15)는 4/24~4/30 — config 시스템, CJS DCE, styled/emotion 트랜스포머, 문서 사이트 개편, 그리고 "프로덕션 레벨 배포에 부족한 게 뭐예요?"라는 첫 질문 — 으로 끝났다. 이 편은 그 질문에 대한 답을 *코드 구조* 차원에서 밀어붙인 7일이다.
+
+세 가지가 동시에 일어난다. (1) **성능을 한 번 더** — 트랜스파일은 binding-lite fast path, 번들러는 numeric const folding과 graph discovery 프로파일. (2) **안정성을 한 번 더** — Zig의 슬라이스/스택 다루는 코드에서 use-after-free와 stack overflow를 근본 수정. (3) **배포 가능한 모양으로** — 단일 저장소를 `@zntc/*` 모노레포로 쪼개고, RN 번들러 래퍼였던 "번개"를 흡수하고, 그리고 — npm org `@zts`가 이미 선점돼 있어서 — **프로젝트 이름을 바꿨다.**
+
+## 5/1 — esbuild 스타일 tsconfigRaw, 그리고 두 워크스페이스
+
+### tsconfigRaw 통합 A1 시리즈
+
+`tsconfig.json`을 JS API에서 어떻게 받을 것인가. esbuild는 `tsconfigRaw` 옵션으로 raw 문자열/객체를 받는다. zts도 그 방식으로:
+
+```
+18:08 > "어느게 유지보수에 나아??"
+18:09 > "다른 번들러들은 tsconfigRaw 어떻게 처리하는데요?"
+18:12 > "A -> B 이렇게 작업이 이어지는거야? 아니면 B 작업 할 떄 A 작업을 제거해야하는거야?"
+18:17 > "그냥 바로 B로 가시죠 그럼"
+18:45 > "esbuild 처럼 가시죠 좋아요 그렇게 갑시다"
+```
+
+`tsconfigRaw`를 JS API에, JS 쪽 파싱은 버리고, `jsx` 머지. 이때 `napi`! 가 잘못된 `jsx` 옵션에 대해 조용히 classic으로 떨어지던 걸 **strict throw**로 바꿨다(breaking change). 시리즈 PR을 자동 wakeup으로 CI 폴링 → 머지까지 무인화하기 시작한 것도 이날:
+
+```
+19:42 > "넵 계속 진행해주세요 PR 하나할때마다 /simplify 로 리뷰 보면서 진행"
+```
+
+`ancestor walk cache`는 "자주 일어나는 이슈 아니예요?? 모노레포나 이런경우" → "일단 이슈만 등록하고 스킵" — over-engineering 판정. `writer-passing 리팩토링 + BoundedArray 도입`도 "호출 빈도 대비 이득 미미"로 스킵. "언젠간 하는 게 낫나?" → "지금은 아니다"가 이날 여러 번 나왔다.
+
+### "여기서 B 작업해주실래요?"
+
+```
+18:43 > "아뇨 지금 폴더에서 다른 작업도 할거라서, 상위폴더 zts에 똑같이 있는데 여기서 B 작업해주실래요??"
+```
+
+`zts`(Claude)와 `zts-codex`(Codex)를 의식적으로 분리해서 쓰기 시작했다는 가장 명시적인 문장. 같은 origin remote, 같은 이슈/PR 풀, 다른 작업 디렉터리.
+
+### Codex: "느린 구간 다 1등 하고 싶어"
+
+같은 날 Codex 쪽에서는 벤치마크 CI를 보다가:
+
+```
+[Codex, 18:29] > "https://github.com/ohah/zts/pull/2350 댓글 보면 벤치 마킹 하는 CI 있잖아? 여기서 보면 우리가 느린 구간들이 있는데 무조건 다 1등 하고 싶거든? 원인 분석해줄래? profile CLI도 있어"
+[Codex, 18:49] > "롤다운은 시맨틱 라이트 같은 아키텍쳐가 있는거죠? 그리고 이 아키텍쳐는 fallback이 필수인가요? 왠만하면 없애고 싶은데요"
+[Codex, 18:55] > "poc 한번 해보면 안돼?"
+[Codex, 19:09] > "근데 이거 했다가 회귀 문제 일어날 경우는 없나요?"
+[Codex, 19:51] > "필요한 회귀테스트 케이스를 생각나는대로 모두 추가해서 진행하는거지"
+[Codex, 19:51] > "좋아 쪼개면서 가는건 좋은데 계속 이어서 너가 컨텍스트 안잃으려면 어떻게 할건데?"
+```
+
+여기서 **binding-lite** — semantic 분석을 전부 돌리지 않고 transpile에 필요한 최소(함수/var/param shadow)만 보는 fast path — POC가 시작된다(#2352). 마지막 질문("컨텍스트 안 잃으려면?")에 대한 답은 "매 작업마다 이슈 #2352에 진행상황 기록"으로 정착됐다.
+
+## 5/2 — binding-lite, 그리고 메모리 오염
+
+### binding-lite Phase 2/3
+
+binding-lite는 5/2에 Phase 2 hardening(함수/var/param shadow 처리, TransformPlan 히트율 리포팅), Phase 3 scope-aware shadow, 그리고 대형 25K/50K/100K 라인 프로파일 fixture까지. `module_specifier_map`(#2393)도. "결과가 바뀐 건 아니고 내부 동작만 최적화된 거지?" — fast path는 동작을 바꾸면 안 된다.
+
+```
+13:51 > "collectBindingNames 이거 얼마나 해야하는데? 걍 통합해줘요"
+22:14 > "결과가 바뀐건 아니고 내부 동작만 최적화된거지?"
+```
+
+### `#raw-require` — import_record specifier use-after-free
+
+이날 진짜 사건. 번들에 raw `require()`가 새어 나가는 버그를 추적했더니 — `import_record`의 specifier가 **use-after-free**였다. 슬라이스가 가리키던 메모리가 재할당되면서 다른 데이터를 가리키게 된 것. 근본 수정은 그 중복본을 `graph.zig`로 옮기는 것.
+
+이어서 더 무서운 게 나왔다 — **var hoisting에서 rename-slice의 `0xAA` use-after-free**. Zig의 GeneralPurposeAllocator는 free된 메모리를 `0xAA`로 칠한다. 그 패턴이 보였다는 건 free된 슬라이스를 읽고 있다는 뜻. 원인은 동일 — 슬라이스를 쥐고 있는데 그 백킹 배열이 realloc됨. 같은 패턴이 `es2015_class` / `transformer` / `es2015_generator`에 걸쳐 **~12개 형제 사이트**에 있었고(#2422/#2426), 한 번에 같은 수정을 적용했다. 파서/트랜스포머의 uninitialized-memory 버그 2개도 추가로 근본 추적(Flow 패턴 작업을 막고 있던 것). NAPI free-on-deinit 누수(#2396), TsconfigCache per-process(#2367)도.
+
+```
+19:00 > "라인 573-575 truth table 참조 코멘트가 다른 곳을 가리킴 (stale ref): 별도 정리 — 이건 버그 문제 있는거 아니예요??"
+22:31 > "rolldown 참고해서 ... 그럼 cjs_output 지금 바로 추가해주세요 이 브랜치에"
+```
+
+`cjs_output` 추가, 트리쉐이킹 전략을 GitHub 문서 + Astro 문서 양쪽에 정리:
+
+```
+12:41 > "그 깃헙 문서에 트리쉐이킹 파트 하나 만들어서 우리 트리쉐이킹 전략 자세하게 써주라"
+12:47 > "거기말고 깃헙 배포문서되는 아스트로에서도 써줄 수 있나여"
+22:17 > "ts_module_block / ts_external_module_reference / ts_export_assignment / ts_namespace_export_declaration 근데 이건 왜 파서가 에밋하지 않아?? 나중에 필요한 케이스 없어?"
+22:25 > "제거하지말고 일단 주석으로 쓰고 해도 성능에는 영향 없죠?"  ...  22:26 > "그럼 이넘은 남겨두죠"
+```
+
+## 5/3 — stack-overflow hardening, numeric const folding
+
+### #2475 — 스택 버퍼를 ArrayList로
+
+4/30의 `Buffer overflow 차단 (256B 스택 버퍼)` 같은 임시 방어들이 이날 정면으로 다뤄진다. ast-walk / semantic / transformer / worklet의 스택 한정 재귀 walker를 **명시적 스택 / ArrayList**로 전환(#2475 감사, #2484). `containsReturn` / `containsYield`는 5/9에 iterative DFS로.
+
+```
+14:16 > "https://github.com/ohah/zts/issues/2475 이 이슈 하이건부터 진행해주세요"
+14:36 > "그럼 일단 머지하고, 2번 해결해줘"
+14:46 > "거기가 루트 커즈 버그 맞아요?"
+14:53 > "이제 아까 하던 어레이리스트로 바꾸는 작업 진행하자"
+15:23 > "이슈 만들고 TDD로 수정하자"
+15:39 > "네 머지하고 worklet도 방금 이슈와 동일한 방법으로 해결해주세요"
+20:36 > "좋아요 권고대로 갈게요. 다만 권고대로 가면서도 계속 실측을 하면서 확인하면서 진행해주세요 매 PR마다 /simplify"
+```
+
+AST intern-map perf(addString dedupe, Span-key HashMap, FunctionExtra/ArrowExtra typed offset structs), tree-shake numeric-const chain folding도 이날.
+
+### Codex: graph discovery 병목, numeric const folding
+
+Codex 쪽은 그래프 discovery 병목을 프로파일로 쪼갰다 — `graph.discover.scan.worker.parse`, `pm.setup.read`가 큰 비중. 그리고 **numeric cross-module const folding**으로 모노레포 번들에서 5051개 모듈이 출력되던 걸 (rolldown은 ~50개) 대폭 축소:
+
+```
+[Codex, 01:26] > "그럼 개선이 될 때까지 해야해 오히려 느려지면 코드 복잡도만 늘어나잖아"
+[Codex, 02:03] > "우회경로를 만들면 복잡도가 늘어나는거 아니야? / refreshAnalysisAfterAstMutation 이건 우회 경로만드는거아니야? 그걸 물어본거임"
+[Codex, 03:37] > "성능 개선에 큰 영향이 없네..??"  ...  03:38 > "큰 픽스쳐에서도 테스트해보고 다른 병목 까지도 확인해보자"
+[Codex, 04:43] > "plugin load / JSON / CSS / asset 경로는 기존 fallback 유지했다고 했는데 안하고는 못해? 이것까지 fallback 없애면 성능 개선 없어?"
+[Codex, 14:31] > "프로파일 카테고리 늘린다고 성능 안 느려지죠? 그냥 늘린거 고정해주세요 이참에"
+[Codex, 21:53] > "보수적으로 하지말고 명확하게 판단 불가능한가요?"
+```
+
+## 5/4 — RN codegen 매트릭스, Flow를 "ts처럼", core-js 자동 폴리필
+
+### RN codegen 골든 매트릭스 #2462
+
+`@react-native/codegen`을 Zig로 포팅한 것 — Fabric 컴포넌트의 `ComponentShape`를 TS/Flow 타입에서 뽑아 JS view config를 emit. 5/1~5/3에 schema_builder, type-alias/interface indexer, validator + ZTS 1400~1499 에러 코드, view_config_emitter를 쌓았고 5/4엔 버전별 골든 매트릭스 — **rn-0.78 → 0.84**, 각 버전 3개 core spec, `@react-native/codegen` 레퍼런스와 byte-diff 스냅샷:
+
+```
+13:37 > "지금하던 인프라 작업끝났으니 #2462 0.78부터 쭉 해야 하는거 아니예여?"
+13:53 > "스냅샷 테스트를 통해 실제 잘 변환되는지 확인해봤나요?"  ...  13:57 > "0.85때는 괜찮았는데 0.78이 문제라는거죠?"
+14:47 > "메트로 코드젠 처리 방식 직접 코드로 확인하면서 진행해주세요"
+14:52 > "근데 버전별로 약간 다른데 그냥 저흰 통합으로 해도 상관없을지?"
+```
+
+(`codegen` → `rn_codegen` 리네임도 이날.)
+
+### "Flow도 ts처럼 구현해주시죠"
+
+```
+15:19 > "ZTS Flow parser 가 type-level function 정보 strip → AST 만으로 인자 추출 불가 ... 라고 하셨는데 바벨은 가능해요??"
+15:20 > "보존 하는 코드 작성이 어렵나요?"
+15:24 > "C로 하나 B로 하나 최종작업 결과물은 똑같지 않아요?"
+15:29 > "근데 노드별 보존해야하는거 아니예요? 노드별로 보존 안하고 방법이 있나요?"
+15:32 > "그럼 플로우도 ts처럼 구현해주시죠"
+```
+
+zts Flow 파서는 type-level 함수 정보를 strip하고 있었다 — Babel은 보존한다. RN codegen이 Flow 타입에서 인자 이름을 뽑아야 하는데 AST에 정보가 없어서 안 됐다. 결론은 "Flow도 TS처럼 타입 노드를 보존". 이후 5/1~5/2에 걸쳐 Flow object body / TS property signature 보존, Flow enum 문법(#2401, flow-enums-runtime), Pick/Omit/WithDefault/Array&lt;T&gt; 같은 유틸리티 타입 처리가 채워진다.
+
+### core-js 자동 폴리필 에픽
+
+```
+[Codex, 01:17] > "음 coreJS도 지원하고 싶은데"
+[Codex, 01:17] > "일단 거기에 예를 들어 react-query 5는 ios12가 지원이 안되는데 es5로 다운레벨링 해서 #없애도, replaceAll 함수가 없어서 터지잖아?"
+[Codex, 01:25] > "그래서 ios12를 넣고 내가 번들하는 함수에 미지원 함수가 발견되면 알아서 폴리필 해주는 auto모드 까지 있었으면 좋겠는데"
+[Codex, 12:31] > "바벨 파서 말고 우리 파서로 감지는 못해요? 그게 더 빠를거 같은데"
+[Codex, 13:43] > "루트커즈 수정하신거죠?"  ...  13:45 > "무조건 루트 커즈 수정하셔야해요"
+```
+
+`runtimePolyfills: off|auto|usage|entry`, `coreJs`, RuntimeTarget(`ios12`/`hermes0.7`/`react-native 0.70`/`node18`), core-js-compat 연동. 처음엔 Babel parser pre-scan으로 감지하다가 → "우리 Zig 파서/그래프로 그래프 기반 감지"로 전환(#2518). rspack과 타깃 정렬. react-query v5 + es5 다운레벨에서 `replaceAll` 폴리필이 자동 주입되는지 스모크로 확인.
+
+### dev 에러 오버레이 + 서버 분리 논의
+
+```
+[Codex, 17:30] > "waiting for bundle란 텍스트는 뜨는데 기존 vite나 webpack처럼 캔버스 형태의 오버레이는 안 나오는데"
+[Codex, 17:49] > "좋아요 우리도 쉐도우돔으로 가시죠"
+[Codex, 18:03] > "소스맵까지 적용은 안되나? 에러스택트레이스 잡아서? 그리고 바깥 클릭한다고 닫히면 안되고 X 눌렀을떄 닫혀야 할거 같은데"
+18:21 > "오버레이 클라이언트 통합은 어디서 어떻게 하는건데요?"
+18:24 > "나눈이유가 https때문이였는데 그걸 지원한다면 지그에서 하는게 나을까요?"
+18:39 > "근데 번개도 사실상 데브서버 만 하고 다른 역할 딱히 없는데 zts도 지금 웹은 그러고 있잖아?"
+19:44 > "근데 서버는 @zts/server로 나누는건 어때? wasm 이슈도 잇고 하니"
+```
+
+dev 에러 오버레이를 div → Shadow DOM으로(소스맵 적용, X로만 닫기, ESM 서빙). 그리고 "데브서버를 별도 패키지(@zts/server)로 빼야 하나"가 처음 떠올랐다 — 5/5의 패키지 분리 대설계로 이어진다.
+
+## 5/5 — 패키지 분리 대설계, BoringSSL, 번개 폐기
+
+### `@zntc/core` / `@zntc/web` / `@zntc/server` / `@zntc/react-native`
+
+단일 저장소를 패키지로 쪼개는 큰 설계. 며칠에 걸친 토론이 이날 결론에 도달한다:
+
+```
+12:28 > "https://github.com/ohah/zts/issues/2538 이거 하려고 하는데 일단 하위버전은 고려안할꺼야 어차피 출시전이라 상관없어 그리고 BoringSSL"
+12:31 > "근데 vite의 경우 SSR도 제공하지? 그런것까지 고렿나다면??"
+12:58 > "nextjs remix, tanstack 이런거 빌드 다 되어야 하는데"  ...  13:06 > "nextjs는 고려 안해도되는거군 RSC, SSR만 하면? 그리고 vite 어댑터 말고 우리 자체 zts.config.ts에서도 되어야하는데"
+13:24 > "사실 vite에게는 트랜스파일러 기능을 좀 더 제공하는거고 자체 독립형이 기본 베이스 방향이야 / swc가 rspack이 메인이지만 swc 비트 플러그인이 있는거랑 비슷한 맥락"
+13:53 > "그럼 우리도 근야 @zts/core @zts/dev-server @zts/dev-server/react-native 인가?"
+13:54 > "예를 들어 리엑트네이티브 자체 cli 있잖아? 이것처럼 같이 제공해야할거같고 번개는 아예 없애고 싶어서 잔존하면 안될것 같은데"
+14:52 > "근데 그냥 @zts/web @zts/react-native 로 나누는건 어떤지? 어느게 나은지 궁금해"
+15:00 > "server-shared (private, npm 미공개) 이게 그럼 어떻게 들어가는건데? 구조상? 나한테 설명해줘"
+15:01 > "다른 번들러들은 어떻게 하고 있지??"  ...  15:04 > "rspack은 왜 저 구조인지?"
+15:09 > "플랫폼 단위로 분리하는게 유지보수에도 유리할까?"  ...  15:16 > "좋아 그럼 그렇게 결정해서 이슈탭에 넣자"
+```
+
+최종: `@zntc/core`(트랜스파일·번들·NAPI) + `@zntc/web`(CSS 파이프라인 — css-modules/css-parser/postcss/sass/loader, `zts.mjs`에서 추출) + `@zntc/server`(private — HMR + WS + Watcher, BoringSSL dev TLS) + `@zntc/react-native`(asset/babel/codegen/require-context/metro-resolve-request 플러그인 팩토리, RN preset, zts-hmr-client.js, Metro HMR adapter) + `vite-plugin-zts`(나중에 `@zntc/vite-plugin`) + `@zntc/wasm` + `@zntc/shared`. `zts` 자체를 self-build로 도그푸드.
+
+### BoringSSL — bun은 어떻게?
+
+```
+14:12 > "bun은 boringSSL 어떻게 쓰고 있나요?"
+14:18 > "번은 왜 저렇게 까지 한거야?"
+14:19 > "우린 걍 데브서버 ssl까지만 하면 되는거긴 한데"
+14:21 > "mbedTLS를 쓰는 번들러는 없지?"
+14:41 > "근데 napi-rs처럼 하나의 플랫폼에서 옵셔널 디펜던시로 하는게 일반적 아니예여?"
+```
+
+dev 서버 HTTPS를 위한 TLS — BoringSSL로(bun이 쓰는 방식 참고). 프리빌트를 GitHub Release에 올려서 옵셔널 의존성으로.
+
+### 번개 폐기 → 예제·데브서버 이관
+
+```
+23:19 > "번개쪽은 디프리케이티드 할거라 테스트 할 필요없는데"
+23:20 > "zts 저장소에 예제에 웹만 있는데 번개의 예제코드를 이쪽으로 옮겨와줘"
+23:23 > "@zts/react-native에 메트로 호환서버 만든거 아니야??"
+23:24 > "정책이 잘못 됐어 번개앱의 데브서버도 옮겨야함"
+```
+
+"번개"(bungae) — 3-11부터 RN 번들러 래퍼였던 별도 저장소. 이제 `@zntc/react-native`로 흡수하고 번개 자체는 deprecated. 예제(`examples/react-native-bare` RN 0.85, `examples/react-native-expo` Expo 55/RN 0.83)와 데브서버를 전부 이쪽으로 옮긴다 — 5/6의 작업.
+
+## 5/6 — 번개 흡수 전수조사, 그리고 이름을 바꾸기로
+
+### "번개에서 그대로 제대로 옮겨온거 맞죠?"
+
+이날은 번개의 RN 데브서버 — babel 옵션, 단축키, ignoreList, prelude, polyfill, 임의 상수 선언 — 가 `@zntc/react-native`로 빠짐없이 옮겨졌는지 전수조사하는 날이었다:
+
+```
+03:17 > "번개에서 그대로 제대로 옮겨온거 맞죠? 다시 한번 확인해봐여"
+12:43 > "번개에서는 지원하지 않았어?"  ...  12:44 > "번개의 zts-bundler만 보면 돼"
+12:47 > "아니 해당 옵션은 쉐어드로 해서 zts번들러도 지원했을텐데? 코드 다시 보ㅏ봐"
+12:54 > "지원 해야되는거 아니야? 그리고 zts에도 폴리필 코드나 뭐 임의 상수 미리 선언하는거 이런건 있지 않았나?"
+13:13 > "그리고 번개랑 다시 비교해서 누락 된 상수 선언이나 옵션 등 다시 확인해주세요"
+14:27 > "계속 진행해줘 그리고 실제 터미널에서 단축키 안 먹는데 제대로 넣은거 맞는지?"
+14:42 > "그전에 번개에선 어떻게 했는지 확인해봐"
+17:06 > "그리고 이그노어리스트도 제대로 못 가져온듯? 그거 확인해봐"
+17:51 > "sysmbolicate가 제대로 안되는지, 에러 스텍 트레이스 안되는데"
+```
+
+`zts dev --platform=react-native`, Metro 호환 서버(cli-server-api, dev-middleware, asset registry handler `/assets/*`, symbolicate + customizeFrame hook, terminal UI — Metro 스타일 배너/로그 + `r/d/?/c/i/a/j` 단축키), `zts.config.ts`의 RN 영역 매핑. Reanimated 회귀(`__extends` 가 non-enumerable static 메서드를 상속 안 함, for-of temp var span이 엉뚱한 위치)도 이날 잡혔다.
+
+### `@zts`가 이미 있다 — 그래서 zntc
+
+저녁, 배포를 준비하다가 막힌다:
+
+```
+20:17 > "이제 배포하려하는데 @zts라는걸 npm에 붙여서 배포하려면 어떻게 해야해? 내 계정명은 ohah인데"
+20:20 > "선점 되어있는데 그럼 zts 대신 다른 이름 혹시 있을까?"
+20:23 > "다른 이름도 추천해봐 zts에 매몰될 필요 없어"  ...  20:27 > "지그 컨셉은 살리고 싶은데 더 다른 이름"
+20:31 > "swc, rolldown 처럼 뭔가 근본이 있었으면 좋겠는데"  ...  20:33 > "배꼇다고 욕먹지 않을까? zwc는?"
+20:36 > "zinc도 npm에 있나본데"  ...  20:40 > "지금 npm org create zinc 실행해봤는데 실패해"
+20:43 > "3~4글자 이내였고 지그가 포함되었으면 좋겠는데"
+20:45 > "zig가 다 들어갈 필욘 없고 z만 들어가도 돼"  ...  20:47 > "znc도 있다는데"
+20:48 > "4글자로 하면? znc 뜻은 좋은데"
+```
+
+`@zts` org는 선점됨. `zwc`(SWC 따라했다고 욕먹을라), `zinc`(있음), `znc`(있음) — 결국 **`zntc`** ("Zig Native Transpiler Compiler"). Codex 쪽에선 `zts → znts`로 시작했다가 `zntc임 쏘리 이름 잘못 말함`으로 정정.
+
+## 5/7 — 이름을 바꾼 날
+
+### `chore: rename zts to zntc` (15:40 KST, `972b207c`)
+
+이날 오후 3시 40분, **687개 파일**이 한 커밋에서 바뀐다 — 식별자, CI 액션(`setup-zts`→`setup-zntc`), 에러 코드 파일(`zts1204.md`→`zntc1204.md`), `zts.config.ts`→`zntc.config.ts`, `zts.mjs`→`zntc.mjs`, 테스트 fixture, HMR client. origin remote는 `ohah/zntc.git`으로. 패키지 스코프는 `vite-plugin-zts`→`@zntc/vite-plugin`, 새 `@zntc/rspack-loader` 등으로 이어진다(5/9~5/10).
+
+```
+[Codex, 15:04] > "zts -> znts로 이름 바꿀건데 다 바꿔줄 수 있을까? 앱의 모든 언급된 부분 전부 다"
+[Codex, 16:14] > "zntc임 쏘리 이름 잘못 말함"
+[Codex, 16:23] > "git pull && bun build:zts:core && bun start:zts 이런 실행 명령어도 바꿔야할듯??"
+[Codex, 17:01] > "깃헙 배포 주소도 바꾸려며 ㄴ깃헙 저장소 주소를 리네임해야하나요?"  ...  17:02 > "ohah.github.io/zts/ 이주소를 바꾸려면여"
+```
+
+### "홍보를 해야할까?"
+
+이름 바꾸는 김에, 새벽에 프로젝트 전체를 한 발 떨어져서 본다:
+
+```
+04:05 > "이제 전체적으로 봤을떄 프로젝트 완성도 어떻다고 생각해?"
+04:31 > "정말 명백해? 비판적인 관점에서 말해봐"
+04:33 > "홍보를 해야할까?"
+04:34 > "도그푸드는 근데 홍보 안하면 누가 안 만들자나"
+04:35 > "번이나 swc, esbuild는 어떻게 홍보했는지, 난 어떻게 하는게 좋을지 알 수 있을까?"
+04:36 > "그리고 RN도 되고 플로우도 되는게 장점인것 같은데"
+04:37 > "그럼 언제부터 홍보하는게 좋을까? 지금 수준에서부터??"
+```
+
+장점은 "RN도 되고 Flow도 되는 빠른 번들러"라는 자기 인식이 분명해졌다. 홍보 시점은 미정 — 하지만 0.1.0 배포 준비(다음 편)는 이날 이후 본격화된다.
+
+### 헤르메스/롤리팝, 그리고 "왜 메트로보다 큰가"
+
+```
+04:44 > "메트로 vs zts 측정해보자 그리고 프로덕션 빌드때 용량 차이도"  ...  04:49 > "왜 ztsㅂ가 용량이 더 크지?"
+05:24 > "근데 헤르메스엔진 보면 다 es5로 다운레벨링 할 필요 없는데 어디까지 내려야할까"
+06:40 > "근데 롤리팝도 다 ES5로 다운그레이드 하는건 아니지않아?"
+07:49 > "롤리팝도 warp 안해요?? 메트로도 안해요?? 메트로도 순서 모듈 평가 그대로 가져가고 있는거 아닌가요?"
+07:54 > "장기적으론 스코프호이스트가 용량에 유리한가?"
+07:55 > "모듈명 스트링 -> 아이디로 하면 돼 용량이 감소돼?"  ...  07:56 > "소스맵에는 영향 안받나?"
+10:23 > "mangle-props 는 rolldown이나 rspack도 있는 기능인가요?"
+14:48 > "근데 메트로는 왜 우리보다 용량이 작을까요?"  ...  14:52 > "용량이 크잖아요 우리가 왜 더 큰건지 알아야해요"
+14:55 > "KB로 보여주세요 바이트 말구"
+```
+
+RN preset 정책을 "Metro-equivalent downleveling"으로 정리(Hermes ES2015+async 매트릭스, `legal_comments` 기본 none). inline-requires(#2679 — Metro 스타일, "oxc/rolldown도 이 패턴 쓰는 거고?"), mangle-props 검토.
+
+### parse_arena heap ptr, HMR 113→89ms
+
+```
+18:05 > "fix(napi): watch list 등록 시 virtual module path skip (panic 회피) 라고 하셨는데 루트커즈 수정이 이게 맞아여?"
+19:12 > "정확한 루트커즈 계속 잡아주세요 어떻게든 확인하셔야 합니다"  ...  19:35 > "내 계속 찾으세요 메모리 누수"
+```
+
+`parse_arena`를 heap 포인터로 옮겨 store round-trip에서 dangling `BufNode` panic 근본 수정(#2694). `feat(init)` React Native CLI 오버레이 initializer. `perf(emit)` — dev 모드 incremental rebuild가 전체 번들 출력을 스킵 → **HMR wall 113ms → 89ms (-21%)**. chunk sourcemap emit을 hash substitution 이후로 미뤄 `file` 필드 정확도(#2661). pnpm/bun farm scoped-package + transitive 테스트(#1924).
+
+도그푸드 중 실제 앱 버그도 발견 — `환불 버튼만 누르고 뜬 모달에서 환불 다시 안 눌러서 제대로 환불이 진행 안된것 같아` (번개 앱을 zts로 빌드해 쓰다가 잡은 UX 버그).
+
+## 7일간 관통한 것들
+
+| 축 | 귀결 |
+|---|---|
+| **binding-lite 트랜스파일 fast path #2352** | semantic 전체 안 돌리고 transpile 최소만. Phase 2/3 + 대형 fixture. "결과는 그대로, 내부만 빠르게" |
+| **메모리 오염 근본 수정** | `import_record` specifier UAF(`#raw-require`), var hoisting `0xAA` slice UAF → ~12개 형제 사이트 일괄 수정 |
+| **stack-overflow hardening #2475** | 스택 한정 walker → ArrayList/명시적 스택 (ast-walk/semantic/transformer/worklet) |
+| **성능 한 번 더** | numeric cross-module const folding (모노레포 5051→대폭 축소), graph discovery 프로파일, AST intern-map perf |
+| **RN codegen 매트릭스 #2462** | `@react-native/codegen` 포팅. rn-0.78~0.84 byte-diff 골든 스냅샷. `codegen`→`rn_codegen` |
+| **Flow를 "ts처럼"** | Flow 파서가 type-level 정보 strip하던 걸 보존으로. Flow enum/유틸리티 타입 채움 |
+| **core-js 자동 폴리필** | `runtimePolyfills: auto`, RuntimeTarget ios12/hermes0.7. Babel pre-scan → 자체 그래프 기반 감지 |
+| **`@zntc/*` 모노레포 분리** | core/web/server(private)/react-native/vite-plugin/wasm/shared. zts self-build 도그푸드 |
+| **번개 흡수 + 폐기** | RN 데브서버·babel옵션·단축키·ignoreList·symbolicate를 `@zntc/react-native`로 전수 이관. 번개 deprecated |
+| **이름 변경** | `@zts` org 선점됨 → `zntc`. 687 파일 한 커밋. 5/7 15:40 KST |
+| **dev 에러 오버레이 / BoringSSL** | Shadow DOM 오버레이, 소스맵, dev HTTPS용 BoringSSL 프리빌트 |
+| **"홍보를 해야할까?"** | 장점은 "RN+Flow 되는 빠른 번들러". 0.1.0 준비 본격화 |
+
+## 5/7 시점에 진행 중인 에픽
+
+| 에픽 | 상태 |
+|---|---|
+| **`@zntc/*` 모노레포** | 패키지 scaffold·CSS 추출·@zntc/server 구현 머지. publish-readiness는 5/9~ |
+| **번개 → @zntc/react-native** | RN 데브서버 이관 머지. ignoreList/symbolicate 후속 디버깅 중 |
+| **RN codegen 매트릭스** | rn-0.78~0.84 머지. codegenNativeCommands·paperComponentName 등 후속(#2462) |
+| **core-js 폴리필** | 그래프 기반 감지로 머지. 타깃 확장 후속 |
+| **binding-lite** | Phase 2/3 머지. 대형 fixture 프로파일 후속 |
+| **메모리/스택 hardening** | `#raw-require`·`0xAA` 일괄 수정 머지, #2475 시리즈 진행. `parse_arena` panic 수정 |
+| **헤르메스/롤리팝 다운레벨** | "Metro-equivalent downleveling" 정책 확정. inline-requires(#2679) 진행 |
+| **mangle-props** | 검토 → 구현 진행 |
+| **dev HTTPS (BoringSSL)** | 프리빌트 옵셔널 의존성 방향 확정 |
+| **`@zntc/init` CLI 스캐폴더** | RN CLI 오버레이 머지. vite/rspack/web 모드는 5/11 |
+| **인기 라이브러리 번들 크기** | "왜 메트로/rolldown보다 큰가" — 트리쉐이킹/mangler/모듈 ID 검토 진행 |
+
+## 다음 편
+
+[3-17](development-17)은 5/8~5/12 — plugin 시스템 통일(comptime-generic 어댑터, sync JS plugin), **대규모 파일 분리 리팩터**(~200 커밋, 코어 파일 라인 수 줄이기), TS Project References, npm 배포 파이프라인(changesets·OIDC·9-platform prebuilt 매트릭스), react-refresh, MetafileAnalyzer, 문서 사이트 대규모 보강, **0.1.0 publish prep** — 그리고 이 17일을 관통한 **Codex 병행 효과에 대한 회고**를 담는다.
+
+```
+3/18 ~ 4/07 ████████████████████  3-1 ~ 3-10 (20일 — 기준선 확보)
+4/08 ~ 4/23 ████████████████      3-11 ~ 3-14 (16일 — Metro 동등성·RFC 시리즈)
+4/24 ~ 4/30 ████████              3-15 (7일 — "프로덕션이라는 말")
+5/01 ~ 5/07 ████████              3-16 (7일 — binding-lite·패키지 분리·이름 변경)
+5/08 ~ 5/12 ██████                3-17 (5일 — 0.1.0을 향해)  ← 다음
+5/13 ~        →→→→→→→→→→→→→       계속 진행 중
+```

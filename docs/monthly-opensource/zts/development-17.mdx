@@ -1,0 +1,266 @@
+---
+title: "3-17. 0.1.0을 향해 — 플러그인 통일·대규모 파일 분리·배포 파이프라인, 그리고 Codex 회고"
+date: 2026-05-12
+---
+
+# 3-17. 0.1.0을 향해 — 플러그인 통일·대규모 파일 분리·배포 파이프라인, 그리고 Codex 회고
+
+> **기간**: 2026년 5월 8일 ~ 5월 12일 (5일, 5/12는 오전까지)
+> **커밋**: zntc 약 392개 (5/8 40 · 5/9 161 · 5/10 89 · 5/11 88 · 5/12 14) — 5/9는 **단일 날짜 최다 커밋(161개)**, 기존 기록 3/31(116)을 넘김
+> **핵심**: plugin 시스템 통일 (generic `unwrapNapi`, comptime-generic per-hook 어댑터, `HookContext` out-param, `buildSync` sync JS plugin), **대규모 파일 분리 리팩터** (~200 커밋 — codegen/transformer/graph/emitter/cli + 테스트 스위트를 수백 개 작은 모듈로), TS Project References (composite·`tsc -b`·`isolatedDeclarations`), test262 OS 불일치 디버그 (await regexp — macOS만 fail), npm 배포 파이프라인 (`@changesets/cli`·`release.ts`·publint·sherif·OIDC·**9-platform prebuilt NAPI 매트릭스**·11-패키지 lockstep), react-refresh 에픽 ($RefreshSig$·component registration), Hermes named-capture regex downlevel (#1063), MetafileAnalyzer (Treemap + import 그래프), codegen sourcemap names 배열, 문서 사이트 대규모 보강 (설치 탭·analyze 페이지·electron/RN init 가이드·"합쇼체" 통일·로드맵·벤치마크 재측정), e2e compat matrix (39 libs / 9 scenarios), JSX runtime helper scope isolation (#3068), 그리고 **0.1.0 publish prep** (배포는 아직)
+> **진행 중** — "publish 준비"까지가 이 편의 끝이다. 실제 npm 배포는 아직 안 했다.
+
+## 이 편의 위치
+
+[3-16](development-16)은 5/1~5/7 — binding-lite fast path, 메모리 오염 근본 수정, stack-overflow hardening, RN codegen 매트릭스, `@zntc/*` 모노레포 분리, 번개 흡수, 그리고 5/7 15:40 KST의 이름 변경 — 으로 끝났다. 이 편은 그 뒤 5일이다. "프로덕션 레벨 배포에 부족한 게 뭐예요?"(4/28)에서 시작된 흐름이 **0.1.0 배포 파이프라인 세팅**까지 온다.
+
+이 5일의 성격은 앞 편들과 조금 다르다 — *새 기능을 만드는* 비중이 줄고, *배포 가능한 상태로 만드는* 비중이 커진다. 코어 파일을 잘게 쪼개고, 11개 패키지의 버전 정책을 정하고, 9개 플랫폼 prebuilt를 CI 매트릭스에 넣고, 문서를 다듬는다. 그리고 마지막에, 이 17일을 관통한 **Codex 병행 효과**를 정리한다.
+
+## 5/8 — plugin 시스템 통일, 그리고 코어 파일 라인 수
+
+### `unwrapNapi(T)` — 어댑터 한 줄로
+
+플러그인 NAPI 경계가 hook마다 보일러플레이트로 두꺼웠다. 이날 그걸 정리한다 — generic `unwrapNapi(T)` 헬퍼, comptime-generic per-hook `NapiPlugin`/`NapiSyncPlugin` 어댑터, TLS 기반 plugin failure/sourcemap 채널을 `HookContext` out-param으로 교체, async/sync dispatcher를 generator로 통일. `buildSync`가 sync JS plugin을 지원하게(이전엔 미지원 정책이었던 걸 "언젠간 해야 하는 거면 다 해주세요"로):
+
+```
+[Codex, 12:54] > "https://github.com/ohah/zntc/issues 이슈에서 작은 단위로 서서히 하나씩 클로즈 해결 하려하는데 어떤거 먼저 하는게 나을까요"
+[Codex, 13:50] > "- buildSync()의 JS plugin 미지원 정책은 유지한다. 이것도 언젠간 해야하는건지?"  ...  13:50 > "언젠간 해야하는거라면 다 해주세요"
+[Codex, 13:51] > "반드시 모든 기능추가는 TDD로 다 검증해야함"
+[Codex, 13:52] > "PR 1->2->3 순차적으로 머지 하면서 진행하는거죠?"
+```
+
+semantic predeclare/hoist 수정(catch-block 함수 재선언, computed ctor/proto key, nested-block 함수 kind)도 이날. RN dev-server 터미널 UI를 번개 것과 정렬 + 콘솔 로그 `v` 토글.
+
+### "코어 파일들이 너무 라인수가 많은것 같은데"
+
+```
+[Codex, 19:44] > "지금 코어 파일들이 너무 라인수가 많은것 같은데 한번 확인해보시겠어요?"
+[Codex, 19:48] > "테스트파일도 목적별로 나ㅜ는게 낫지 않을까?"
+```
+
+여기서 5/8~5/11을 관통하는 **대규모 파일 분리 리팩터**가 시작된다. 먼저 테스트부터 — `test(core): split ...` 가 30개 넘게. 그다음 코어 코드.
+
+### test262 OS 불일치
+
+```
+21:50 > "지금 메인에 머지했더니 실패하는 test262 있는데 확인해줘"
+22:20 > "그럼 기존 파서버그는 여전한거야? 메인기준으로 다 통과하는거같은데"
+22:32 > "근데 왜 메인 CI는 다 성공이지? 지금도?"
+22:42 > "왜 리눅스는 성공함?? 이해 안되네"
+```
+
+await + regexp가 들어간 test262 케이스가 **macOS에서만 fail**하고 Linux/메인 CI는 통과. 자동 wakeup으로 `[DBG-OS]` 라인을 grep해가며 추적 — macOS/Linux의 test262 metadata parse 차이가 분기점(`debug/test262-await-regexp-os-discrepancy` 브랜치). 3-3에서 달성한 Test262 100%가 OS별로 미묘하게 갈리고 있었다.
+
+## 5/9 — 최다 커밋의 날 (161개)
+
+### 두 트랙이 동시에
+
+이날 161개 커밋은 두 개의 큰 트랙이 겹친 결과다.
+
+**(1) 모노레포 publish-readiness** — `@changesets/cli` + `release.ts`(dry-run-first), publint + sherif CI, publish-smoke + publish-install-test, `prepublishOnly` + `PUBLISH.md`, source-exports condition, RN runtime `.js`→`.cjs`, `@zntc/rspack-loader` 신규 패키지. 그리고 **TS Project References 에픽** — composite, `tsc -b`, solution-style root tsconfig, `isolatedDeclarations`, web/RN/vite-plugin/wasm/init를 core/server에 wire, `IDE.md` 가이드.
+
+```
+09:27 (역할표 붙여넣음 — @zntc/core / @zntc/web / @zntc/server(private) / @zntc/wasm / @zntc/shared / vite-plugin-zntc)
+10:16 > "zntc로 배포할건데 그것도 워크스페이스 알아서 관리 돼?"
+10:17 > "server 코드는 그럼 알아서 들어감??"
+10:18 > "pack은 그렇게한다치더라도 빌드는 zntc가 하는거 아님?"
+10:59 > "진짜 근본 해결: source 직접 inline? ... 이게 왜 에픽급 변경이야?"
+11:03 > "어떤데 다른 번드러들은?"  ...  11:04 > "롤업이 젤 안정적인가? 궁금"
+17:45 > "퍼블리시 아직 하면 안되는데 저거 하면 스크립트를 통해 배포되버리는거 아니예요?"
+```
+
+**(2) 대규모 파일 분리** — `refactor: split ...` 가 ~100개. codegen / transformer / graph / napi / es2015_class를 여러 helper 모듈로. runtime-helper 수정(es5-rn `__extends$1 is not defined`, canonical_name 보존, symbol-bound helper refs #2869), `.js`/`.jsx`를 ESM으로 파싱(esbuild/swc/rollup 정렬 → 이후 CLI/transpile 경로로 좁힘), `.cjs`→script/`.cts`→module, for-of/for-loop `_loop` async-marker 전파.
+
+```
+[Codex, 00:37] > "지금 테스트 뿐만 아니라 원래 코드도 다 파일 분리 하는거지 ?"  ...  00:38 > "일단 테스트쪽만 분리해"
+[Codex, 08:03] > "왜이렇게 오래 걸려?"  ...  08:04 > "근데 PR 너무 많은거 아니야? 아까 그렇게 안 많다고 하지 않았나"  ...  10:00 > "그냥 한 PR에 해버려도 되지않아?"
+[Codex, 14:48] > "트랜스포머는 여전히 줄이 많은거 같은데 왜 유지가 됐는지 이유가 알 수 있을까요?"
+[Codex, 17:30] > "깃헙 CI가 맛탱이가 간것 같은데"  ...  17:31 > "로컬에서 가능한 CI 다 돌리고 없으면 바로 머지해줘 그냥"  ...  17:36 > "아마 for in 수정했는데 기댓값이 안 바뀌어서 그런것 같은데"
+[Codex, 21:18] > "지금 에러 나는 실패 케이스는 내가 수정할테니 계속 리팩토링 진행해줘 / 너가 수정한거에서 실패 안하면 돼"
+```
+
+### rspack `builtin:zntc-loader`?
+
+```
+19:10 > "rspack에서 ... use: 'builtin:swc-loader' ... 이런 플러그인 우리가 제공해줄 수 있을까? vite 제공해주는거처럼"
+19:12 > "rspack은 esbuild는 어떻게 하는데?"  ...  19:12 > "wasm으로 빌드해서 줘야 하나?"  ...  19:12 > "그럼 buildin 방식은 제공 못해?"  ...  19:13 > "어느게 더 빠른데?"
+19:30 > "그리고 우리꺼 넣었을때랑 swc 넣엇을때랑 벤치마크도 비교해줘"
+```
+
+`@zntc/rspack-loader` 신규 패키지 — rspack의 `builtin:swc-loader` 같은 자리에 들어갈 zntc 로더. 메모리 누수 #2869/#2868도 이날 근본 수정(`symbol-bound가 다른 번들러들도 다 그렇게 하니 그게 낫지 않을까요?`).
+
+## 5/10 — 9-platform prebuilt, react-refresh, 배포 파이프라인
+
+### NAPI 플랫폼 매트릭스
+
+```
+14:08 > "CI에는 각 운영체제 테스트 있지 않아요?"  ...  14:11 > "번은 어떻게 하고 있죠?"  ...  14:14 > "12개 플랫폼 다 해야하나? 아니면 6개로도 충분한가?"
+18:31 > "RN은 왜 현재 작업중이라 판단 하신거죠?"
+18:34 > "arm은 다른 번들러들이나 napi-rs에서 제공하나? 딱 그정도면 되는데"  ...  18:37 > "win32-ia32까지 주는걸로 하죠"
+18:41 > "CLI도 지원되어야 하는거 아니예요?"
+19:50 > "ia32 매트릭스를 제외했는데 왜 ia32가 돼?"  ...  19:51 > "CI에서 노드 22로 점검하는거 하나 추가해줄 수 있을까"
+```
+
+**9개 플랫폼** — darwin x64/arm64, linux x64/arm64 (gnu + musl), win32 x64/arm64/ia32. loader가 libc(gnu vs musl) 감지, `zig-out/lib/zntc.node` 단일화, win32-ia32 smoke(Node 22 LTS), `release.yml` 매트릭스 NAPI build + npm publish job. `@zntc/core` dual ESM/CJS exports.
+
+### 배포 파이프라인 — OIDC
+
+```
+15:05 > "깃헙 CI를 통해 배포할건데"
+15:06 > "rc 버전 등에 대한 대응도 되어있는지 궁금"
+15:07 > "지금 환경변수에 저장되어있는 NPM_TOKEN을 깃헙 환경변수에도 등록 하시면 되여"
+15:22 > "short-lived OIDC token이 뭐예요?"  ...  15:23 > "short-lived OIDC token이걸로 근데 npm 배포가 됨?"  ...  15:27 > "배포는 하지말구"
+```
+
+GitHub Actions에서 OIDC short-lived token으로 npm publish, rc 버전 대응. **세팅만 — "배포는 하지말구".** 11개 패키지의 버전 정책도 정했다:
+
+```
+17:42 > "그럼 어떤건 업데이트 되고 어떤건 업데이트 안될때는?"
+18:18 > "그럼 하나의 핫픽스도 나머지 버전이 다 업되는 그런 형태네?"
+18:18 > "swc/helpers는 그럼 어떤 관계야? 얘는 독립적이던데"  ...  18:18 > "그럼 왜 우린 11개지?"  ...  18:18 > "근데 우리는 swc/helpers 이거 내장되어있지 않아?"
+```
+
+→ lockstep(한 핫픽스에도 11개 버전이 같이 올라감) 정책 + lockstep 강제.
+
+### react-refresh 에픽
+
+```
+[5/11] 11:54 > "react-refresh는 데브에만 들어가고 리액트 프로젝트만 들어가는거 맞나요?"
+11:55 > "다른 번들러들은 어떻게 도ㅣ고 있죠?"
+11:56 > "좋아요 그럼 vite와 동일한 개선 해주시죠 vite 코드 한번 더 살펴보시고"
+```
+
+`$RefreshSig$` hook signature opt-in(`reactRefreshHookSignatures`), `const Foo = () => ...` 컴포넌트 등록, `reactRefresh`를 `TranspileOptions`에 노출, Vite와 동일한 경로 필터. Hermes named-capture-group regex downlevel(#1063), babel `wrapRegExp` parity, bundler lazy-barrel/wrapper-barrel 분리, mangler cross-module Phase A shadow guard, `vite-plugin-zntc`→`@zntc/vite-plugin`도. mtime_map upsert 누수(#2868), forwardClientLogs deep-clone 누수(#2885) — RN dev 메모리 누수 진단의 결과:
+
+```
+00:18 > "리엑트 네이티브에서 dev 모드로 키면 계속 메모리 증가하던데 이 이슈일 수 있을까요?"
+01:16 > "아니 디버그 콘솔 끄니까 괜찮은데, 콘솔 남기면서 메모리 누수는 못 막음?? 근데 왜 아무것도 안해도 그 옵션이 영향을 받을까?"
+02:00 > "30MB 증가는 처음엔 80MB이였다 오래 켜두니까 30MB씩 증가해서 215MB까지 증가했는데 그 이후론 안보이네"
+```
+
+## 5/11 — 0.1.0 prep, MetafileAnalyzer, 문서 대보강
+
+### "이제 슬슬 배포하려고 하는데"
+
+이날은 배포 직전 전수 점검의 날이다.
+
+```
+10:21 (메인 히어로 수치 붙여넣음 — 2ms 트랜스파일 / 3ms 번들링 / 19× faster vs rolldown (small) / 340+ 문서 페이지)
+> "메인에 벤치마크도 차트 대표적인거 하나 넣어주고 수치로도 적어줄 수 있어?"
+10:32 > "그리고 배포하려고하는데, 이제 다른 상용 번들러들에 비해 build Options이나 제공하는 기능 부족한게 뭐가 있을까요?"
+10:57 > "메인 기준으로 이제 스모크 테스트 다시 해줄래? umd amd minify 등 버그가 있는지 점검이 필요 해"  ...  10:59 > "더 엄격하고 정밀한 테스트가 필요해"
+11:57 > "이제 배포하려고 하는데 production 빌드 라이브러리에서 실제 빌드는 잘 되고 있는데, 잘 실행되고 있는지? 더 엄격하게 직접 테스트 해보실 수 있나요 브라우저, 노드 환경, cjs, esm, 다운 레벨링 등 다 종합적으로 점검이 필요해요"
+21:11 > "좋아요 실 배포는 하지말고 세팅만 다 해주세요 말씀하신거"
+22:09 > "배포 전략이나 버전 전략 문서로 적어주세요"
+23:23 > "이제 배포하려는데 최종적으로 실제 배포에도 문제 없는지 전체적인 테스트 해볼 수 있을까?"
+```
+
+`chore(release): 0.1.0 publish 준비` — 메타데이터/문서/배너, `RELEASE_STRATEGY.md`. `OutputFile`을 esbuild 호환 모양으로(`contents` Uint8Array + lazy text getter). `jsx: 'preserve'` 모드 + return-ASI hazard 수정(#3056). vite-plugin virtual module ID + query-param sub-import(#3022). HTML EJS 스타일 `ZNTC_*` env-var 토큰 치환(XSS 방어 — `html-env EJS token replacement` 테스트 FAIL을 TDD로 잡음). mangler reserved-name 수정(jotai/svelte/three — #2965/2958/2971/2959). writer-edge over-fire 회귀(#3012). codegen arrow-body leftmost-`{` paren wrap(#2964), destructuring shorthand longhand expand(#2977). resolver 디렉터리 레벨 realpath 캐시.
+
+### MetafileAnalyzer
+
+```
+13:05 > "웹팩이나 이런데에 analsyer 같은걸로 웹 페이지 그래프 같은거 보여주잖아? 그런거 있나?"
+14:22 > "https://ohah.github.io/zntc 여기서 에러코드 항상 기본값으로 열려있는데 닫히게 해줄 수 있나여 ... 그리고 플레이그라운드 하위메뉴에 ... 번들러 트랜스파일러 이렇게 두개로 해주시고"
+16:44 > "https://ohah.github.io/zntc/en/analyze/ 여기 링크가 없다는데"
+```
+
+`MetafileAnalyzer` — esbuild metafile을 Treemap + import-graph로 시각화하는 `analyze` 페이지. codegen sourcemap에 `name_index`(names 배열, oxc 스타일 explicit mapping)도.
+
+### 문서 사이트 대보강 + 로드맵 + 합쇼체
+
+```
+12:17 > "지금 문서에 스타일 컴포넌트나 이모션, 플로우, 리액트 네이티브 워클릿 등 다른 번들러에 비해 그냥 네이티브로 지원되는거 설명이 안 써있는 듯?"
+12:37 > "https://ohah.github.io/zntc/guides/installation/ 설치에 각 pnpm bun npm 이런거 각 라인별로 되어있는데 탭으로 할 수 없어??"
+16:04 > "어떤 문서에선 합니다 어떤데에선 한다 이렇게 되어있는데 합니다 체로 바꿔줘"
+17:47 > "로드맵도 하나 만들고 싶은데 문서에"
+18:15 > "https://ohah.github.io/zntc/guides/electron/ 이렇게 react-native, react-native-expo 설정도 하는법 적어줘"
+18:28 > "https://ohah.github.io/zntc/guides/react-native/ init 설명도 이제 업데이트 해야하지 않아? 헬프 눌렀을떄 뜨는 명령이 다를텐데"  ...  18:28 > "실제 실행도 해봤어?"
+18:31 > "디프리케이티드 된건 아예 제거해줘도 되요 배포 아직 하나도 안해서 하위버전 신경 안써도 됨."
+```
+
+설치 페이지를 pnpm/bun/npm 탭으로, electron/RN/RN-expo init 가이드, native-transforms·plugins dev guide, "한다"체와 "합니다"체 혼재를 합쇼체로 통일, 로드맵 페이지, 벤치마크 재측정. `@zntc/init` vite/rspack/web 오버레이 모드.
+
+### 대형 번들 프로파일링 + 워커풀
+
+```
+19:15 > "그리고 지금 대형 번들 프로파일링 해봐요"
+19:22 > "다음 단계 후보 (별개 epic): resolve.realpath cache, mangling parallelize, scan.worker per-file overhead 절감 ... 이건 지금 해왔던 거랑 아ㅖ 별개죠?"  ...  19:22 > "그리고 지금 번들러들 다른 번들러에 비해 이미 훨씬 빠른거죠?"
+19:57 > "그래서 가장 병목이 뭔데요??"  ...  19:59 > "콜을 어떻게 줄일 수 있을까요??"  ...  20:00 > "윈도우 리눅스 맥 셋다 고려해야하는데"  ...  20:30 > "워커풀 스케일링은 어떻게 재설계 해야되는데요??"
+20:13 > "넵 롤백하고 계속 더 개선 되는 방법 찾아주세여 그리고 웹팩은 비교표에 빼주세요"
+```
+
+resolve.realpath cache, mangling 병렬화, scan.worker per-file overhead — "지금도 다른 번들러보다 훨씬 빠른데" 그 위에서 또 한 겹. (워커풀 재설계는 시도 후 일부 롤백.) `axios FAIL` CI 회귀도 추적.
+
+## 5/12 — 출시 직전 최종 점검 (오전까지)
+
+```
+00:09 > "지금 실 라이브러리 좀 더 자주 쓰는거 인기 많은거 그리고 오래된 거 더 다양한 케이스 실험해볼 수 있을까요?"
+01:28 > "지금 웹펙에 비해서 부족한 기능들이 뭐가 있을까??"
+01:31 > "문서에 언급해주시고, dev server proxy / custom middleware: CLI flag 존재하지만 webpack 수준의 옵션·문서 부족 이거 옵션 추가 지금 해줄 수 있을까여"
+02:34 > "깃헙 페이지에도 업데이트해주세요"  ...  02:44 > "PR 올리고 머지해주세요"
+08:06 > "이제 기능상으로 깃헙페이지랑 실제 기능 부분 누락된거 있나? 코드상으로 점검해바"
+```
+
+**e2e compat matrix** — 39개 라이브러리 / 9개 시나리오 / real-app shape, 중앙 포트 할당(`tests/e2e/tests/ports.ts`). **JSX runtime helper scope isolation #3068** — synthetic-import bypass를 없애고 transformer가 정식 AST 노드를 emit하도록(사용자 식별자 충돌 회피). dev-server proxy/middleware의 webpack 갭을 문서화 + 옵션 추가. 사용자 페이지에서 PR#/D-ID/perf-history/구현 비교 제거(공개용으로 정리). HTTPS dev server / Web Worker 사용자 가이드.
+
+이 시점에서 zntc는 — 트랜스파일 ~2ms, 번들 ~3ms(소형), rolldown 대비 ~19×, 340+ 문서 페이지, 9 플랫폼 prebuilt, `@zntc/{core,web,server,react-native,vite-plugin,wasm,rspack-loader,init,shared}` + 9 platform 서브패키지, RN 데브서버(Metro 호환) + Flow + 워클렛 + styled/emotion 네이티브 트랜스포머 + core-js 자동 폴리필 — **0.1.0 배포 직전**이다. 아직 npm에 올리진 않았다.
+
+## Codex 병행 효과 회고 — 두 AI, 하나의 저장소
+
+4/26부터 5/12까지, 이 17일은 **Claude Code(`zts`/`zntc` 폴더)와 OpenAI Codex CLI(`zts-codex` 폴더)를 병행**한 기간이다. 처음 받았던 질문 — "메모리가 zts로 가도 이어지는거?"(3-1, 3/18) — 의 17일 뒤 버전은 "상위폴더 zts에 똑같이 있는데 여기서 B 작업해주실래요?"(5/1)다.
+
+**구조**: 두 효과는 *별도 클론, 같은 origin remote(`ohah/zts` → 5/7부터 `ohah/zntc`)*. 사용자는 GitHub 이슈 URL과 PR URL을 양쪽에 그대로 던졌고, Codex가 만든 PR도 같은 저장소·같은 라벨·같은 assignee(`ohah`)로 올라갔다 — **하나의 이슈/PR 풀을 공유**. Codex 세션은 거의 매번 작업 시작 시 `git switch main && git pull`로 상대방 결과를 흡수했고, "제가 그사이에 메인 머지 한거 있는데 그거 확인 한번 해주세요"·"메인기준으로 리베이스 하세요" 식으로 사용자가 수동 동기화했다.
+
+**역할 분담의 무게중심** (Codex 쪽):
+- 번들 크기/속도 회귀 전수조사 + root cause 수정 — mobx/d3/dotenv/toolkit/lru-cache/lodash-es가 "왜 rolldown보다 큰가/느린가" → numeric const folding, lazy barrel 로딩
+- Vite 스타일 app builder parity — `zts dev/build/preview`, HTML entry, `.env`, PostCSS/Tailwind, dev CSS HMR, 에러 오버레이
+- binding-lite / semantic-light 성능 아키텍처 POC + 회귀 fixture 대량 추가
+- core-js 자동 폴리필
+- zts → zntc 리네임
+- 코어/테스트 파일 라인 수 줄이는 대규모 리팩터(5/8~5/11)
+- CI flaky 수정 + CI 병렬화 + 벤치마크/문서 사이트 정비
+
+5/11~5/12 zntc 본체 커밋 메시지(`refactor: split ... tests`, `perf(fs)`, `perf(resolver)`, `feat(core): OutputFile shape esbuild 호환`, `chore(release): 0.1.0 publish 준비`)가 이 Codex 대화 흐름과 정확히 겹친다 — 이 시기 본체에 머지된 상당 부분이 Codex 산출물이다.
+
+**Codex에 대한 교정** — Codex 로그에 "코덱스가 못함" 같은 직접 비교 발언은 없지만, 운영상의 마찰은 자주 보인다: 워크트리 자동 생성 거부("그냥 워크트리 만들지 말고 그냥 메인기준으로"), 메인 기준 강제 반복, "무조건 루트커즈 수정", 한글 주석 규칙 위반 지적, 같은 전수조사를 "할 때마다 계속 나오네요"라며 여러 번 시킴, `<turn_aborted>`(턴 강제 중단)가 4/30·5/2·5/3·5/5·5/7·5/8·5/10·5/11 등 거의 매일, "왜이리 오래걸려여"·"PR 너무 많은거 아니야?" 같은 속도/PR 분할 불만. 컨텍스트 연속성은 "매 작업마다 이슈 #2352에 진행상황 기록"으로 풀었다 — 3-14의 "메모리 파일 + 부트스트랩 문구" 패턴의 Codex 버전.
+
+**왜 둘을 썼나** — 이건 대화 로그에 직접 답이 없다. 추론하자면: (1) 처리량 — 같은 17일에 ~1,300개 커밋(5/9 하루 161개)은 한 AI/한 워크스페이스로는 어려운 규모다. (2) 작업 격리 — "이 폴더에서 다른 작업도 할 거라서" 처럼, 큰 리팩터(파일 분리)와 기능 작업(RN codegen, 패키지 분리)을 물리적으로 다른 디렉터리에 두면 머지 충돌과 컨텍스트 오염이 준다. (3) 비교 자체 — 같은 이슈를 양쪽에 던져보고 어느 쪽 접근이 나은지 보는 용도(5/9 `우리꺼 넣었을때랑 swc 넣엇을때랑 벤치마크도 비교해줘`처럼, "비교"가 이 사람의 기본 의사결정 도구다).
+
+## 5일간(+17일간) 관통한 것들
+
+| 축 | 귀결 |
+|---|---|
+| **plugin 시스템 통일** | generic `unwrapNapi`, comptime-generic per-hook 어댑터, `HookContext` out-param, async/sync 통일, `buildSync` sync JS plugin |
+| **대규모 파일 분리 리팩터** | codegen/transformer/graph/emitter/cli + 테스트를 수백 개 작은 모듈로 (~200 커밋, 5/8~5/11) |
+| **TS Project References** | composite, `tsc -b`, `isolatedDeclarations`, solution-style root tsconfig, IDE.md |
+| **배포 파이프라인** | `@changesets/cli`·`release.ts`·publint·sherif·OIDC publish·9-platform prebuilt NAPI 매트릭스·11-패키지 lockstep |
+| **react-refresh** | `$RefreshSig$` hook signature opt-in, 컴포넌트 등록, Vite 경로 필터 |
+| **0.1.0 publish prep** | 메타데이터/배너/문서, `RELEASE_STRATEGY.md`, `OutputFile` esbuild 호환. 배포는 아직 안 함 |
+| **MetafileAnalyzer / codegen sourcemap names** | Treemap + import 그래프 `analyze` 페이지, `name_index` oxc 스타일 mapping |
+| **문서 사이트 대보강** | 설치 탭, electron/RN/expo init 가이드, 합쇼체 통일, 로드맵, 벤치마크 재측정, 340+ 페이지 |
+| **e2e compat matrix / JSX scope isolation** | 39 libs × 9 scenarios, synthetic-import bypass 제거(#3068) |
+| **test262 OS 불일치** | await+regexp가 macOS만 fail — metadata parse 차이. 3-3의 100%가 OS별로 갈리고 있었음 |
+| **메모리 누수 hunting** | mtime_map upsert(#2868), forwardClientLogs deep-clone(#2885), #2869 symbol-bound — RN dev 215MB 증가 추적의 결과 |
+| **Codex 병행** | 두 AI, 별도 클론, 같은 이슈/PR 풀. ~1,300 커밋/17일. 처리량·격리·비교 |
+
+## "완성"은 아직 — 그러나 "배포 직전"
+
+3-14의 마지막에 썼던 다섯 문장 — "Hermes 구문 통과와 실제 RN 앱이 도는 건 다르다", "번들러의 경계는 시장이 정해준다", "성능은 한 번 측정하고 끝이 아니다", "AST 설계는 2주짜리에서도 한 번 더 갈아엎는다", "구조적이라 스코프 밖이라는 핑계는 금지" — 에, 4/24~5/12의 19일이 다섯을 더한다:
+
+1. **"학습 프로젝트"라는 자기소개는 어느 시점에 슬그머니 바뀐다** — 4/28 "프로덕션 레벨 배포 하려면 부족한 게 뭐예요?"가 그 분기점. 코드가 충분히 쌓이면 "공부용"이라는 말이 안 어울리는 순간이 온다.
+2. **이름은 코드보다 늦게, 그러나 갑자기 정해진다** — `@zts`가 npm에 선점돼 있다는 걸 배포 준비하다 발견. 한 저녁의 브레인스토밍 끝에 `zntc`, 그리고 687 파일 한 커밋.
+3. **모노레포 분리는 "배포 가능한 모양"의 일부다** — 단일 저장소로는 "vite에선 코어만, 자체 실행은 코어+서버" 같은 설치 시나리오를 표현할 수 없다. 패키지 경계는 사용자의 설치 명령에서 역산된다.
+4. **두 AI를 동시에 쓰면 처리량은 늘지만 동기화 비용이 생긴다** — `git switch main && git pull`, "메인 머지 한 거 확인해주세요", `<turn_aborted>` — 17일 내내 수동 동기화. 그래도 5/9 하루 161 커밋은 그 비용을 치를 만했다.
+5. **"배포 직전"과 "배포"는 또 다르다** — "세팅만 다 해주세요 실 배포는 하지말고"가 5/10~5/11 내내 반복됐다. 0.1.0 publish prep까지 와도, 실제로 `npm publish`를 누르는 건 아직 안 한 일이다.
+
+```
+3/18 ~ 4/07 ████████████████████  3-1 ~ 3-10 (20일 — 기준선 확보)
+4/08 ~ 4/23 ████████████████      3-11 ~ 3-14 (16일 — Metro 동등성·RFC 시리즈)
+4/24 ~ 4/30 ████████              3-15 (7일 — "프로덕션이라는 말")
+5/01 ~ 5/07 ████████              3-16 (7일 — binding-lite·패키지 분리·이름 변경)
+5/08 ~ 5/12 ██████                3-17 (5일 — 0.1.0을 향해)
+5/13 ~        →→→→→→→→→→→→→       계속 진행 중 — 다음 편은 "0.1.0이 실제로 npm에 올라간 뒤"
+```
+
+다음 편은 `npm publish`가 눌리고, 첫 사용자가 이슈를 열고, "RN+Flow 되는 빠른 번들러"라는 자기 인식이 시장에서 검증(혹은 반박)되면 써질 것 같다. 아직 그 시점은 오지 않았다.

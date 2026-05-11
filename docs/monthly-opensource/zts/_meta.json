@@ -99,5 +99,23 @@
     "name": "development-14",
     "label": "3-14. RFC 시리즈 — References·AST 재설계·HMR 프로파일",
     "tag": "26.04.23"
+  },
+  {
+    "type": "file",
+    "name": "development-15",
+    "label": "3-15. \"프로덕션이라는 말\" — config·CJS DCE·styled/emotion 트랜스포머",
+    "tag": "26.04.30"
+  },
+  {
+    "type": "file",
+    "name": "development-16",
+    "label": "3-16. binding-lite·메모리 오염·패키지 분리, 그리고 이름이 바뀐 날",
+    "tag": "26.05.07"
+  },
+  {
+    "type": "file",
+    "name": "development-17",
+    "label": "3-17. 0.1.0을 향해 — 플러그인 통일·파일 분리·배포 파이프라인·Codex 회고",
+    "tag": "26.05.12"
   }
 ]
