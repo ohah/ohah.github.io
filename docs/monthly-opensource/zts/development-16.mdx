@@ -6,7 +6,7 @@ date: 2026-05-07
 # 3-16. binding-lite·메모리 오염·패키지 분리, 그리고 이름이 바뀐 날
 
 > **기간**: 2026년 5월 1일 ~ 5월 7일 (7일)
-> **커밋**: zts/zntc 약 412개 (5/1 58 · 5/2 73 · 5/3 71 · 5/4 43 · 5/5 57 · 5/6 64 · 5/7 36)
+> **커밋**: zts/zntc 약 402개 (5/1 58 · 5/2 73 · 5/3 71 · 5/4 43 · 5/5 57 · 5/6 64 · 5/7 36)
 > **핵심**: esbuild 스타일 `tsconfigRaw` 통합 (A1 시리즈), binding-lite 트랜스파일 fast path (#2352), **메모리 오염 근본 수정** — `import_record` specifier use-after-free(`#raw-require`)·var hoisting의 `0xAA` slice UAF가 ~12개 형제 사이트로 fan-out, stack-overflow hardening (스택 버퍼 → ArrayList, #2475/#2484), AST intern-map perf, numeric cross-module const folding, RN codegen rn-0.78~0.84 골든 매트릭스 (#2462), **Flow 파서를 "ts처럼" — type-level 정보 보존**, core-js 자동 폴리필 에픽 (`runtimePolyfills: auto`, RuntimeTarget ios12/hermes0.7), **`@zntc/*` 모노레포 패키지 분리** (core/web/server/react-native/vite-plugin/wasm), BoringSSL dev TLS, **번개(bungae) RN 데브서버 흡수 + 번개 폐기**, dev 에러 오버레이(Shadow DOM), 그리고 **2026-05-07 15:40 KST — 프로젝트 이름이 `zts`에서 `zntc`로 바뀜**
 > **진행 중** — 패키지 분리·core-js·RN codegen 매트릭스·번개 흡수 모두 이 7일에 머지됐지만 후속 phase가 줄줄이 열려 있다.
 
