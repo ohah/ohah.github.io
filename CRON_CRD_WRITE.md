@@ -359,3 +359,6 @@
 - **마지막 실행**: 2026-05-18 18:30 (Asia/Seoul) = 2026-05-18 09:30 UTC
 - **검사 파일 수**: 1개 파일 (docs/monthly-opensource/crd/development-3.mdx)
 - **상태**: ✅ 검사 완료 (린트 통과, 오타 없음)
+
+### 2026-05-18 19:00 UTC (Scheduled)
+- [ ] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-18 19:00 UTC)
