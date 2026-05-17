@@ -350,7 +350,7 @@
 - **상태**: ✅ 검사 완료 (린트 통과, 오타 없음)
 
 ### 2026-05-18 18:30 UTC (Scheduled)
-- [ ] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-18 18:30 UTC)
+- [x] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-18 18:30 UTC)
 
 ## ✅ CRON TASK COMPLETED - ONE FILE VERIFIED (2026-05-18 18:30 UTC)
 
