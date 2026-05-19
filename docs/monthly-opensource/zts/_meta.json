@@ -117,5 +117,11 @@
     "name": "development-17",
     "label": "3-17. 0.1.0을 향해 — 플러그인 통일·파일 분리·배포 파이프라인·Codex 회고",
     "tag": "26.05.12"
+  },
+  {
+    "type": "file",
+    "name": "development-18",
+    "label": "3-18. minify 격차 추격과 Module Federation — 0.1.0은 아직 preview",
+    "tag": "26.05.19"
   }
 ]
