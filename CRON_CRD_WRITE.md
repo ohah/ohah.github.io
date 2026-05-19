@@ -280,6 +280,6 @@
 
 - **완료일자**: 2026-05-20
 - **마지막 실행**: 2026-05-21 08:30 (Asia/Seoul) = 2026-05-20 23:30 UTC
-- **검사 파일 수**: 1개 파일 (docs/monthly-opensource/crd/development-5.mdx)
+- **검사 파일 수**: 1개 파일 (docs/monthly-opensource/crd/development-6.mdx)
 - **상태**: ✅ 검사 완료 (린트 통과, 오타 없음)
 ---
