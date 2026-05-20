@@ -467,3 +467,6 @@
 - **마지막 실행**: 2026-05-21 19:00 (Asia/Seoul) = 2026-05-21 10:00 UTC
 - **검사 파일 수**: 1개 파일 (docs/monthly-opensource/hwpjs/development-7.mdx)
 - **상태**: ✅ 검사 완료 (린트 통과, 오타 없음)
+
+### 2026-05-21 23:30 UTC (Scheduled)
+- [ ] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-21 23:30 UTC)
