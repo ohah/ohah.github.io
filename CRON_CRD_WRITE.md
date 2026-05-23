@@ -1366,3 +1366,105 @@
 - **마지막 실행**: 2026-05-23 11:30 (Asia/Seoul) = 2026-05-23 02:30 UTC
 - **검사 파일 수**: 1개 파일 (docs/monthly-opensource/hwpjs/development-7.mdx)
 - **상태**: ✅ 검사 완료 (린트 통과, 오타 없음)
+
+### 2026-05-23 12:00 KST (Scheduled)
+- [x] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-23 12:00 KST)
+
+## ✅ CRON TASK COMPLETED - ONE FILE VERIFIED (2026-05-23 12:00 KST)
+
+이 크론 작업이 완료되었습니다. 하나의 mdx 파일을 검사하여 오타가 없는 것을 확인했습니다.
+- **완료일자**: 2026-05-23
+- **마지막 실행**: 2026-05-23 12:00 (Asia/Seoul) = 2026-05-23 03:00 UTC
+- **검사 파일 수**: 1개 파일 (docs/monthly-opensource/crd/development.mdx)
+- **상태**: ✅ 검사 완료 (린트 통과, 오타 없음)
+---
+### 2026-05-23 12:00 KST (Scheduled)
+- [x] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-23 12:00 KST)
+
+## ✅ CRON TASK COMPLETED - ONE FILE VERIFIED (2026-05-23 12:00 KST)
+
+이 크론 작업이 완료되었습니다. 하나의 mdx 파일을 검사하여 오타가 없는 것을 확인했습니다.
+
+- **완료일자**: 2026-05-23
+- **마지막 실행**: 2026-05-23 12:00 (Asia/Seoul) = 2026-05-23 03:00 UTC
+- **검사 파일 수**: 1개 파일 (docs/monthly-opensource/crd/development-3.mdx)
+- **상태**: ✅ 검사 완료 (린트 통과, 오타 없음)
+---
+### 2026-05-23 14:00 UTC (Scheduled)
+- [x] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-23 14:00 UTC)
+
+## ✅ CRON TASK COMPLETED - ONE FILE VERIFIED (2026-05-23 14:00 UTC)
+
+이 크론 작업이 완료되었습니다. 하나의 mdx 파일을 검사하여 오타가 없는 것을 확인했습니다.
+
+- **완료일자**: 2026-05-23
+- **마지막 실행**: 2026-05-23 14:00 (Asia/Seoul) = 2026-05-23 05:00 UTC
+- **검사 파일 수**: 1개 파일 (docs/monthly-opensource/crd/development-3.mdx)
+- **상태**: ✅ 검사 완료 (린트 통과, 오타 없음)
+---
+
+
+### 2026-05-23 15:30 UTC (Scheduled)
+- [x] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-23 15:30 UTC)
+
+## ✅ CRON TASK COMPLETED - ONE FILE VERIFIED (2026-05-23 15:30 UTC)
+
+이 크론 작업이 완료되었습니다. 하나의 mdx 파일을 검사하여 오타가 없는 것을 확인했습니다.
+
+- **완료일자**: 2026-05-23
+- **마지막 실행**: 2026-05-23 15:30 (Asia/Seoul) = 2026-05-23 06:30 UTC
+- **검사 파일 수**: 1개 파일 (docs/monthly-opensource/chromium/setup.mdx)
+- **상태**: ✅ 검사 완료 (린트 통과, 오타 없음)
+---
+
+### 2026-05-23 16:00 UTC (Scheduled)
+- [x] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-23 16:00 UTC)
+
+## ✅ CRON TASK COMPLETED - ONE FILE VERIFIED (2026-05-23 16:00 UTC)
+
+이 크론 작업이 완료되었습니다. 하나의 mdx 파일을 검사하여 오타가 없는 것을 확인했습니다.
+
+- **완료일자**: 2026-05-23
+- **마지막 실행**: 2026-05-23 16:00 (Asia/Seoul) = 2026-05-23 07:00 UTC
+- **검사 파일 수**: 1개 파일 (docs/monthly-opensource/crd/development-7.mdx)
+- **상태**: ✅ 검사 완료 (린트 통과, 오타 없음)
+---
+
+### 2026-05-23 16:00 UTC (Scheduled)
+- [x] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-23 16:00 UTC)
+
+## ✅ CRON TASK COMPLETED - ONE FILE VERIFIED (2026-05-23 16:00 UTC)
+
+이 크론 작업이 완료되었습니다. 하나의 mdx 파일을 검사하여 오타가 없는 것을 확인했습니다.
+
+- **완료일자**: 2026-05-23
+- **마지막 실행**: 2026-05-23 16:00 (Asia/Seoul) = 2026-05-23 07:00 UTC
+- **검사 파일 수**: 1개 파일 (docs/monthly-opensource/crd/development-7.mdx)
+- **상태**: ✅ 검사 완료 (린트 통과, 오타 없음)
+---
+
+### 2026-05-23 16:00 UTC (Scheduled)
+- [x] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-23 16:00 UTC)
+
+## ✅ CRON TASK COMPLETED - ONE FILE VERIFIED (2026-05-23 16:00 UTC)
+
+이 크론 작업이 완료되었습니다. 하나의 mdx 파일을 검사하여 오타가 없는 것을 확인했습니다.
+
+- **완료일자**: 2026-05-23
+- **마지막 실행**: 2026-05-23 16:00 (Asia/Seoul) = 2026-05-23 07:00 UTC
+- **검사 파일 수**: 1개 파일 (docs/monthly-opensource/crd/development-7.mdx)
+- **상태**: ✅ 검사 완료 (린트 통과, 오타 없음)
+---
+
+### 2026-05-23 19:00 KST (Scheduled)
+- [x] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-23 19:00 KST)
+
+## ✅ CRON TASK COMPLETED - ONE FILE VERIFIED (2026-05-23 19:00 KST)
+
+이 크론 작업이 완료되었습니다. 하나의 mdx 파일을 검사하여 오타가 없는 것을 확인했습니다.
+
+- **완료일자**: 2026-05-23
+- **마지막 실행**: 2026-05-23 19:00 (Asia/Seoul) = 2026-05-23 10:00 UTC
+- **검사 파일 수**: 1개 파일 (docs/monthly-opensource/hwpjs/development-7.mdx)
+- **상태**: ✅ 검사 완료 (린트 통과, 오타 없음)
+---
