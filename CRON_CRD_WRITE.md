@@ -37,7 +37,7 @@
 - **상태**: ✅ 검사 완료 (린트 통과, 오타 없음)
 
 ### 2026-05-24 11:00 KST (Scheduled)
-- [ ] CRON_CRD_WRITE.md: Verify another MDX file for spelling (2026-05-24 11:00 KST)
+- [x] CRON_CRD_WRITE.md: Verify another MDX file for spelling (2026-05-24 11:00 KST)
 
 ## ✅ CRON TASK COMPLETED - ONE FILE VERIFIED (2026-05-24 11:00 KST)
 
@@ -45,5 +45,5 @@
 
 - **완료일자**: 2026-05-24
 - **마지막 실행**: 2026-05-24 11:00 (Asia/Seoul) = 2026-05-24 02:00 UTC
-- **검사 파일 수**: 1개 파일 (docs/monthly-opensource/crd/development-3.mdx)
+- **검사 파일 수**: 1개 파일 (docs/monthly-opensource/electron-mcp-server/development-1.mdx)
 - **상태**: ✅ 검사 완료 (린트 통과, 오타 없음)
