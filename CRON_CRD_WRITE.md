@@ -621,6 +621,7 @@
 
 - **완료일자**: 2026-05-26
 - **마지막 실행**: 2026-05-26 12:30 (Asia/Seoul) = 2026-05-26 03:30 UTC
-- **검사 파일 수**: 1개 파일 (docs/monthly-opensource/electron-mcp-server/development-2.mdx)
+- **검사 파일 수**: 1개 파일 (docs/monthly-opensource/crd/development-2.mdx)
 - **상태**: ✅ 검사 완료 (린트 통과, 오타 없음)
+
 ---
