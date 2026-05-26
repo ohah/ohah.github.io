@@ -117,6 +117,9 @@
 
 - **완료일자**: 2026-05-26
 - **마지막 실행**: 2026-05-26 23:00 (Asia/Seoul) = 2026-05-26 14:00 UTC
-- **검사 파일 수**: 1개 파일 (docs/monthly-opensource/chromium/first-contribution.mdx)
+- **검사 파일 수**: 1개 파일 (docs/monthly-opensource/hwpjs/development-4.mdx)
 - **린트 결과**: ✅ 통과 (8개 파일 전체 0 warnings, 0 errors)
 - **상태**: ✅ 검사 완료 (오타 없음)
+
+### 2026-05-27 00:00 KST (Scheduled)
+- [ ] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-27 00:00 KST)
