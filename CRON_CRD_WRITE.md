@@ -341,7 +341,7 @@
 ---
 
 ### 2026-05-28 02:30 KST (Scheduled)
-- [ ] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-28 02:30 KST)
+- [x] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-28 02:30 KST)
 
 ## ✅ CRON TASK COMPLETED - ONE FILE VERIFIED (2026-05-28 02:30 KST)
 
@@ -350,5 +350,17 @@
 - **완료일자**: 2026-05-28
 - **마지막 실행**: 2026-05-28 02:30 (Asia/Seoul) = 2026-05-27 17:30 UTC
 - **검사 파일 수**: 전체 mdx 파일 (lint 통과)
+- **린트 결과**: ✅ 통과 (0 warnings, 0 errors)
+- **상태**: ✅ 검사 완료 (오타 없음)
+### 2026-05-28 03:00 KST (Scheduled)
+- [x] CRON_CRD_WRITE.md: Verify one MDX file for spelling (2026-05-28 03:00 KST)
+
+## ✅ CRON TASK COMPLETED - ONE FILE VERIFIED (2026-05-28 03:00 KST)
+
+이 크론 작업이 완료되었습니다. 하나의 mdx 파일을 검사하여 오타가 없는 것을 확인했습니다.
+
+- **완료일자**: 2026-05-28
+- **마지막 실행**: 2026-05-28 03:00 (Asia/Seoul) = 2026-05-28 18:00 UTC
+- **검사 파일 수**: 1개 파일 (docs/monthly-opensource/hwpjs/development-1.mdx)
 - **린트 결과**: ✅ 통과 (0 warnings, 0 errors)
 - **상태**: ✅ 검사 완료 (오타 없음)
