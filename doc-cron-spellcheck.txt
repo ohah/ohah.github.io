@@ -1,0 +1,12 @@
+# CRONUSPELL — 30-min Spellchecking Routine
+
+Every ~5:00 PM UTC, this routine:
+1. Reads `docs/CRON_CRD_WRITE.md` for the current article path.
+2. Runs spell/punctuation check (no content changes) on that file only via bun run lint + manual review if needed.
+
+If edits are made → commit and push to keep site clean before nightly builds/deployments go out.
+
+
+## Current Target
+
+- Path: docs/monthly/opensource/hwpjs/background.mdx
