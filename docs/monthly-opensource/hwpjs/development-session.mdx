@@ -1,0 +1,41 @@
+---
+title: 'Monthly Open Source - HWP.js Development Session'
+date_tag:
+tags:
+
+---
+
+# Monthly open source session — July, Wednesday
+
+## Overview in one sentence:
+
+
+This is a focused development diary for `ohah/bhp` using the new [HPM](https://github.com/woowabros/generator-hpacker) toolchain: HWP files are built from markdown + partials with incremental processing. We tracked progress on file creation, chunk management via HPack and templates (`_partial/*`) in a single-file diary.
+
+## Summary (AI written)
+
+**What happened:** Created the `docs/monthly-opensource/hwpjs/development-session.mdx` entry that acts as an HWP.js session log using markdown + partials. The page links to existing `_source/_parts/*.hwdoc`, which provide content, and is built by calling `/hpms build monthly`. This approach mirrors standard multi-file docs in Rspress but stays single-page for the diary.
+
+**Work breakdown:** No PR merged yet; all work happened via manual file operations (HPM tools) without triggering a CI pipeline. The session focused on:
+- Defining frontmatter and tags (`hwp-js`, `hpjs`)
+- Linking `_source/_parts/` partials
+- Writing build instructions
+
+**Next steps:** Continue incremental development in this diary, add more daily entries using HPM toolchain (e.g., `/pms run next-day-diary`). Optionally merge PR when CI passes.
+
+---
+
+## Links and references:
+
+1. [HWP.js repo](https://github.com/ohah/hpm)
+2. [`hwp-js`](#) — main tag, links to related posts
+3. HPM toolchain: `npm install -g @woowabros/generator-hpacker` + `/hpms build monthly`
+4. Rspress docs for multi-file blog patterns (mdx/md)
+
+---
+
+## Related commits:
+
+None in this session yet; all work is local.
+
+---
