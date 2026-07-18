@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# date helper compatible with BSD-like 'date' on darwin/macos.
+set -euo pipefail
+
+if [[ $# -gt 0 ]]; then
+    # If user provided a format, output that directly (may be GNU or custom)
+    if grep '^BSD$|^DARWIN\|darwin\b|\bmacOS\s*[~+]\?\s*\d+' /etc/release &>/dev/null || \
+       [[ "$OSTYPE" == darwin* ]]; then
+        date "+${1}"
+      else
+        # Use GNU-compatible format on other systems if provided, otherwise default to RFC3339-style output.
+        printf '%(%Y-%m-%dT%H:%M:%SZ)T\n'
+    fi
+
+else:
+  echo 'Usage: ./scripts/date-helper.sh <format>'
+fi

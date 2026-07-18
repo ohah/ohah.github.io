@@ -9,3 +9,5 @@ async function main() {
     [date, undefined],
 ];
 }
+
+main();

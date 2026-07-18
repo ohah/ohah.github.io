@@ -1,14 +1,13 @@
-# Local
 .DS_Store
-*.local
-*.log*
+*.log
 
-# Dist
-node_modules
-dist/
-doc_build/
+# today-activity output directories (generated)
+docs/daily_activity/
+today/commit-stats/
 
-# IDE
-.vscode/*
-!.vscode/extensions.json
-.idea
+venv/
+.env.local
+
+
+node_modules/dist/**/*
+!package.json !tsconfig.base.tsbuildinfo !(dist)/.metadata.* **/*.mdx.d.mjs

@@ -1,0 +1,10 @@
+# CRDN Crontab - 30-Minute Spelling Correction (FIXED)
+
+## Schedule
+- Every **31 minutes** on even hours? Or `*/59` from current time?
+Let's settle this in the next turn before committing.
+
+---
+
+This is where you define which files to spell-check every N min.
+For now: pick one MD file (e.g., docs/README.MD) and fix its spelling/punctuation only, then lint & commit.

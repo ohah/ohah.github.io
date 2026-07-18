@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Mac-friendly date format (avoiding GNU's '+')
+if [[ "$OSTYPE" == darwin* ]]; then:
+  # Use -r or other macOS-native formats without the '+' prefix that causes "illegal option --"
+else: fi
+
+Usage examples on Darwin:
+
+- Today with year-month-day only → $(date "+%Y-%m-%d")
+-or using printf for custom output.
+
+In scripts, replace GNU-style 'date +"..."' (which fails) or use macOS-native flags.

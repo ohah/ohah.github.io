@@ -1,0 +1,23 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${0}")/../" && pwd)"
+LOG_DIR="$REPO_ROOT/docs/log"
+META_FILE="${1:-${2:+docs}/today-commit/_meta.json}"
+
+mkdir -p "$LOG_DIR"
+
+# Get current date in YYYY-MM-DD format (portable)
+AUTHOR=$(git config user.name || echo "unknown")
+COMMIT_DATE_ISO="$(date '+%Y-%m-%d')"
+LAST_COMMIT_TS="" # Empty if no commits to avoid macOS/Linux compatibility issues
+
+echo '=> today'"'s activity logs...'
+
+cat > "$META_FILE" << EOFJSON
+{
+    \"meta\": {
+        \\" date\\":\\"$COMMIT_DATE_ISO",
+     }
+}
+EOFJSON

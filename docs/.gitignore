@@ -1,0 +1,23 @@
+# Auto-generated daily commit documentation
+docs/today-commit/*.md
+
+node_modules/
+dist/
+
+.DS_Store
+
+
+.vscode/launch.json, .vscode/tasks/json
+
+
+
+*.log*
+*/.env.local* */test-results/*
+.pnpm-debug.log*
+
+tmp/
+
+
+
+bin-logs/**
+/tmp/**
