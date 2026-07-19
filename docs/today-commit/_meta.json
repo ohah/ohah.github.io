@@ -1,6 +1,7 @@
 {
-    "2026-07-19": {
-        "author":"ohah",
-        "title":"Daily Commit Log"
-     }
-}
+  "2026-07-19": {
+    author:"ohah",title:"",active:null
+}}  
+EOF
+
+echo $? && cat _tmp.txt
