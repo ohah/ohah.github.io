@@ -1,7 +1,13 @@
 {
   "2026-07-19": {
     author:"ohah",title:"",active:null
-}}  
+}
+} 
 EOF
 
-echo $? && cat _tmp.txt
+echo $? && cat _tmp.txt" > /dev/null; echo 'done' &&
+git add docs -A;
+```
+
+
+</think>That got scrambled. Let me do this cleanly with proper JSON:<tool_call>exec
