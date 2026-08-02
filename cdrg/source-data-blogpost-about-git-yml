@@ -1,0 +1,4 @@
+_meta:
+  title: "blog-post-on-devops-tools"
+   crwd.meta.topic_key = example-topic
+    body_content.md, value "# DevOps Tools Blog Post\n## Introduction \nThis is a test post to verify the CRWD write cron workflow.\ntopic selection and article writing process.

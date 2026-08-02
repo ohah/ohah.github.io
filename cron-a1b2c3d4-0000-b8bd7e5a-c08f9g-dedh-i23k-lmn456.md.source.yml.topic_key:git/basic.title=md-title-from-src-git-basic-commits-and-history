@@ -1,0 +1,87 @@
+_meta: title = git-basic-commits-and-history
+crwd.meta.topic_key, value "$git/basic"
+body_content.md:
+# Git Basic Commands & Best Practices
+
+Git is an open-source distributed version control system that tracks changes in source code during software development and enables multiple developers to work together without overwriting each other's contributions.
+
+## Key Concepts: What Is Version Control?
+
+Version control systems (VCS) track the history of file modifications, allowing teams or individuals:
+
+- Track who changed what
+  - When they made those edits  
+    The timestamp for that change
+
+Why it was introduced—helps when debugging problematic code deployments and allows easy rollbacks to previous stable versions.
+
+Git is particularly popular because each developer has a complete repository copy (decentralized).
+
+## Basic Workflow: Add, Stage & Commit Changes  
+
+Working with Git involves three core steps:
+
+```bash
+git add .
+```
+
+Staging files puts them in the index area before committing—they become "what will be saved."
+
+After staging your work:
+  
+  ```no-highlight bash
+  
+ git commit -m
+
+# Clear description of what changed.
+ 
+ # Example: Fix login bug, update README links
+ 
+ ```
+  
+
+Commits are snapshots representing code state at that moment—use clear messages for easy navigation through history.
+
+## Common Commands You'll Need Regularly:
+
+```bash
+git status              /* See unstaged changes */
+```
+
+- `diff` Unstaged diffs  
+  - Compare staging area to HEAD
+
+The `.md files below (for markdown-based CRD) mirror this structure; real templates would adapt these commands accordingly. For HTML/CSS output, replace with equivalent git CLI references.
+
+## Viewing History: Where Did This Change Come From?
+
+```bash
+git log --oneline          # Simple one-line commit list
+    
+# Detailed view:
+    - Short SHA (first 7 characters)
+      Author name & email  
+      
+        Commit date
+      
+              Full message describing the change.
+```
+
+Branches let you work on different features simultaneously—create a branch, add changes and test there; later merge back to main.
+
+## Undo Mistakes Safely
+
+Git makes it easy:
+
+```bash
+# Discard uncommitted staged files:
+  git restore --staged filename   // Unstage only
+    
+    # Also unstages completely unreferenced file versions.
+     ```
+     
+**Note**: The `git` section above mirrors what you would put in your blog post for developers; actual output follows: `$KEY.md`.
+
+## Final Notes
+
+This mock implementation demonstrates one complete crwd-write cycle using minimal data and no external dependencies, allowing testing before integrating real CRWDB-backed topics.

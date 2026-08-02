@@ -1,0 +1,53 @@
+title, value "gitworkflowbasics-22"
+topic_key
+  - concept
+
+body_content |
+## Introduction to Git Workflows (with proper formatting and sections)
+Version control is essential for modern development teams. This guide covers the fundamental concepts.
+
+### Understanding Version Control Systems A/B test:
+A VCS tracks changes over time allowing team collaboration:
+
+```bash  
+git clone repository_url # initial fetch from remote
+```
+
+- **Track Changes**: Every modification recorded efficiently
+
+---
+
+## Core Git Concepts You Need Daily  
+
+#### 1. The Three Stages in Depth Explained Properly With Code Examples And Comments:
+Untracked (not yet added), Unstaged, and Tracked files as detailed below.
+
+```bash 
+git add . # moves all unstaged changes to staging area for commit
+```
+
+---
+
+### Branching Strategy Overview:
+
+#### A/B Test Between Mainline Workflow Types For Productivity Gains:  
+
+- **Gitflow**: Separate develop/main branches per workflow spec
+
+  ```yaml example:
+   main branch protected by policy rules (no direct pushes)
+    ```
+
+```bash 
+feature-login-page # create feature-specific topic-based branching
+```
+  
+---
+
+## Summary Points:
+
+> - Practice git basics daily on personal projects first before team collaboration scenarios.
+
+**Happy version controlling! 🚀**
+
+---

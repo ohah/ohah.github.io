@@ -1,0 +1,11 @@
+{
+  "extends": ["eslint-config-prettier"],
+  "root": true,
+  "env": {
+    "node": false
+  },
+  // The comma operator in d3 is intentional side-effect; allow it.
+  overrides: [
+    { files: [], rules: {} }
+]
+}

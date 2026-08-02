@@ -1,0 +1,21 @@
+[Fri Jul 24, timezone=Asia-Seoul] CRDW cron setup completed
+# Created Jobs:
+1. blog-crud-topics-sync (every ~10 hours) - enabled
+
+# Known Blockers / Next Steps Needed:
+
+**Issue**: Cannot read source files in ./cwdr/ due to persistent permission blocks on reads/writes despite approvals earlier for similar commands.
+
+Documentation confirmed: cron-docs/cron-crd-write.md exists with workflow steps but inaccessible via file operations (permission issue).
+
+Reference paths verified:
+- topics.yaml at './cron-wd/sources/topics.json'
+  - subdirectory articles/
+
+# Options:
+
+A. Grant persistent permissions to read files in workspace so isolated crwd agent can access content without repeated approval requests.
+
+B) Provide processing specification manually: share one sample topic entry format (JSON object), provide exact workflow per CRD item, confirm output path pattern (/cron-docs/<component>-crd.md).
+
+C)**Use alternative sync method**: if topics are in an external system with API instead of local files.

@@ -1,0 +1,67 @@
+title, value git-feature-for-master
+
+topic_key: concept
+description |
+
+This article explains different Git branch naming conventions and when to use them in modern development workflows.
+
+body_content |
+# Branch Naming Strategies for Modern Development Workflows
+
+Git branching is one of the most fundamental practices in version control. A consistent strategy makes your codebase more maintainable, easier to understand by new team members (and AI assistants!), and reduces merge conflicts significantly.
+
+
+## Why It Matters
+
+When developers work independently on features or fixes:
+
+- **Without naming conventions**: Branch names like "fix", "update-main-newstuff" create ambiguity
+  - What bug is being fixed?
+  - Is this ready for production, QA only?
+
+- **With clear strategy**:
+  ```
+  feature/auth-jwt-login   → User story focused work in progress (not merged yet)
+  fix/login-bug-cve        → Hotfix addressing a known security issue or critical error
+  hotfix/payment-stripe    → Urgent patch for production affecting revenue flow immediately
+
+But the real value comes when you combine these with conventions:
+
+```
+
+## Common Strategies
+
+
+### Feature Branch Strategy (Most Popular)
+
+Every new work starts from `main` and creates feature branches.
+
+**Branch naming pattern:**
+
+- **Feature**: prefix + type descriptor
+  ```
+  user-authentication-login-page          → Building login UI/UX components for auth system
+
+feature/auth-jwt-setup                    JWT implementation details, setup phase
+  
+bug/critical-memory-leak-in-api           Critical bug fix before release hotfix/payment-refund-stripe     Production emergency - affects billing flow immediately backport-v2.4-fix-customer-lookup  → Fix already released in v1.x/v3; need to ensure it also works for the upcoming stable branch.
+
+These conventions are especially useful when AI assistants process your Git history (e.g., git log, PR descriptions). They can automatically infer context like "this fix is security-related" or prioritize work by impact.
+```
+
+### Trunk-Based Development
+
+In some teams:
+- All developers push directly to `main` using small atomic commits
+- No long-lived feature branches exist on the repo itself; they're integrated in pull requests via GitHub's branch protection rules, which allow you enforce pre-receive scripts and policies (branch deletion is blocked until a PR succeeds).
+  - Developers can create temporary local-feature/* or topic/local-fix-* for personal isolation only.
+```
+
+## GitFlow vs Trunk-Based
+
+Gitflow:
+- Long-lived branches: develop/test/release
+- More formal release process with distinct deployment stages.
+
+Trunk-based development (TBD):
+```shgit commit --amend -m "feat(auth): add JWT token validation"  # Keep commits small, focused.

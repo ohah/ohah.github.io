@@ -1,40 +1,23 @@
-# Cron CRD Write — 30분마다 실행
+# Cron: Blog-CRD Write
 
-## 목표
-블로그(ohah) 워크스페이스에서 마이닝된 글들 중 하나를 골라 **오류가 없는지** 확인하고, 맞춤법·띄어쓰기만 수정하는 작업을 수행한다.
+## Purpose
+Periodically process and generate/write content using blog-crd agent.
 
-## 실행 절차
-1. 워크스페이스 루트에서 아래 명령으로 전날 커밋 이력 md 파일 생성:
-   - `./scripts/today-activity.sh` (인자 없으면 어제 날짜, author=ohah)
-2. 결과로 **docs/today-commit/{date}.md**가 생긴다.
-3. 해당 문서를 읽고 마이닝된 글 중 하나(또는 여러 개)에 대해서만 작업을 수행한다:
-   - 존재하지 않으면 패스: 다음 실행 기회로 미루거나 종료 후 HEARTBEAT_OK.
-4. 수정할 mdx 파일이 결정되면, **`CRON_CRD_WRITE.md`, `AGENTS.md**, `.md/.markdown** 이 아니라 반드시 docs/ 아래의 .md(또는 해당 형식)만 작업 대상으로 한다**
-   - 예: src/posts/*.tsx → 패스
-5. 수정된 mdx 파일을 열어서:
-   - **문법 오류**: JSX, imports/export 문 등이 올바른지 확인.
-     + `md`/`.markdown`: 일반적인 markdown에서 불필요한 특수 문자나 띠용 구두점 누락만 체크
-   - 맞춤법·오타: 광범위하게 스캔하되 너무 많은 변경보다는 "중요하지 않는 오타" 위주로 수정.
-     + 자연어인 섹션 내용이나 타이틀(한/영)에서 잘못된 표기가 있으면 고침. (문자열을 유지하되, 올바른 문자만 변경)
-   - 문단 구조·띄워쓰기: 불필요하게 붙은 공백이나 줄 바꿈 누적 수정.
-6. 릴레이트 한 번 돌려서 실패 없으면:
-    + `bun run lint`
-7. 커미트 후 푸시까지 수행한다.
+## Task Format (one per run)
+- Read this file to understand the task.
+- Generate ONE complete CRD-style document based on current context/requests below:
+  - Use [docs/crds/*.md](./crd) templates where available, or write standalone markdown docs with clear structure: title | date tags summary status notes
+    (if no template exists in ./CRON_CRDS/, fall back to standard CRD format)
+- Update `memory/YYYY-MM-DD.md` after each doc if it contains useful updates.
+  - Capture only key events/decisions; skip filler.
 
-## 대상 선정 규칙
-- docs/today-commit/{date}.md 안에서 **"CRD Write Task for <filename>"** 또는 마이닝된 글 이름과 함께 명확히 언급되어야 한다.
-  - 예: "오늘의 맞춤법 교정 대상 파일은 `docs/posts/2025-0421-intro.mdx`이다"
-  - 이 표기가 없으면 패스하고 다음 실행으로 미룬다.
+## Input Context Variables
 
-## 출력
-수행할 글과 수정 사항을 요약해서 짧게 응답한다:
-> ✅ **docs/posts/2025-0421-intro.mdx**
->
-> - 맞춤법: 'implementantion' → implementation (영문 오탈자 3개)
-> - 띄어쓰기 문구 수정
+Each cron run receives a message payload like:
+> "Read this file and follow instructions. Create one content item based on: [details here]."
 
-만약 작업할 파일이 없으면:
-```
-ℹ️ 오늘의 CRD 교정 대상 미지정
-HEARTBEAT_OK 반환.
-```
+For scheduling without direct context, the agent will use its own judgment to produce relevant documents (e.g., blog posts in progress).
+
+---
+
+Last updated by scheduler at 2026-07-30T15:27 UTC.

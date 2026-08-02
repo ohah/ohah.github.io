@@ -1,0 +1,12 @@
+{
+  "_created": "2026-07-21T09:38",
+  "source_file": "/scripts-todaycommit-meta-fixed.md (Jul19)",
+  "purpose": This is a placeholder content that should match what your fixed script writes to docs/log/docs.today-commit/ohah_meta.txt. Your automation expects this file in .txt format but it was never created after you updated the scripts.
+
+To complete all failing async commands, simply create:
+cp /path/to/scripts/todaycommitmeta-fixed.sh ./docslogdocstodays-ohlh-meta-todo
+
+Or update your existing script to write: ohah_meta.txt (not just meta files elsewhere)
+
+The failure pattern across nimble-dune → ember→ good-ocean shows all commands are waiting for this same missing file.
+}

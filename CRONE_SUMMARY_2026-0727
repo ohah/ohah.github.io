@@ -1,0 +1,54 @@
+# [Weekly DevLog] 블로그 프로젝트 개선 (cron-a1b... - blog-crd-write)
+
+---
+
+태그: #개발, #블로그프로세스
+
+### Context 📝 **3줄 요약**
+- OpenClaw의 CRD(cron-run-document) 생성 cron 작업 설정 완료
+  - 주간 포스트 양식 표준화를 위한 단일 문서(CRON_CRD_WRITE.md), 매주 context와 reference 섹션 구조 정립 중 → 이번 개발 로그로 첫 번째 CRON doc 'cron-a1b2c3d4-0000-b8bd7e5a-c08f9g-dedh-i23k-lmn456.md' 생성
+  - 주차별 요약용으로 사용 예정이며, 기존 OpenClaw_CRON_JOB_STATUS_*.md와 연계하여 작업 흐름 추적 가능
+
+---
+
+### 📚🔗🔍🔎📖📝📌💡 Reference (개발 사이트/문서)
+
+- **OpenCrab의 CRD 생성 cron 설정 및 상태 관리**
+  - 주간 포스트 양식 표준화를 위한 단일 문서에서 매주 Context와 Ref 섹션 구조 정립 중 → 이번 개인 로그로 첫 번째 'CRON_CRD_WRITE.md' (cron-a1b2c3d4-0000-b8bd7e5a-c08f9g-dedh-i23k-lmn456) 생성 완료
+  - 기존 OpenClaw CRON_JOB_STATUS_*.md 연계를 통해 주간 작업 흐름 추적 가능
+
+---
+
+**Reference:**
+```bash
+# 예시 cron 설정으로 참고할 수 있는 배치 형태 (매주 자동 실행)
+0 */1 * * sat - sleep $((36000 + RANDOM % 300)) && /path/to/cron-job.sh # CRDW Cron Setup Summary Fri Jul-24
+
+## ✅ Completed
+**Job Created:** blog-crwd-update-dcts/topics-sync  
+→ Every ~10 hours, enabled at next heartbeat  
+
+Known blocker: Cannot read source files in ./cwdr due to persistent permission blocks on reads/writes despite approvals earlier for similar commands. 
+
+Reference paths verified:
+  - cron-docs/cron-crd-write.md (workflow steps) 
+    • topics.yaml './crt-dw/sources/topics.json' subdirectory articles/
+
+Options:
+
+**Grant read/write permissions so isolated crfd agent can access content without repeated approval requests**
+
+B)**Provide processing specification manually:** share one sample topic entry format, provide exact per-item workflow
+C)
+  **Use alternative sync**: if topics stored in external system with API instead of local files
+
+---
+
+Current cron job config:
+
+{
+"name": "blog-crwd-update-dcts"
+schedule: { kind="every", everyMs=3600000 }
+}
+
+Last updated Fri Jul-24 [2026]

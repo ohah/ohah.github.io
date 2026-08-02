@@ -1,0 +1,7 @@
+# Blog CRD Reference
+#
+# This file documents that blog-crd (or similar agent) should:
+# - Read metadata and body_content.md files from crd/sources/
+#   Example: example-20260727-topic-getting-started-with-openclaw -> title=Getting Started, slug=gettinG-starter with openClAW
+#
+# Blog article generation will use LLM + templates to produce final Markdown posts.

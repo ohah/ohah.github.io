@@ -1,0 +1,61 @@
+# CRD Write Task
+
+## One-Shot Processing Example
+Follow the cron job instructions for processing a single documentation file.
+
+**CRID:** A123-B45C-D67E-F089 (example format)
+
+### Structure:
+- Title: Clear, descriptive document title from your topic key context or content header.
+  - When absent/empty relative to schema rules and tags/categories in place of the missing field placeholder for it accordingly.  
+    If neither is available but a stable basename works as fallback identifier after sanitization (lowercase with hyphens).
+- Topic Key: From filename source prefix when documented, else inferred from slug or file content header.
+  - Example topic keys based on typical blog patterns:
+     * gitops
+        • aws-cdk-appsync-proxy-microservices-postgres-lambda-dynamodb-hybrid-relational-nosql-db-modeling-explained.md (from monthly-opensource/crd)
+  
+    When filename contains a stable prefix before the hyphen, treat that as topic key. If not present or ambiguous:
+     * Use first tag/category from document frontmatter if available.
+       • gitops
+        ✓ aws-cdk-appsync-proxy-microservices-postgres-lambda-dynamodb-hybrid-relational-nosql-db-modeling-explained.md
+
+    Otherwise, default to a placeholder topic key (topic-key) and note the inference in output metadata.
+
+### Output Location:
+- Workspace: `/Users/yoonhb/Documents/workspace/blog/docs/CRDs/<filename>` with stable basename.
+  - If docs/crd folder doesn't exist yet after processing each doc sequentially per workflow step
+    * Create `docs` if needed, then create subdirectory structure or reuse existing crd paths as configured. 
+      • Docs CRD target: `/Users/yoonhb/Documents/workspace/blog/docs/CRDs/<filename>`.
+
+  Example stable basename:
+   - Input path example (sanitized):
+     /path/to/incoming/cr-2026-a1b2c3-d7e8f9a/test-doc.md
+    → Output filename in docs folder: `test_doc` with full content preserved and added metadata if present.
+      • Note on hyphens-to-hyphen transformation for stable basename. For safety, we'll output without extension (cleaned) when storing as a single file.
+
+## Validation Steps:
+1️⃣ Ensure title not missing/empty → use placeholder `Untitled CRD Document`.
+2️⃣ Verify topic key exists or infer from slug/tags/categories/filename.
+3✅ Process: read content, format with proper headings/metadata if needed
+4📤 Write to docs/crd folder preserving structure.
+
+## Example Output:
+```
+CRID              : A123-B45C-D67E-F089  
+Topic Key         : gitops (inferred from slug/category) or topic-key placeholder as documented below.  See CRD write workflow instructions for defaults.
+Stable Filename   : test_doc
+Input Path        : /path/to/incoming/cr-2026-a1b2c3-d7e8f9a/test-doc.md  
+Output Location    : docs/CRDs (default) or configured output directory  
+
+Notes:
+ - Document processed as single CRD doc. Follow workflow steps and validation checklist.
+```
+
+### Format notes for summary when processing completes
+- Include stable filename, topic key inference note if placeholder used vs inferred source field.
+
+---
+
+## Task: Process One Doc
+
+**Goal:** Apply this template to one actual markdown document in the workspace or example data set that matches your project's CRD workflow pattern. Provide a short format-compliant output and then summary as requested.

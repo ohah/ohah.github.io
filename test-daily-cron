@@ -1,0 +1,21 @@
+#!/bin/bash
+# One-time verification of daily cron workflow
+
+echo "=== Testing blog crons ===" 
+cd /Users/yoonhb/Documents/workspace/blog || exit 1  
+
+if [ -f scripts/today-activity.sh ]; then  
+    echo "[OK] today‑activity script found"
+else    
+        return
+    
+fi
+        
+bun run --silent ./scripts/./today/activity/sh > test-output.log && \
+echo "✓ Daily cron successful" ||
+{
+        
+            cat /Users/yoonhb/Documents/workspace/blog/test/output/.log || true
+                exit 1
+                
+}

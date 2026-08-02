@@ -1,0 +1,19 @@
+_meta.title = blog-post-content-with-md-blocks
+crw.meta.topic_key: "git-basics"
+body_content.md:
+# Git Basics for Bloggers
+
+## What is Version Control?
+
+Version control systems track changes to your files over time. Think of it as a super-powered history book that lets you:
+
+- Track who made what change and when 🕐️
+- Revert bad commits easily ⏪✅  
+- Branch out (create parallel versions) for experiments 🔀
+
+## Why Use Git?
+
+1. **Backup** - Never lose your work again 💾🔒2 teams collaborate on the same file without overwriting each other's changes 👥3 easy to publish and deploy 🚀4 version control integrated into most tools you already use ⛓️
+---
+
+*This post is about git basics — perfect for developers getting started with blogging!*

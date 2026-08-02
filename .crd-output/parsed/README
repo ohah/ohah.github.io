@@ -1,0 +1,12 @@
+# CRD Documentation Output Directory
+---
+
+This folder contains processed and validated Content Resource Documents (CRDs).
+
+## Structure
+
+- **Processed Files:** Fully formatted, schema-compliant documents ready for consumption by downstream systems.
+-
+Note: These files are automatically generated from incoming sources. Manual edits will be overwritten on the next cron run.
+
+---

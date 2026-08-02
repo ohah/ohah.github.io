@@ -1,0 +1,10 @@
+{
+"name":"CRD Write — one blog post by crwd agent"
+}
+schedule kind at tz +090000
+sessionTarget isolated  
+payload delivery mode announce enabled true day_min >= 1 && max <=5]
+[10,24:00]}
+anchorMs}}
+}]}]}},"enabled":true}]}}"
+JSON

@@ -1,0 +1,9 @@
+# Topics for blog post generation
+
+topics:
+  git-basics-for-beginners
+    - title: Git Basics For Beginners (Simple Guide)
+      description: Getting started with version control and the basics of using GitHub.
+
+tools-and-command-line-automation-in-python>
+```pythonimport sys, osdef main():...

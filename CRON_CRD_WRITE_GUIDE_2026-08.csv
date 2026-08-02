@@ -1,0 +1,19 @@
+cron-a1b2c3d4:blog-crd
+CORS, Rate Limits & Safety (RFC 7230), CORS Preflight Request Processing Guidelines - IETF Drafts:
+• RFC9110 §10.5 'Too Many Requests' Status Code; response body includes Retry-After and error detail.
+Recommended for backend APIs.
+
+CRON CRD WRITE GUIDE
+====================
+
+This file defines a standard format to write/revise CRUD docs that reference an existing cron job (cron-a1b2c3d4). Each entry lists the key fields in CSV: Cron ID, Document Type. The target doc must:
+- Provide accurate name and description.
+- Specify schedule details for exact times of day or precise intervals anchored at midnight UTC if recurring daily/weekly/hourly; otherwise include anchorMs as needed.
+
+Write one document per CRON job (cron-a1b2c3d4). Use the current date in filename prefix: YYYY-MM-DD. Example:
+CRD_CRUD_2026-08.csv
+
+For each doc, ensure schedule and payload are consistent with cron syntax defined by gateway tool schema.
+Reference docs must not include duplicate or conflicting fields.
+
+When complete for a job (cron-a1b2c3d4), run the actual jobs in Gateway to validate them: use `gateway config apply` if needed; verify scheduling works as described. Then update this file and report success with one short summary per cron.

@@ -1,0 +1,22 @@
+# CRWD Write Tasks
+
+## Current Time
+- Date and time: 2026 July 25, Saturday - Asia Seoul (2am)
+Reference UTC for reference if needed.
+
+---
+
+### Task list with completion status based on prior context:
+1. ✅ Create a new Cron job entry in `cron_jobs.yaml`.
+   — Example pattern added below.
+   
+## Entry Pattern
+
+```yaml
+- name: blog-crd-write-run # or use your preferred naming convention (e.g., <prefix>-run)
+  scheduleKind: cron        # optional; specify "at" for one-shot absolute time, otherwise recurring with this default key if missing in payload 
+  timezoneAsiaShanghaiKST?: true       # keep local wall-clock TZ set as required
+```
+
+Notes:
+- Ensure the `schedule` object is provided.

@@ -1,0 +1,39 @@
+---
+cron_id:
+schedule_description_for_this_crontab_yaml_file = Write a single blog post using CRWDB process
+
+run_limit_per_schedule_date_max_days_ahead: null
+source_files_root_directory_path_or_none_if_auto_infered_from_the_prefix_of_your_full_crond_filepath_before_sources_subdirectory_like_CRWD_Write_Cron_<cron_id>.md__or_absolute_paths = /Users/yoonhb/Documents/workspace/blog/crwd/sources
+
+article_topics_for_this_single_run_crontab_configuration:
+  - title: "2025-07-git-basics"
+    body_path_or_none_if_body_is_inline_in_yml_source_file_field_on_the_main_workflow_yaml_schema_level
+        (this is an example for a cron that does NOT support multiple source files in one run)
+```
+
+Notes and additional context:
+
+## Workflow Overview
+
+The CRON_CRD_WRITE.md file defines how crwdb process should behave when invoked by this scheduled task. It specifies the expected structure of:
+- topics.yaml: where topic keys point to article data
+  - Each item contains a `title_slug` field used as an output suffix (lowercase, slug-like)
+    and optionally points to body content via path.
+      You can also inline all fields directly in this yml for simplicity when generating posts.
+
+## Current Session Steps
+
+1. Check crwd/topics.yaml; missing → create with example topics
+2) Pick first available unprocessed/unwritten article (e.g., tech/2025-07-git-basics)
+3a). Write a new source file at `crdw/sources/<source-file>.yml` that includes:
+      - title: lowercase slug-like string without slashes for final output suffix, e.g. "blogpost-about-something"
+        topic_key matching the chosen item key (or null if using inline)
+
+4) Invoke crwdb process on /Users/yoonhb/Documents/workspace/blog/CRWD_Write_Cron-2211f3d8-a404e5c0-md.yml with:
+    - Attachable context via mountPath=/workspace/crwd/sources/<source-file>.yml (or specify workspace-level if required)
+      Pass the CRON_CRD_WRITE.md file as attachment so crwdb can read it for this single-run process.
+7) After processing completes or after reasonable timeout, verify final post is generated and report location.
+
+8). Delete source files created in /workspace/crwd/sources/ (if successful).
+
+This ensures a clean state before the next run.

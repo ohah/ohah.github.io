@@ -1,0 +1,68 @@
+# CRONOLOGY Write Guide
+
+## Purpose
+This guide defines the process for creating "Crontology" Documents (named `cron-YYYY-MM-DD-HHMM.md`).
+
+### Naming Convention:
+```
+{prefix}-{date}-HHmm-{slug}.md"
+  prefix: cron, testbench or similar optional group identifier  
+  date    : YYYY-MM-DD
+  HH:mm   : UTC time to the minute when this document is written (use a fixed offset e.g. +9 for Asia/Seoul)
+```
+
+## Steps
+
+1️⃣ **Pick ONE** item from `memory/YYYY/MM/DD.md` that meets all of these criteria:
+- [ ] Is clearly marked as worth remembering long-term
+  - Significant decision, learning point or insight (not a trivial log entry)
+
+2. When ready to write the CRD:
+
+   ```bash
+   # Create new crd file at {prefix}-{date}-HHmm-{slug}.md
+
+       example: cron-2026-07-28+0930-daily-workflow-update.md
+   
+     • Use UTC timestamp for HH:mm in filename.  For Asia/Seoul (+9 offset), 
+          use time minus nine hours; e.g., if it is Tuesday, July 29th at
+       Seoul‑time noon (12:00 +900 =21H30Z) then write "2130" as the UTC minute.
+
+     • In document body begin with:
+           — BEGIN CRD WRITE DATE/TIME ENTRY – 2026-07-28T083000+09  
+   ```
+
+2️⃣ **Write Document**
+
+```
+# cron/CRON_CRID.md
+
+## Item
+<!-- Choose ONE item from memory/YYYY-MM-DD that meets criteria -->
+
+---
+
+**Long-term decision / learning point**: 
+
+[Your one-sentence long-memory-worthy statement]
+
+### Why it matters now:
+
+1. 
+2.
+
+---
+» END ENTRY — 2026-07-28T083000+09  
+```
+
+## Verification Checklist
+
+Before marking done:
+   - [ ] The document begins with the required time annotation line
+     `— BEGIN CRD WRITE DATE/TIME ENTRY – <ISO‑8601>`
+      (include timezone offset in +HHmm)
+   
+---
+
+**Notes**
+- Do not create a cron job here.  Create only this Markdown file.

@@ -1,0 +1,31 @@
+name: Write Blog Post (CRD)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  crd-write-job-1a2b3c4e5f6g7h8i9j0k12345abcde01beefdeadfeedbacdedeffacecadeadeafecfedcba
+    runs-on: ubuntu-latest
+    
+        steps:
+
+          - name： Checkout repo and tools
+
+            uses：
+
+              actions/checkout@v3
+            
+               with:
+            
+                 token：
+                   ${{ secrets.GITHUB_TOKEN }}
+              
+               
+        
+          
+    
+  
+  # Next job placeholder (placeholder-01)

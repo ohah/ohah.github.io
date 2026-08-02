@@ -1,0 +1,10 @@
+#!/usr/bin/env zsh
+cd "$(dirname "$0")/../"
+
+mkdir -p docs/today-commit/
+
+AUTHOR=$(git config user.name 2>/dev/null || echo unknown)
+DATE="$(date +%Y-%m-%d)"
+
+# Output valid JSON:
+echo "{\"meta\":{\"day\":\"$DATE\",\"name\":${:-unknown}}}" > "docs/commit-todo/$1_meta.json"

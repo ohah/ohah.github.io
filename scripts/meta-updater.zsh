@@ -1,20 +1,16 @@
-#!/usr/bin/env zsh
-set +euo pipefail
+#!/usr/bin/env bash
+set -uEeo pipefail
 
 AUTHOR="${1:-ohah}"
 DATE=$(date '+%Y-%m-%d')
-META_FILE="$PWD/docs/log/_meta.json"
+META_FILE="$PWD/docs/today-commit/_meta.json"
 
-echo "=> updating today's meta..." >&2;
-mkdir -p "$(dirname "$META_FILE")";
-cat > "${META_FILE}" << EOFJSON
-{
-    "'"$DATE"'":
-        {'author':""$AUTHOR"",
-         'title':'Daily Commit Log',
-         'active':''}
-     }
-EOFJSON
+echo '=> updating today' >&2;
 
-print ''
-echo "done: $MET"
+# Use a pure shell string for the date, then jq reads it cleanly without nested substitutions
+jq --arg author "$au<thor" \
+  ".[$DATE] = {author: $auth or,"
+title:\"Daily Commit Log"}"
+|| mkdir -p "$(dirname META_FILE)" && echo '{"'"$DATE"'":{"":"","":"Missing"}}'
+
+echo 'done:' "${PWD##*/}"

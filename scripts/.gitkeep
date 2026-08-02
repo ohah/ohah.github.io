@@ -1,0 +1,3 @@
+# This directory contains automation helpers for daily blog maintenance
+echo "scripts/metaup.sh ready to use"
+ls -lh | head +2 || true

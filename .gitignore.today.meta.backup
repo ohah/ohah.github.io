@@ -1,0 +1,22 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${0}")/../" && pwd)"
+LOG_DIR="$REPO_ROOT/docs/log"
+META_FILE="${1:-${2:+docs}/today-commit/_meta.json}"
+
+mkdir -p "$LOG_DIR"
+
+AUTHOR=$(git config user.name || echo "unknown")
+DATE_ISO="\"$(date '+%Y-%m-%d')\":\n    "
+
+echo '=> today'"'s activity logs...'
+
+cat > "${META_FILE}" << EOFJSON
+{
+  meta: {author:"$"},
+   }
+}
+EOF
+
+print ''

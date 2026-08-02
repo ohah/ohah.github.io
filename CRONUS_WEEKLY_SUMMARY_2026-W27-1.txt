@@ -1,0 +1,112 @@
+[Weekly DevLog] 블로그 프로젝트 개선 (W26→0727)
+
+---
+
+태그: #개발, #블로그_CRD
+
+### Context 📝 **3줄 요약**
+OpenClaw의 CRON 주간 보고서(CRONUS_WEEKLY_SUMMARY_YYYY-WXX-#.txt)를 생성했습니다.
+1. 각주차에 해당하는 'CRONUS_W26.md'에서 중요 개발 내용을 추출
+2. 최신 상태(07/27 19:00 기준), 시기별 주제 분류, 다음 단계 요약 포함 구조로 작성 완료
+
+---
+
+### 📚🔗🔍🔎📖📝📌💡 Reference (개발 사이트/문서)
+
+- OpenClaw CRON 보고서 생성
+  - 매주 'CRONUS_WEEKLY_SUMMARY_YYYY-WXX-\#.txt' 문서를 통해 주간 개요 수집 및 요약을 자동화할 계획
+
+---
+
+## This Week's Highlights (0727 기준)
+
+### Current Status ✅ Completed Work:
+- [x] CRON weekly summary 구조 정립
+  - 시기별 분류: 전체(전반적 진행 상황), OpenClaw, 블로그 프로젝트의 세 개 섹션을 통합한 완성형 주간 요약 문서 생성
+
+### Key Updates & Context:
+- **Week Number**: W26
+  - 이번 달: ~7.27 (예정)
+- **Current Focus**:
+
+#### 🖥 OpenClaw 관련 업무 진행 상황 (#openclaw):
+1) CRON 주간 보고서 작성 구조 확립 및 첫 문서(CRONUS_WEEKLY_SUMMARY_2026-W26.md, ~0727 19:00 기준)
+   - 완료된 사항:
+     * Week별 개요 요약 파일을 자동 생성할 수 있는 CRON 주간 보고서 구조 정립
+       • 시기 분류 섹션(전체/시작→진행↔OpenClaw, 블로그)
+   - 예정되는 작업:
+     * 매주 이 문서에 다음 기수의 개요를 추가할 계획으로 주차별 요약을 통한 중간 검토
+       • 구조: 시기분류 섹션에서 각 Week 별 상태(시작/진행) 및 OpenClaw, 블로그 세부 사항 작성
+
+2~4. (예정)
+
+---
+
+#### 📝 Blog Project 진입점:
+- **Blog CRD 생성 시작** (#블로그_CRD)
+  - [ ] 개요: 일반적인 기술 포스트에 대한 글쓰기 가이드라인(CRD) 도구 활용을 위해 블로그 프로젝트 내에서 주간 키워드 수집 및 요약 진행
+    * 다음 단계:
+      • [ ] CRON_CRD_WRITE.md(주차별 컨텍스트/Reference 구조 정립 중)
+        - 참고할 문서: OpenClaw의 weekly summary 작성 가이드라인 (CRONUS_WEEKLY_SUMMARY_YYYY-WXX-\#.txt, W26~0727 기준 생성 완료)
+
+---
+
+### 🔮 Next Steps 📅
+1) 매주 정해진 시간(예시: 월요일 09:00 KST)
+   - CRONUS_WEEKLY_SUMMARY_YYYY-WXX-#.txt 문서에 이번 주 개발 내용 추가 작성
+
+2. OpenClaw의 새로운 weekly summary 구조 적용
+3) 블로그 프로젝트에서 'CRD 도구' 활용을 위한 CRON_CRD_WRITE.md(주차별 컨텍스트/Reference 섹션 정립)
+
+---
+
+## Summary (Time-based Categories)
+- **전체**: W26~0727 19:00 기준 주간 개요 작성
+### OpenClaw:
+1) [x] CRON weekly summary 구조 확립 및 첫 문서(CRONUS_WEEKLY_SUMMARY_2026-W27.md, ~July.20-21 시작→진행)
+   - 상태 정리: 시기별 요약(시작/완료), OpenClaw 항목 분류에 따른 중간 검토용 주요 개선 사항 기재
+### Blog Project:
+1) [ ] CRON_CRD_WRITE.md 구조 확립 (주차별 컨텍스트, Reference 섹션 정리 예정)
+2~3. 
+
+---
+
+## Final Note 💭
+
+**Week 27 → July/08(월)/2026**: 다음 주(CRONUS_WEEKLY_SUMMARY_YYYY-WXX-#.txt) 진행 시 필요한 것들
+1)** 매주 CRON weekly summary 파일 추가하기**
+   - 예시: W28 문서에 이번 달 중간 개요 수집 및 8월 목표 도출 등 (7/20~0725)
+     * 'CRONUS_WEEKLY_SUMMARY_2026-W27.md' (~July.22까지), ~August이력에서 해당하는 날짜와 요약 추가
+   - 주기: 월요일(예시) 09:00 KST 기준으로 각주차별 보고서 파일 생성/업데이트
+
+2)** 블로그 프로젝트 내 CRD 도구 활용 가이드라인(CRON_CRD_WRITE.md 구조 정립 중)
+   - [ ] 컨텍스트 섹션(해당 주간의 핵심 개념, 키워드 등을 위한 참고할 문서 리스트 포함)
+
+---
+
+## Appendices
+### (예정): Next Week Schedule
+
+#### 1. OpenClaw Tasks:
+- [ ] CRONUS_WEEKLY_SUMMARY_2026-W27.md 추가 작성 및 관리 지속(수요일~0428 기준)
+   - 예시: W28 문서에 이번 달 중간 개요 수집 (07/22), 08월 목표 도출, 블로그 프로젝트 CRD 가이드라인(CRON_CRD_WRITE.md) 추가 작성
+     * 'CRONUS_WEEKLY_SUMMARY_2026-W27-1.txt' (~7.20~21 시작→진행)
+   - 주기: 매주 정해진 시간(예시 09/00 KST)
+
+#### 블로그 프로젝트에서 CRD 도구 활용 가이드라인(CRON_CRD_WRITE.md 구조 확립 중):
+- [ ] Reference 섹션 작성 (개발 사이트, 문서 등 리스트 포함)
+   - 예시: 주간 컨텍스트를 위해 OpenClaw의 weekly summary 및 CRON 보고 생성 가이드라인을 참고할 수 있는 'CRONUS_WEEKLY_SUMMARY_YYYY-WXX-#.txt' (~07/22)에 요약된 개요 추가
+     * 다음 단계: 블로그 프로젝트에서 일반적인 기술 포스트 CRD(글쓰기 가이드라인) 작성을 위해 이 문서 활용
+
+---
+
+## Weekly Review Checklist ✓ (0727 19:00)
+- [x] 전체 주간 개요(W26~2026-W27, ~July.22까지 시작→진행 상태 및 OpenClaw/블로그 세부 항목 수집)
+
+### Key Insights:
+주기적인 CRON weekly summary를 통해 매개 달의 중반을 기준으로 한 검토 가능
+이는 향후 주차별 진척도 추적, W27 다음 단계 계획(매월 3~4회)에 유리하게 작용함
+
+---
+
+**Generated**: CRON_CRD_WRITE.md (W26→2026-W28)

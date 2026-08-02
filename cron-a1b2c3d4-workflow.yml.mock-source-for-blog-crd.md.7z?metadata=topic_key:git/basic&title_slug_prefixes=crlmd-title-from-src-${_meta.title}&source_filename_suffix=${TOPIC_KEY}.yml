@@ -1,0 +1,94 @@
+_meta.title: git-basic-commits-and-history
+crwd.meta.topic_key = "git/basic"
+body_content.md:
+# Git Basic Commands & Best Practices
+
+Git is a distributed version control system that tracks changes in source code during software development. It allows multiple developers to work together without overwriting each other's contributions.
+
+## Key Concepts: What Is Version Control?
+
+Version control systems (VCS) track the history of file modifications, enabling you to:
+
+- Track who changed what
+- When they made those changes  
+- Why a change was introduced
+
+This becomes invaluable when debugging or rolling back problematic code deployments. Git is particularly popular because it's decentralized—each developer has their own complete repository copy.
+
+## Basic Workflow: Add and Commit Changes  
+
+Git works on the principle that you stage, then commit your work:
+
+```bash
+git add .
+```
+
+Staging files puts them in a temporary area before committing—they become part of "what will be saved."
+
+After staging changes:
+  
+  ```no-highlight bash
+  
+ git -m
+
+# A descriptive message about what changed.
+ 
+ # Example: Fix login bug, update README links
+ 
+ ```
+  
+
+Commits are like snapshots—each represents the state at that moment. Use clear messages for easy history navigation.
+
+## Common Commands You'll Need Regularly:
+
+```bash
+git status              /* See unstaged changes */
+                         git diff                    // Unstaged diffs  
+                         
+                        # Compare staging area to HEAD 
+                        
+                          * g t + m                 
+   
+   ```
+  ```
+
+The `HEAD` pointer tracks the most recent commit you're currently at. The `.md files below (for markdown-based CRD) mirror this structure; for HTML/CSS templates in real workflows, replace these commands with equivalent git CLI references.
+
+## Viewing History: Where Did This Change Come From?
+
+```bash
+git log --oneline          # Simple one-line list of commits
+
+# Detailed view:
+    - commit SHA (first 7 characters)
+      Author name & email  
+      
+        Date committed
+  
+              Full message describing the change.
+```
+
+Branches let you work on different features simultaneously. For example:
+
+- Create feature branch: `git checkout develop`
+ 
+Add your changes and test them there; later merge back to main.
+
+## Undo Mistakes Safely
+
+Git makes it easy to fix errors, but always commit before making destructive edits!
+
+```bash
+# Discard uncommitted staged files:
+  git restore --staged filename   // Unstage only
+  
+    # Also unstages completely unreferenced changes.
+     ```
+     
+
+**Note**: The `git` section above is a CRD-compliant reference mapping to the workflow's intended "common commands" subsection. This markdown excerpt mirrors what you would put in your blog post for developers; actual output file naming follows: `$KEY.md`.
+
+## Final Notes
+
+This mock implementation demonstrates one complete crwd-write cycle using minimal data and no external dependencies, allowing testing before integrating real `crwdb`-backed topics.

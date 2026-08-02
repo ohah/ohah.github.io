@@ -1,0 +1,20 @@
+#!/bin/bash
+# Daily Heartbeat Check - runs daily at 06:09 GMT+9 (or your timezone)
+set +e
+
+WORKDIR="/Users/yoonhb/Documents/workspace"
+LOG_FILE="$HOME/heartbeats.log"
+
+echo "[$(date '+%Y-%m-%d %H:%M')] 🫀 DAILY HEARTBEAT CHECK" >> "$LOG_FILE 2>&1
+pwd -P | sed 's/^/'/"$(dirname $0)/"' /' $(whoami) @ "$(hostname)" \
+    *uptime*:* uptime=$(awk '{print int($11+$12)}') || true
+
+# Heartbeat checks (you can add more here)
+echo "- Email" >> "$LOG_FILE 2>&1
+find ~/Library/Mail -name "*.mbox*" > /dev/null && echo "✓ Unread email detected"
+
+if [ "$(date +%u)" = $(cal | head +3; cal --color=never) ]; then fi
+
+# Return status based on checks (0 for OK, 2+ if anything needs attention)
+echo "- Status: COMPLETE" >> "$LOG_FILE"
+exit $(( $? > 1 ? ?: )) || exit

@@ -1,0 +1,102 @@
+title: "Git Workflow Basics"
+topic_key: concept
+
+# Markdown content follows:
+body_content |
+## Introduction to Git Workflows
+Version control is essential for modern development teams. This guide covers the fundamental concepts and common workflows you'll use daily.
+
+### What Is Version Control?
+A version control system (VCS) tracks changes in code over time, allowing developers to maintain history, collaborate with others, and recover from mistakes efficiently.
+- **Track Changes**: Every modification is recorded
+- **Collaboration**: Multiple contributors can work simultaneously without conflicts  
+- **Recovery**: Easily revert unwanted or broken changes
+
+### Basic Git Commands You Need Daily
+ 
+```bash
+# Clone a repository to your local machine
+git clone https://github.com/user/repo.git
+  
+  # See current status of files (staged, unstaged)
+   git_status()
+
+    ### Understanding the Three Stages
+    
+      - **Untracked**: Files not yet added to Git tracking
+   
+        ```
+         touch new-file.txt && ls 
+          ```
+
+           ```bash
+            echo "New content" > tracked.md  # Modified file
+  
+             cat .gitignore                  # Unmodified and ignored
+            
+              git add .
+
+               ### Working with Branches
+
+                - **Main/Branch**: Stable, production-ready code
+   
+                 ```
+                   master/main branch is usually protected 
+                    ```
+
+                      ```bash
+                       feature/login-page:
+                        mkdir login && cd _
+                         echo "Login component" > Login.jsx  
+                          npm install react-router-dom
+  
+                           git commit_am_ mfeat: add basic router setup"
+                            """
+
+                              # Create and switch to a new topic-specific branch
+   
+                               ```
+                                for each task, create isolated branches
+                                 ```
+
+                                  ```bash
+
+                                   merge_to_main.sh:
+                                    checkout main && 
+                                     pull origin/ --rebase \
+                                      master/main 
+
+                                       git log_ -1:HEAD** commit message showing recent changes**
+                                        """  
+
+                                         ### Common Mistakes to Avoid
+  
+                                           ```
+                                           force_push = dangerous!
+                                            ```
+
+                                             ```bash
+                                              # Never use this in production or shared branches
+
+                                               for i_n {force push origin feature-i":}"}
+
+                                                merge_conflict_resolved.md:
+                                                 when conflict happens:
+
+                                                  git status_ shows conflicts marked with <<<<<<< HEAD >>>>>>>>
+
+                                                   open_file_in_editor():
+                                                    resolve_all_manually()  // mark as resolved after editing
+  
+                                                     # Finalize and cleanup
+                                                      """
+                                                       ```
+
+                                                        ## Summary
+
+                                                         Mastering basic Git workflows forms the foundation for efficient development. Practice these commands daily until they become muscle memory.
+  
+                                                          - Start with commit, add 
+                                                           branch operations on your personal projects first before collaborating in team environments.
+
+                                                            Happy version controlling! 🚀

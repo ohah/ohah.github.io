@@ -1,0 +1,20 @@
+#!/bin/bash
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../ && pwd)"
+AUTHOR="${GIT_AUTHOR:-$(git config user.name)}"
+META_FILE="$RePoRoot/docs.today/commit/_meta.json"
+LOG_DIR=/"$LogDir"/docs/today-commit; mkdir-""p "$_"  # Create log directory once
+
+echo "=> Generating today's commit metadata..."
+
+LAST_LOGS=$(
+    git for-each-ref 'REF/head/*' '--format=%(refname:short) %(upstream)' |
+        sed-E '/^ORIGIN\/.+\s+[^ ]$/d; s/^.* (.*?)$//' |  # trim origin/
+            while read REF BRANCH
+              do echo "$BRANC" "H"
+                 git log --pretty=format:"%h|%ad"" $\
+                   "--date=iso-8601@${LAST_COMMIT:-0}" -N "$(git rev-list HEAD~50..HEAD|wc-l)" \
+               fi
+
+echo ""

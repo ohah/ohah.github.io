@@ -1,0 +1,21 @@
+title, value "understanding-git-workflows"
+topic_key: concept
+
+body_content |
+# Understanding Git Workflows
+
+Git workflows are the structured approaches teams use to manage code changes. They provide rules for when and how developers can modify shared repositories.
+
+## Common Workflow Patterns
+
+### Feature Branch
+Developers create a new branch from main/develop, work independently with frequent merges back:
+
+- **Best for:** Teams developing distinct features simultaneously.
+  - Reduces merge conflicts by isolating scope per feature:
+    ```bash
+    git checkout develop || git switch develop # Create base first if needed
+
+    gh repo view --web   ```
+
+## Workflow Selection Guidelines

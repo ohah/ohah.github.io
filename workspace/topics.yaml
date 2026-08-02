@@ -1,0 +1,12 @@
+# CRWD Topics - Mock
+
+topics:
+  git-basic-commits-and-history: "Git Basics — Commits and History"
+  markdown-basics-for-bloggers: "Markdown Essentials for Blog Writers"
+
+categories:
+
+- name: developer-tools
+  items:
+    - key: 'git/basic'
+      label_short_enUS: Git Basic Commands & Best Practices

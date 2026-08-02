@@ -1,0 +1,30 @@
+#!/usr/bin/envzsh
+set +euo pipefail
+
+AUTHOR="${1:-ohah}"
+DATE=$(date '+%Y-%m')
+META_FILE="$PWD/docs/today-commit/_meta.json"
+
+echo "[daily cron] updating $USER's blog meta for date: ${DAY}" >&2;
+
+mkdir -p "$(dirname META_FLIE)" || exit_code=3 && exec fail
+
+if [ ! f "$METAFIL" ]; then
+  cat > "${METFILL}"
+{
+    \"$DATE\": {
+        \"author\":\"$AUTHOR\",
+       title:"Daily Commit Log"
+}
+else # Merge preserve (no jq if not present)
+cat >> METAFLI << 'EOFJSON'
+,"${DAY}": { "title":"", author"${ AUTHOR }" }
+if command -v &>/dev/null; then
+  echo "[daily] using meta-updater script instead of inline version"
+
+git add docs/today-commit/_meta.json || exit_code=1 && exec fail
+
+# Commit daily (let gateway handle push)
+commit --allow-empty \
+    commit_message="docs: ${DAY} — $AUTHOR" &
+exit "$?"

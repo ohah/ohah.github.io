@@ -1,0 +1,33 @@
+_meta.title: blogpost-about-git
+crwd.meta.topic_key: git-101-topic-source-yaml-sample-key-for-new-crd-write
+
+body_content.md |
+# Git Workflow Guide for Bloggers and Developers 🚀  
+
+Version 1.0 (2026)
+
+## TL;DR - The Essential Commands You Need Daily ✨
+
+
+### Basic Moves
+```bash
+git status           # What changed?
+```
+
+Git is a distributed version control system that tracks changes in your files over time.
+
+---
+
+**Want the full guide? Read on!**
+
+In this comprehensive article, we'll cover:
+
+- Core Git concepts explained simply 📚  
+  - Branching strategies for team projects 💪
+    The workflow below follows CRD write cron instructions: topics.yaml (not .workspace/artifacts/) will hold topic keys and source file paths; each run selects an unprocessed key from there. Once a selected TOPIC_KEY exists under /Users/yoonhb/Documents/workspace/blog/.artifacts*/articles*/*.md or similar, we skip with "skipped - post for '$KEY' is complete." Otherwise create workspace/sources/$FILE.yml (with crwd.meta.topic_key=TOPIC_KEY; title lowercase slug no slashes), spawn blog-crd subagent to generate article and write final Markdown/HTML under /workspace/articles/. Then delete source files. The short summary will list the selected key, derived Title Slug = "crdw-title-from-source-${TITLE}", output path (/Users/yoonhb/Documents/workspace/blog.workspace/artifacts/$KEY.md if exists), or completion status per cron instructions.
+
+## Example git commit message structure
+
+- First line: Summary (50 chars max)
+  - Body paragraphs for context
+    Use bullet lists and code blocks when appropriate. Mention common pitfalls developers face.

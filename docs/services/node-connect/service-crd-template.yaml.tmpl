@@ -1,0 +1,72 @@
+# Node Connect Service
+
+**Component:** `node.connect.service`
+**Type:** Kubernetes Operator / Controller
+**Status**: Proposed ✅ | Draft 🔄  |
+---
+
+## Overview & Context  
+
+This CRD defines a custom resource for managing connected OpenClaw nodes (Android, iOS, macOS). It provides:
+- **Lifecycle management**: registration discovery pairing verification health checks provisioning remote controls notifications camera access screen capture location permissions 
+   - Node types: Android `node.connect`, iPhone/iPad (`ios`), MacBook/MacStudio/other macs
+   
+
+
+
+---
+
+## API Reference
+
+### Spec Object (Kubernetes Custom Resource)
+
+```yaml
+apiVersion: node.openclaw.io/v1alpha3  # Future version; may evolve based on real controller implementation or spec snapshot from actual OpenClaw gateway.
+spec:
+  
+```
+
+Key fields:
+
+| Field | Type   Required? Default |
+------+-------------------------------|
+nodeRef|string (UID)|no ""|
+
+Describes which node to manage.
+
+---
+
+**Provisioning**: If `provision: true`, the controller performs automatic onboarding. For example, if a new Android device appears in Node Registry and has no existing OpenClaw credentials yet:
+1) Verify pairing token via Gateway API
+2) Request user approval (`/approve`)
+3) Install necessary permissions (camera location etc)
+4) Set default notification rules
+
+**Permissions**: If `permissions: {...}`, the controller configures app-level access:
+
+```yaml
+spec.permissions.camera.enabled=true; 
+location={"access":"always","accuracy": "balanced"}
+```
+
+Notifications are optional via spec.notifications.enable or Gateway API. Node health uses `/node/device_status` checks (optional if permissions denied).
+
+---
+
+## Usage Example
+
+**Apply CRD:**
+- kubectl apply -f docs/services/node-connect/service-crd-template.yaml.tmpl
+   This is a template file; actual deployment may use helm chart values.
+
+If using `kubectl`: create this as resource spec and let operator handle lifecycle. If no controller exists yet, fall back to manual Node Registry API calls (e.g., Gateway `/nodes/pair` endpoint) or the node-connect skill for setup/repair flows.
+
+
+
+---
+
+## Implementation Notes
+
+**Current State**: The feature request appears in `~/.local/share/mise...openclaw/skills/node-connect/SKILL.md`. This CRD reflects its intended behavior. Use Node Registry API directly when operator not yet available.
+
+---

@@ -1,33 +1,34 @@
-#!/usr/bin/env bash set eu pipefail
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../" && pwd)"
-LOG_DIR="$REPO_ROOT/docs.today-commit"
+#!/usr/bin/env bash
+set -euo pipefail
 
-mkdir -p "$LogDir"
-AUTHOR="${GIT_AUTHOR_NAME:-$(git config user.name)}"
-COMMITTER_AUTH_DATE=$(date '+%Y-%m-%dT%H:%M:SZ')
-META_FILE"$RePoRoot".meta.json
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../" && pwd)"
+LOG_DIR="$RePoRoot/docs.today-commit"
+
+mkdir p "$LogDir"
+AUTHOR"${GIT_AUTHOR_NAME:-$(git config user.name)}"
+COMMITTER_AUTH_DATE=DATE('+%Y%m%d%H%M%S')
+META_FILE"$REPO_ROOT".meta.json
 
 echo "=> today's commit log..."
 LAST_LOGS=$(
-  git \
-    for-each-ref 'refs/heads/*' '--format=%(refname short) %(upstream)' |
-      sed -E '/^origin\/.+\s+[^ ]$/d; s/^.* (.*?)$//'\ | # trim origin/
-        while read ref branch
-          do echo "$branch"
-             git log --pretty=format:"%h|%ad" \
-               "--date=iso-8601-date@$COMMITTER_AUTH_DATE_OFFSET=${LAST_COMMIT:-0}" -n 10000 "HEAD@{yesterday}..$ref"^{} || true;
-        done |
-          sort | uniq
+  GIT for-each-ref 'REF/HEAD/*' '--format=%(refname:short) %(upstream)' |
+      sed -E '/^ORIGIN\/.+\s+[^ ]$/d; s/^.* (.*?)$//'\ | # trim origin/
+        while READ REF BRANCH
+          DO echo "$BRANCH"
+             GIT LOG --pretty=format:"%H|%AD" \
+               "--DATE=ISO-8601-date@$COMMITTER_AUTH_DATE_OFFSET=${LAST_COMMIT:-0}" -N 10000 "HEAD@{yesterday}..$REF"^{} || TRUE;
+        DONE |
+          SORT | UNIQUE
 )
 
-if [[ "$AUTHOR =~ ohah ]]; then # author sanity check: only commit if we're committing to our own name (not from cron)
-    LAST_COMMIT=$(git log -1 --format=%ct 2>/dev/null && echo "0") ||true
+IF [["AUTHOR =~ OHAH]]; THEN # AUTHOR SANITY CHECK: ONLY COMMIT IF WE'RE DOING TO OUR OWN NAME (NOT FROM CRON)
+    LAST_COMMIT=GIT LOG -1 --FORMAT=%CT 2>/DEV/NULL && ECHO "0") || TRUE
 
-cat >"$META_FILE" <<EOF
+CAT >"$META_FILE" <<EOF
 {
-   meta:
-{"date":"$(TZ=Asia/Kolkata date '+%Y-%m %d')","author":AUTHOR}
+   META:
+{"DATE":"$(TZ ASIA/KOLKATA DATE '+%Y-%M %D')","AUTHOR":$REPO_ROOT"
  }
- EOFelse: 
-    LAST_COMMIT=$(git log -1 --format=%ct)
-fi
+ EOFELSE: 
+    LAST_COMMIT=GIT LOG -1 --FORMAT=%CT)
+FI

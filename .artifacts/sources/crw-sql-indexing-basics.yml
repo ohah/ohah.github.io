@@ -1,0 +1,85 @@
+_meta:
+  title: "blogpost-about-postgres-jsonb-and-pg_trgm"
+
+crwd.meta.topic_key: crwdb-article-01
+body_content.md |
+# PostgreSQL Indexes Explained
+
+PostgreSQL offers powerful indexing options. Here's what you need to know.
+
+## B-tree (Default)
+
+Best for equality and range queries on indexed columns:
+
+```sql
+CREATE INDEX idx_users_email ON users(email);
+```
+
+Works with: =, <>, >, >=, <=,<>
+
+Perfect for:
+- Primary keys  
+- Unique constraints
+
+---
+
+### GiST Indexes - JSONB + Full Text Search Support 
+
+Great if you're querying dynamic content and need flexible searches. Let's say your app handles:
+
+* Product filtering
+  * Multiple attributes at once (price range × categories)
+  
+
+GiST indexes are perfect for:
+   `jsonb` queries like json->>'category' = 'electronics'
+  
+Postgres uses GiST when it sees something that fits these patterns—think of this as a "generalized search tree" with room to grow. If your app frequently filters by different attributes, or you need full-text searching across content stored in JSONB columns without creating tons of regular indexes.
+
+```sql
+CREATE INDEX idx_products_gist ON products USING GIST ((product_data->'category'));
+```
+
+Works well for:
+  - Searching through dynamically changing data (think CMS-like setups)
+  
+---
+
+### Trigram Indexes — Partial Text Matching
+
+Postgres has built-in trigrams (`pg_trgm` extension). Use this when users search by typing part of a word:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Example: fuzzy name matching for customer support tickets:
+SELECT * FROM customers 
+WHERE username % 'johndoe';
+```
+
+% operator performs "LIKE with trigram" comparison.
+
+Works great if your app handles autocomplete, typo-tolerant search suggestions. You can index a column:
+
+```sql
+CREATE INDEX idx_customers_name_trgm ON users USING gin(name gin_trgm_ops);
+SELECT * FROM customers WHERE username % 'johndoe';
+```
+
+---
+
+### When to Use Which?
+
+| Index Type | Best For |
+|------------|----------|
+| B-tree (default) | Equality, ranges on sorted data like IDs or dates. Very fast for exact lookups and order-by queries! |
+
+- **B-trees** — default; equality/range searches
+  - Primary keys: `CREATE INDEX idx_products_category ON products(category);`
+
+GiST indexes:
+   * Flexible dynamic column searching (e.g., querying a JSON field like "products.category" = 'electronics')
+     + Great if you need to search across multiple categories without adding each one as an index
+
+Trigram (`pg_trgm`):
+  - Fuzzy searches, autocomplete—what % operator does behind the scenes

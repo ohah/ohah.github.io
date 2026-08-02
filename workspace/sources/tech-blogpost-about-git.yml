@@ -1,0 +1,45 @@
+_meta.title = "blog-post about git"
+crwd.meta.topic_key:
+body_content.md: |
+  # Git Basics for Beginners
+
+## What is Version Control?
+
+Version control systems (VCS) are essential tools for managing changes to files over time. They help developers track modifications, collaborate with others seamlessly.
+
+### Why Use VCS?
+- Track every change made
+- Revert mistakes easily  
+- Collaborate without conflicts affecting main codebase safely per branch-based workflows or use commit history as a timeline of work
+
+## Key Git Commands Every Developer Should Know
+  
+| Command | Description |
+|---------|-------------|
+| `git clone` | Clone an existing repository locally on your machine to start working with it offline until you fetch/pull updates from origin when needed. It's like downloading the entire remote project at once for local use (including history). You can specify a branch name if focusing initially, then switch later using checkout or git-switch command depending on version compatibility and style preferences between CLI versions; both do similar things but differ subtly in options flags they expose versus underlying operations such as merging strategies etc. |
+| `git add` | Stage changes for commit: move files from working directory index area ready to be recorded by next committed snapshot called "index state" representing the last known consistent set of staged modifications before applying final git-commit command with optional message describing each batched change collectively (and sometimes individual file messages per line). |
+| `git status` | See current repository stage: modified unstaged files and/or new untracked additions ready for staging if any exist. Helps you understand what's changed since last commit or previous merge operation across branches to ensure nothing unexpected has occurred before pushing/pull requests go out safely without missing important fixes that might have been lost otherwise during sync operations between local repositories after merging conflicting updates from remote side (e.g., pull request merges). |
+| `git diff` | Compare your current working copy against the last commit or any other revision: shows exactly what changed, line by line. Great for reviewing changes before committing to avoid mistakes; can also compare branches with git-diff branch1..branch2 syntax highlighting differences across those two trees as a unified view of edits between them at arbitrary points in history (including merging conflicts resolution). |
+| `git commit` | Save staged files into repository: create new revision containing all currently-staged modifications plus any existing untracked items that have been added to staging. A good practice is always include an informative message summarizing the changes made; this provides useful context for future reviewers of your history like other team members who may need clarity about what motivated certain adjustments (e.g., bug fix vs new feature). Commit messages follow a conventional format: "fix(message): description" or similar depending on project conventions. |
+| `git push` | Upload local commits to remote repository hosting service such as GitHub/GitLab/etc.. This makes your changes available for collaboration with others; often combined after merging branches locally and verifying everything works well via tests before deploying upstream (CI/CD pipelines usually run against these pushes). |
+
+## Working With Branches
+
+Creating a branch allows you experiment safely without affecting main codebase. Once done, merge back when ready.
+
+### Typical Workflow:
+1) Start from latest: `git checkout -b feature/new-feature origin/main`
+2) Make changes and commit
+3) Switch to other branches if needed or close after finishing using git-switch --detach <branchname> syntax optionally (but main branch should be protected by safety rules like requiring PR review)
+4) When satisfied, merge back into develop/master via pull request workflow for better code quality checks before merging
+
+## Best Practices Summary
+- Use descriptive commit messages 
+  - Start with type: feat/fix/docs/refactor/perf/style/test/chore/etc.
+  - Follow convention style guides (Conventional Commits)
+  
+Commit early and often but ensure each message clearly explains the "what" vs. implied impact, not just a vague summary.
+
+## Conclusion
+
+Git is fundamental to modern software development workflows across teams worldwide regardless of tech stack or language; mastering these basics will serve you well throughout your career as an engineer using version control systems daily.
