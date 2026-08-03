@@ -1,0 +1,60 @@
+# Cron Job Cards Guide
+
+## Overview
+This folder documents cron job cards for blog system. Each card captures the intent, scope, schedule and notes.
+
+Format (per week/month):
+
+- Title: `[YYYY-MM]-BLOG_CRON_ENTRY.md` or `2026-W{W}-Weekly-Blog-Cron`
+  - YYYY-Month style entries cover full month; W-{Week} covers specific weeks.
+- Schema:
+```yaml
+---
+id: "cron-a1b2c3d4"
+title: "[YYYY-MM] Blog Cron Entry for Week(s)"
+status: active | draft | deprecated
+
+# High-level intent and scope (short)
+intent_scope:
+
+schedule_weeks_or_months_as_range_if_not_daily_cron jobs_run_on:
+  - KR
+- time_zone_hint_seconds_offset_utc_plus_9 = +32400 sec.
+
+content_plan_summary_cards_to_create_for_this_period: optional, but useful for multi-week planning
+
+notes_and_optional_additional_context_from_human_when_available:
+
+---
+```
+
+## Weekly Entry (Aug‑Sep)
+```yaml
+# Example 2026-AUG-W31-Weekly-Blog-Cron.md content:
+id: "cron-a1b2c3d4"
+title: "[YYYY-MM] Blog Cron — Aug Week(s) W{W}"
+status: active
+
+intent_scope:
+
+schedule_weeks_or_months_as_range_if_not_daily_cron jobs_run_on_KR - 6pm KR (09 UTC)
+- time_zone_hint_seconds_offset_utc_plus_9 = +32400 sec.
+
+content_plan_summary_cards_to_create_for_this_period:
+# optional
+notes_and_optional_additional_context_from_human_when_available:
+
+---
+```
+
+## Usage
+
+1. Check this guide for current format.
+2. Use weekly/monthly templates as a starting point (e.g., Aug‑Sep 2026).
+3. Keep notes concise; link to relevant docs/CRDs where appropriate.
+
+When in doubt, use the template above and adapt labels/context accordingly without guessing dates or offsets beyond what’s provided here.
+
+
+## Related
+- `docs/cron-job-cards-GUIDE_README.crd` — this file.

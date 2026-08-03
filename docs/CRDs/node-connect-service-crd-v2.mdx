@@ -1,0 +1,40 @@
+# Node Connect Service - CRD v0.4
+
+| Field | Value |
+|-------|-------|
+| **Title** | Debugging OpenClaw Android, iOS & macOS Device Pairing (node connect) with node-inspect-debugger synergy |
+
+## Tags
+`openclaw`, `debugtools-macos-ios-android-node-connect-device-pair-qr-auth-setup-failures-troubleshoot-diagnose`
+
+---
+
+### Summary
+
+**Problem:** When users attempt to pair OpenClaw Android, iOS or macOS devices via QR codes with the node-tools (node connect), they encounter failures: no response from paired nodes after scanning a code that was supposed to succeed. These include stale pairing info in Node.js apps (`~/.openclaw/nodes.json` mismatched across OS and sessions) plus issues like app crashes on startup, missing dependencies for `adb`, or permission-denied setups.
+
+**Solution:** Use the new skill node-connect together with an existing debugging tool chain: open a TTY (using pty=true), run diagnostic commands step by step. For example:
+
+```
+openclaw nodes describe <node>
+# Then read permissions and battery levels
+ls -la ~/.local/share/mise/installs/node/*/lib/openclaw/skills/
+cat node-connect/SKILL.md | head # Check requirements before starting debugging flow.
+npm list --depth=0 in the project root if it's a Node.js app, or `python3` command for Python dependencies
+```
+
+This systematic approach lets you validate device presence (e.g., via macOS Terminal commands such as `/usr/sbin/system_profiler SPUSBDataType | grep -i "iPhone"` on Mac Studio) and test QR code readability. Then fix permissions (`chmod +x`, adjusting Node.js user groups), reinstall openclaw node tools, or update firmware if needed.
+
+---
+
+## Notes
+
+- Root cause: mismatched `~/.openclaw/nodes.json` across devices/sessions due to partial pairings persisting on one host while being unpaired elsewhere.
+  - Fix by deleting stale JSON files and re-pair via QR scan in the app of your choice (e.g., OpenClaw iOS, Android apps).
+- For node-inspect-debugger integration: run Node.js with `node inspect` or add a launch script:
+```
+openclaw nodes invoke --command 'inspect' on paired macOS devices.
+npm install debugpy for Python debugging support if needed
+# Use pty=true in exec to see terminal output clearly and confirm the pairing is stable before launching any CLI tools that depend on node access (e.g., Node.js apps with openclaw, or OpenAI's Bedrock AgentCore cloud browsers).
+```
+- If QR scans hang indefinitely after scanning: ensure your device OS firewall settings allow incoming connections from localhost during debugging sessions; check system logs (`log show --predicate 'process == "openclaw"'`) for any errors like `ECONNREFUSED` that may indicate a blocked port.
