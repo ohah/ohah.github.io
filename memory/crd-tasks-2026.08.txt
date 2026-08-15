@@ -1,7 +1,0 @@
-# CRD Tasks for August
-
-## 1) Cloudflare R2 vs AWS S3: Performance Comparison
-**Status:** Drafting in progress...
-*Started:* Not yet completed.
-
-This is a fresh blog post idea comparing the two major object storage services—CloudFlare's free-tier friendly offering versus Amazon Web Services' battle-tested but costlier alternative. Target audience includes developers, startups building low-cost infrastructure with strict latency needs.

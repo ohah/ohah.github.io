@@ -1,7 +1,0 @@
-{
-  "week": "W31",
-  "dateRangeStartISO": null,
-  "createdDateUTCString": "",
-  
-} 
-Error reading existing file; no prior CRD_W28 was found. Based on the cron instruction, create a fresh `CRON_CRD_WRITE.md` reflecting this session's new context (2026-W30) and include an explicit schedule for W31."}

@@ -1,6 +1,0 @@
-{
-  "key": "restapi-basics",
-"title_slug_placeholder_if_not_set_by_topic_entry__should_match_the_source_file_name_suffix_before_ext_yml_or_yaml = null,
-"description: A comprehensive guide to REST API fundamentals including methods, status codes, and best practices for building web services.
-body_content_path_for_article_body_from_topics_item_key_data_structure_like_crwd/sources/<source-file>.yml_to_use_as_single_run_post_generation_without_running_full_cron_workflow_again_which_is_not_supported_by_this_task
-}

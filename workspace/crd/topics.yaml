@@ -1,8 +1,0 @@
-# Available topics for CRWD posts
-#
-# Each entry represents a topic that can be processed by the blog-crd agent.
-topic_keys:
-  - tech-trends-2026
-
-meta_notes: >
-  This file is managed externally. Add new items here when you want them to appear as available post targets,

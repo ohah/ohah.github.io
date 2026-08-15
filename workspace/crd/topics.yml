@@ -1,5 +1,0 @@
-# crwdb: Available article concepts, keyed by TOPIC_KEY
-#
-# Topics can be marked as processed=false initially. The CRD write cron should:
-# - Pick topics where "processed": false if possible.
-crwd-draft-01-first-post-topic-key-not-yet-created-from-agent-prompt
