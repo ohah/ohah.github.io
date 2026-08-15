@@ -1,3 +1,7 @@
-# Keep this file empty (or with only comments) to skip heartbeat API calls.
+# Heartbeat Checklist
 
-# Add tasks below when you want the agent to check something periodically.
+Morning routine:
+- [ ] Check calendar for upcoming events (< 24h)
+- Review today's priorities
+Evening check-out (~21:00):
+- Plan tomorrow tasks if needed
