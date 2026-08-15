@@ -1,7 +1,0 @@
-- workspace/sources/git-workflow-guide.yml: git-gitworkflowguide-topic-source-yaml-sample-key-for-new-crd-write
-  status:
-    key_exists_under_artifacts_at_articlesmd_placeholder.md?: false
-
----
-
-Note (2026 July): topics.yaml entries store the full path to a source file and its derived TOPIC_KEY, plus existence of final Markdown/HTML artifacts under /Users/yoonhb/Documents/workspace/blog/.artifact*/articles*/*.md. An entry is considered unprocessed if status.key_exists_under_artifacts_at_articlesmd_placeholder.md? = false.
