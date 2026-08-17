@@ -204,7 +204,7 @@ resolve.realpath cache, mangling 병렬화, scan.worker per-file overhead — "�
 
 **e2e compat matrix** — 39개 라이브러리 / 9개 시나리오 / real-app shape, 중앙 포트 할당(`tests/e2e/tests/ports.ts`). **JSX runtime helper scope isolation #3068** — synthetic-import bypass를 없애고 transformer가 정식 AST 노드를 emit하도록(사용자 식별자 충돌 회피). dev-server proxy/middleware의 webpack 갭을 문서화 + 옵션 추가. 사용자 페이지에서 PR#/D-ID/perf-history/구현 비교 제거(공개용으로 정리). HTTPS dev server / Web Worker 사용자 가이드.
 
-이 시점에서 zntc는 — 트랜스파일 ~2ms, 번들 ~3ms(소형), rolldown 대비 ~19×, 340+ 문서 페이지, 9 플랫폼 prebuilt, `@zntc/{core,web,server,react-native,vite-plugin,wasm,rspack-loader,init,shared}` + 9 platform 서브패키지, RN 데브서버(Metro 호환) + Flow + 워클렛 + styled/emotion 네이티브 트랜스포머 + core-js 자동 폴리필 — **0.1.0 배포 직전**이다. 아직 npm에 올리진 않았다.
+이 시점에서 zntc는 — 트랜스파일 \~2ms, 번들 \~3ms(소형), rolldown 대비 \~19×, 340+ 문서 페이지, 9 플랫폼 prebuilt, `@zntc/{core,web,server,react-native,vite-plugin,wasm,rspack-loader,init,shared}` + 9 platform 서브패키지, RN 데브서버(Metro 호환) + Flow + 워클렛 + styled/emotion 네이티브 트랜스포머 + core-js 자동 폴리필 — **0.1.0 배포 직전**이다. 아직 npm에 올리진 않았다.
 
 ## Codex 병행 효과 회고 — 두 AI, 하나의 저장소
 
@@ -232,7 +232,7 @@ resolve.realpath cache, mangling 병렬화, scan.worker per-file overhead — "�
 | 축 | 귀결 |
 |---|---|
 | **plugin 시스템 통일** | generic `unwrapNapi`, comptime-generic per-hook 어댑터, `HookContext` out-param, async/sync 통일, `buildSync` sync JS plugin |
-| **대규모 파일 분리 리팩터** | codegen/transformer/graph/emitter/cli + 테스트를 수백 개 작은 모듈로 (~200 커밋, 5/8~5/11) |
+| **대규모 파일 분리 리팩터** | codegen/transformer/graph/emitter/cli + 테스트를 수백 개 작은 모듈로 (\~200 커밋, 5/8\~5/11) |
 | **TS Project References** | composite, `tsc -b`, `isolatedDeclarations`, solution-style root tsconfig, IDE.md |
 | **배포 파이프라인** | `@changesets/cli`·`release.ts`·publint·sherif·OIDC publish·9-platform prebuilt NAPI 매트릭스·11-패키지 lockstep |
 | **react-refresh** | `$RefreshSig$` hook signature opt-in, 컴포넌트 등록, Vite 경로 필터 |
@@ -242,7 +242,7 @@ resolve.realpath cache, mangling 병렬화, scan.worker per-file overhead — "�
 | **e2e compat matrix / JSX scope isolation** | 39 libs × 9 scenarios, synthetic-import bypass 제거(#3068) |
 | **test262 OS 불일치** | await+regexp가 macOS만 fail — metadata parse 차이. 3-3의 100%가 OS별로 갈리고 있었음 |
 | **메모리 누수 hunting** | mtime_map upsert(#2868), forwardClientLogs deep-clone(#2885), #2869 symbol-bound — RN dev 215MB 증가 추적의 결과 |
-| **Codex 병행** | 두 AI, 별도 클론(`zts-codex`), 같은 이슈/PR 풀. 4/24~5/12 ~1,340 커밋. 처리량·격리·비교 |
+| **Codex 병행** | 두 AI, 별도 클론(`zts-codex`), 같은 이슈/PR 풀. 4/24\~5/12 \~1,340 커밋. 처리량·격리·비교 |
 
 ## "완성"은 아직 — 그러나 "배포 직전"
 

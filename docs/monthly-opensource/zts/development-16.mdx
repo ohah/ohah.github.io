@@ -7,7 +7,7 @@ date: 2026-05-07
 
 > **기간**: 2026년 5월 1일 ~ 5월 7일 (7일)
 > **커밋**: zts/zntc 약 402개 (5/1 58 · 5/2 73 · 5/3 71 · 5/4 43 · 5/5 57 · 5/6 64 · 5/7 36)
-> **핵심**: esbuild 스타일 `tsconfigRaw` 통합 (A1 시리즈), binding-lite 트랜스파일 fast path (#2352), **메모리 오염 근본 수정** — `import_record` specifier use-after-free(`#raw-require`)·var hoisting의 `0xAA` slice UAF가 ~12개 형제 사이트로 fan-out, stack-overflow hardening (스택 버퍼 → ArrayList, #2475/#2484), AST intern-map perf, numeric cross-module const folding, RN codegen rn-0.78~0.84 골든 매트릭스 (#2462), **Flow 파서를 "ts처럼" — type-level 정보 보존**, core-js 자동 폴리필 에픽 (`runtimePolyfills: auto`, RuntimeTarget ios12/hermes0.7), **`@zntc/*` 모노레포 패키지 분리** (core/web/server/react-native/vite-plugin/wasm), BoringSSL dev TLS, **번개(bungae) RN 데브서버 흡수 + 번개 폐기**, dev 에러 오버레이(Shadow DOM), 그리고 **2026-05-07 15:40 KST — 프로젝트 이름이 `zts`에서 `zntc`로 바뀜**
+> **핵심**: esbuild 스타일 `tsconfigRaw` 통합 (A1 시리즈), binding-lite 트랜스파일 fast path (#2352), **메모리 오염 근본 수정** — `import_record` specifier use-after-free(`#raw-require`)·var hoisting의 `0xAA` slice UAF가 \~12개 형제 사이트로 fan-out, stack-overflow hardening (스택 버퍼 → ArrayList, #2475/#2484), AST intern-map perf, numeric cross-module const folding, RN codegen rn-0.78\~0.84 골든 매트릭스 (#2462), **Flow 파서를 "ts처럼" — type-level 정보 보존**, core-js 자동 폴리필 에픽 (`runtimePolyfills: auto`, RuntimeTarget ios12/hermes0.7), **`@zntc/*` 모노레포 패키지 분리** (core/web/server/react-native/vite-plugin/wasm), BoringSSL dev TLS, **번개(bungae) RN 데브서버 흡수 + 번개 폐기**, dev 에러 오버레이(Shadow DOM), 그리고 **2026-05-07 15:40 KST — 프로젝트 이름이 `zts`에서 `zntc`로 바뀜**
 > **진행 중** — 패키지 분리·core-js·RN codegen 매트릭스·번개 흡수 모두 이 7일에 머지됐지만 후속 phase가 줄줄이 열려 있다.
 
 ## 이 편의 위치
@@ -127,7 +127,7 @@ Codex 쪽은 그래프 discovery 병목을 프로파일로 쪼갰다 — `graph.
 
 ### RN codegen 골든 매트릭스 #2462
 
-`@react-native/codegen`을 Zig로 포팅한 것 — Fabric 컴포넌트의 `ComponentShape`를 TS/Flow 타입에서 뽑아 JS view config를 emit. 5/1~5/3에 schema_builder, type-alias/interface indexer, validator + ZTS 1400~1499 에러 코드, view_config_emitter를 쌓았고 5/4엔 버전별 골든 매트릭스 — **rn-0.78 → 0.84**, 각 버전 3개 core spec, `@react-native/codegen` 레퍼런스와 byte-diff 스냅샷:
+`@react-native/codegen`을 Zig로 포팅한 것 — Fabric 컴포넌트의 `ComponentShape`를 TS/Flow 타입에서 뽑아 JS view config를 emit. 5/1\~5/3에 schema_builder, type-alias/interface indexer, validator + ZTS 1400\~1499 에러 코드, view_config_emitter를 쌓았고 5/4엔 버전별 골든 매트릭스 — **rn-0.78 → 0.84**, 각 버전 3개 core spec, `@react-native/codegen` 레퍼런스와 byte-diff 스냅샷:
 
 ```
 13:37 > "지금하던 인프라 작업끝났으니 #2462 0.78부터 쭉 해야 하는거 아니예여?"
@@ -348,7 +348,7 @@ RN preset 정책을 "Metro-equivalent downleveling"으로 정리(Hermes ES2015+a
 
 ## 다음 편
 
-[3-17](development-17)은 5/8~5/12 — plugin 시스템 통일(comptime-generic 어댑터, sync JS plugin), **대규모 파일 분리 리팩터**(~200 커밋, 코어 파일 라인 수 줄이기), TS Project References, npm 배포 파이프라인(changesets·OIDC·9-platform prebuilt 매트릭스), react-refresh, MetafileAnalyzer, 문서 사이트 대규모 보강, **0.1.0 publish prep** — 그리고 이 17일을 관통한 **Codex 병행 효과에 대한 회고**를 담는다.
+[3-17](development-17)은 5/8\~5/12 — plugin 시스템 통일(comptime-generic 어댑터, sync JS plugin), **대규모 파일 분리 리팩터**(\~200 커밋, 코어 파일 라인 수 줄이기), TS Project References, npm 배포 파이프라인(changesets·OIDC·9-platform prebuilt 매트릭스), react-refresh, MetafileAnalyzer, 문서 사이트 대규모 보강, **0.1.0 publish prep** — 그리고 이 17일을 관통한 **Codex 병행 효과에 대한 회고**를 담는다.
 
 ```
 3/18 ~ 4/07 ████████████████████  3-1 ~ 3-10 (20일 — 기준선 확보)

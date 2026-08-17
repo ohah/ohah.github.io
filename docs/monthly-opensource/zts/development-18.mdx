@@ -7,7 +7,7 @@ date: 2026-05-19
 
 > **기간**: 2026년 5월 13일 ~ 5월 19일 (7일, 5/19는 오전까지)
 > **PR**: zntc 약 217개 (5/13 12 · 5/14 26 · 5/15 50 · 5/16 44 · 5/17 49 · 5/18 36) — 두 AI 병행 머지
-> **핵심**: RN 런타임 회귀 커밋단위 리뷰(#3156), TS 파서 D 시리즈 + TSC conformance audit, **"minify가 esbuild/rolldown/rspack보다 크다"는 단 하나의 격차를 mangler Phase A 1-char pool 잠식까지 루트커즈 추격** (M/N/K 시리즈 — rxjs 누적 −12%대·esbuild −751B), Codex 트랙의 **코드 스플리팅 P3 → Module Federation(웹 P1~P4 + mf-manifest/remoteEntry/shareScope 런타임, RN 자체 C/JSI 로더 설계)**, Ed25519/SHA-256 청크 무결성 sidecar, CLI 옵션 갭 보강(`--version`/`--no-config`/`--color`), Zig 인라인 test 분리(#3497~3499)
+> **핵심**: RN 런타임 회귀 커밋단위 리뷰(#3156), TS 파서 D 시리즈 + TSC conformance audit, **"minify가 esbuild/rolldown/rspack보다 크다"는 단 하나의 격차를 mangler Phase A 1-char pool 잠식까지 루트커즈 추격** (M/N/K 시리즈 — rxjs 누적 −12%대·esbuild −751B), Codex 트랙의 **코드 스플리팅 P3 → Module Federation(웹 P1\~P4 + mf-manifest/remoteEntry/shareScope 런타임, RN 자체 C/JSI 로더 설계)**, Ed25519/SHA-256 청크 무결성 sidecar, CLI 옵션 갭 보강(`--version`/`--no-config`/`--color`), Zig 인라인 test 분리(#3497\~3499)
 > **진행 중 / 배포 안 함** — 이 구간에 **새 npm publish는 없었다**. 5/12의 "0.1.0 publish 직전"이 그대로 **public preview** 취급으로 유지됐고, 무게중심은 배포가 아니라 (a) minify 크기 격차 좁히기 (b) Module Federation 구현으로 옮겨갔다.
 
 ## 이 편의 위치
@@ -140,7 +140,7 @@ minify 격차 추격이 길어지면서 자동 루프(매 PR `/simplify` → 오
 > "자체 C/JSI 로더 만들거예요 / 그리고 터보모듈만 지원할거임"
 ```
 
-Module Federation을 웹뿐 아니라 RN까지. RN은 단일 번들 제약이 있으니 **자체 C/JSI 로더 + TurboModule 한정**으로 간다는 설계 결정. 이날 Codex 쪽은 P3-B 청크 인프라 PR(#3324~3371)을 대량 머지했다 — 이건 [2026-05-16 today-commit](../../today-commit/2026-05-16)의 #3342~3371 P3 시리즈와 정확히 겹친다.
+Module Federation을 웹뿐 아니라 RN까지. RN은 단일 번들 제약이 있으니 **자체 C/JSI 로더 + TurboModule 한정**으로 간다는 설계 결정. 이날 Codex 쪽은 P3-B 청크 인프라 PR(#3324\~3371)을 대량 머지했다 — 이건 [2026-05-16 today-commit](../../today-commit/2026-05-16)의 #3342\~3371 P3 시리즈와 정확히 겹친다.
 
 Claude 트랙은 emit 아키텍처 전면 개편 가능성까지 타진한다:
 
@@ -173,7 +173,7 @@ minify 격차에는 천장이 있었다 — rspack이 three.js에서 압도적�
 
 chunk 재파싱이 증분/병렬 빌드와 상충하므로, emit 스파이크는 별도 브랜치로 격리. bundle-context export const coalescing RFC(#3411)가 이 흐름에서 머지됐다.
 
-Codex 쪽은 Module Federation 스파이크 S0~S5 + webpack/rspack 호환 `mf-manifest.json`·`remoteEntry`·`shareScope` 런타임을 P1 전 단계까지 머지한다(#3375~3450). 표준 구현체를 직접 클론해 테스트 갭을 봉인:
+Codex 쪽은 Module Federation 스파이크 S0\~S5 + webpack/rspack 호환 `mf-manifest.json`·`remoteEntry`·`shareScope` 런타임을 P1 전 단계까지 머지한다(#3375\~3450). 표준 구현체를 직접 클론해 테스트 갭을 봉인:
 
 ```
 5/17 13:57 [Codex] (96022bca)
