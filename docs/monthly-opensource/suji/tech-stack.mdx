@@ -1,0 +1,73 @@
+---
+title: 2. 기술 스택과 구조
+date: 2026-03-30
+---
+
+# 2. 기술 스택과 구조
+
+## 전체 그림
+
+```text
+┌──────────────────────────────────────────────┐
+│         프론트엔드 (React/Vue/Svelte)          │
+│         __suji__.invoke / emit / on           │
+├──────────────────────────────────────────────┤
+│              Suji 코어 (Zig)                   │
+│   Window │ WebView │ IPC Bridge │ EventBus     │
+│  ┌────────────────────────────────────────┐   │
+│  │       BackendRegistry (dlopen)          │   │
+│  │   Zig · Rust · Go · Node · Lua · Python │   │
+│  │   SujiCore API (크로스 호출)             │   │
+│  └────────────────────────────────────────┘   │
+└──────────────────────────────────────────────┘
+```
+
+핵심은 **BackendRegistry**다. 백엔드는 언어와 무관하게 동적 라이브러리로 빌드돼 `dlopen`으로 로드되고, 코어가 채널 이름으로 호출을 라우팅한다. 백엔드끼리 서로 부를 수도 있어서, 예제 앱 하나에 Zig·Rust·Go·Node 백엔드가 동시에 붙어 서로 호출한다.
+
+```bash
+cd examples/multi-backend && suji dev   # Zig + Rust + Go + Node.js
+```
+
+## 언어별 SDK
+
+각 언어에서 자연스러운 관용구로 핸들러를 쓰게 하는 것이 목표라, SDK를 언어마다 따로 만들었다.
+
+| 언어 | 방식 |
+|------|------|
+| Rust | `#[suji::command]` proc macro + `export_commands!` |
+| Go | `suji.Bind(&App{})` 구조체 바인딩 |
+| Zig | comptime builder 패턴 |
+| Node.js | `@suji/node` — libnode 임베드 |
+| Lua | vendored Lua 5.4 + cjson (시스템 의존 0) |
+| Python | embedded CPython 3.13 (GIL, 번들 stdlib) |
+
+프론트엔드 쪽에는 `@suji/api`가 있고, 5월에 `BrowserWindow` OO 래퍼를 얹어 Electron 코드와 모양을 맞췄다. 타입은 `suji types`로 백엔드 핸들러에서 `.d.ts`를 생성한다.
+
+## CEF와 그 바깥
+
+CEF는 브라우저 레이어만 맡는다. 이 경계를 지킨 덕분에 5월 16일에 **CEF 무관 embed C ABI**를 잘라낼 수 있었다. `libsuji_core`는 창도 CEF도 모르고, IPC·이벤트·핸들러 레지스트리·플러그인만 갖는다. 그 위에 각 플랫폼 호스트가 얹힌다.
+
+- 데스크톱 — CEF 호스트 (macOS·Windows·Linux)
+- iOS — Swift 호스트 + JS 브릿지
+- Android — NativeActivity + JNI 브릿지
+
+모바일 호스트에서 필요한 네이티브 기능(clipboard, dialog, shell, notification, safe_storage, fs, app 메타)은 `__core__` 채널로 통일해 데스크톱과 같은 API 표면을 유지했다.
+
+## 플러그인
+
+공식 플러그인은 별도 dylib으로 빌드되고 SDK 래퍼가 언어별로 붙는다. 각 플러그인에 `zig build test-<name>` 테스트 타깃이 따로 있다.
+
+`state`(KV), `sqlite`(벤더 SQLite 3.51), `log`(rotating file logger), `store`(file-backed config), `http`(URL allowlist deny-by-default), `os-info`, `autostart`, `notification-rich`, `window-state`, `positioner`, `upload`, `terminal`(forkpty PTY).
+
+## 보안 기본값
+
+- **contextIsolation** — `window.__suji__`를 frozen으로 두고 슬롯을 봉인
+- **CSP 기본 헤더**와 IPC 유효성 검사
+- **fs 샌드박스** — 프론트엔드 경로 화이트리스트, 백엔드는 우회 가능
+- **deny-by-default** — http 플러그인 URL allowlist, upload 경로 allowlist, SSRF·traversal 검사
+- **macOS App Sandbox** — `suji build --sandbox`, helper별 entitlements, security-scoped bookmarks
+- **모바일 권한 게이트** — C ABI Stage 1(코어) + Stage 2(iOS·Android 호스트 글루)
+
+## 검증
+
+단위 테스트 790여 개에 더해, Puppeteer + Bun으로 실제 앱을 띄워 CDP로 검사하는 E2E 스크립트가 기능마다 하나씩 붙어 있다. 모바일은 iOS 시뮬레이터와 Android 에뮬레이터에서 실제로 띄워 확인하는 e2e를 따로 돌린다.

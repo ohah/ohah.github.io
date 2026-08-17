@@ -1,0 +1,66 @@
+---
+title: 3-3. 터미널 밖으로
+date: 2026-07-16
+---
+
+# 3-3. 터미널 밖으로 (7/1 ~ 7/16)
+
+7월 전반은 Maru가 "터미널 앱"에서 "터미널을 품은 워크벤치"로 넘어간 구간이다. 사이드바가 워크스페이스를 갖고, 웹 패널이 붙고, 에이전트가 그것을 제어할 수 있게 됐다.
+
+## 먼저 안 죽게 만들기
+
+7월 2~3일은 시작·생명주기 안정화에 썼다. 비정상 시작으로 프로세스가 죽어도 앱을 종료하지 않고 창을 유지하도록 루트커즈를 잡고, 시작-hold를 exit-code 게이트·grace window·죽은 입력 가드·좀비 reap으로 강화했다. 잘못된 `shell.command`로 앱이 크래시하던 것은 기본 셸 폴백으로 막았다.
+
+## 사이드바가 워크스페이스를 갖는다
+
+7월 4~6일, 사흘 동안 사이드바 그룹 체계를 밀어붙였다.
+
+| 슬라이스 | 내용 |
+|------|------|
+| SG1·SG2 | 위치 파생 데이터와 직렬화 토대 |
+| SG3a~c | 가변 높이 hit-test, `projectRows` 그룹 헤더 투영, 그룹 만들기·헤더 렌더·접기 |
+| SG4·SG5 | 카드 드래그로 그룹 넣고 빼기, 그룹 통째 드래그, 그룹 색, 중첩·형제 그룹 |
+| GP1~5 (C2) | 핀과 그룹 통합 — pin-region-aware 파생, 복원 순서, `toggleGroupPin`, `pin_derived` 렌더 |
+| GL1~4 | 그룹-로컬 pin — `local_pinned` 직렬화, `stablePartitionSubtree`, 📌 렌더, 중첩 하드닝 |
+
+그룹 고정(C2)과 그룹-로컬 pin(GL)은 직교하는 개념이라 각각 §12·§13 문서에 적대적 검증을 세 차례씩 반영해 확정했다.
+
+## 관측성: 세션을 녹화하고 되돌린다
+
+7월 7일 하루에 관측성 축을 통째로 완성했다.
+
+- `MARU_TRACE` 라이브 레코딩으로 실제 세션 캡처 후 replay
+- `maru.trace.v1`·`maru.snapshot.v3` 역파싱 리더와 round-trip
+- base kind(output/resize) 재적용으로 화면 replay 완성
+- 입력 이벤트 기록, 크래시에도 살아남는 증분 flush
+- 익명화 transform과 `maru trace anonymize`
+
+버그 리포트에 "무슨 일이 있었는지"를 파일로 받을 수 있게 된 시점이다.
+
+## 웹 패널과 인앱 브라우저
+
+7월 8~11일, WKWebView를 pane으로 붙이는 Phase 4를 밀었다.
+
+- 빈 WKWebView pane 부착, 웹 패널 rect/surface 생애주기 계산
+- 입력·IME responder 전이를 spike로 확인 — **터미널 IME가 회귀하지 않는지부터** 봤다
+- 8차 `/code-review max`가 짚은 웹 포커스 입력·stale rect 계열 결함 7건 정리
+- 웹 Term 통합(4e) — union + sentinel로 모델 토대를 놓되 터미널 경로는 그대로 둠
+
+7월 10일에는 Phase 5로 브라우저 제어 코어와 `maru-app://` 신뢰 서빙을 끝냈다. `browser.*` 스키마·디스패치·authz를 헤드리스로 세운 뒤, 경로 샌드박스와 CSP를 순수 보안 코어(L2)로 분리하고, realpath로 symlink 탈출을 막는 asset resolve를 C-ABI로 Swift 핸들러에 브리지해 `WKURLSchemeHandler`에 연결했다.
+
+7월 11일에는 인앱 브라우저를 쓸 만하게 마감했다. 주소창 back/forward/reload와 ⌘←/→/R, 주소창 편집을 공유 `OverlayInput`으로 리팩터해 IME 조합 표시를 얻었고, `inputFocus`에 `.addr_edit`을 추가해 평문 타이핑이 새던 문제를 고쳤다.
+
+## 에이전트가 브라우저를 몬다
+
+7월 12~15일은 에이전트 제어 프로토콜(5f)이다. doc-first로 §9.4 프로토콜 리뷰와 §9.5 구현 설계를 쓰고, 감사에서 나온 A1~A5와 3차 전수조사의 모순·gap을 정정한 뒤 구현으로 내렸다.
+
+1. **5f-0a EventBroker** — 구독·매칭·직렬화를 순수 코어로
+2. **5f-0b-1 OutboundQueue** — 응답과 이벤트를 한 큐로, coalesce·purge
+3. **CLI-1·CLI-2** — `maru browser` 클라이언트(파서·wire·렌더)와 소켓 배선
+4. **5f-1-0~2** — 화면 캡처: 설계 → 서버측 chunk-streaming → CLI 재조립 + PNG 출력, rect/scale 옵션
+5. **snapshot-1·2** — ARIA 트리를 read-only eval로 스냅샷하고, 그 ref(`data-maru-ref`)를 locator 삼아 click/type/scroll
+6. **§9.5.9** — page-world 주입 + proactive drain + `browser.console` pull로 콘솔 캡처, bounded transfer로 큰 결과 전송 통일
+
+## 주소창을 진짜 텍스트 필드로
+
+7월 16일에는 주소창을 제대로 만들었다. 슬라이스 0 설계(caret·선택·마우스 편집)에서 시작해, 순수 모델·레이아웃·hit-test(1), `fieldLayout` 단일 소스 렌더(2), 마우스 편집과 `OverlayInput`→`TextField` 교체(3), 클립보드 브리지(4, ⌘X는 OSC52 write drain 재활용) 순으로 쌓았다.

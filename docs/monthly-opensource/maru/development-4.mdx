@@ -1,0 +1,56 @@
+---
+title: 3-4. 파일 패널과 영속 세션
+date: 2026-07-31
+---
+
+# 3-4. 파일 패널과 영속 세션 (7/17 ~ 7/31)
+
+7월 후반은 두 개의 큰 축이 겹친 구간이다. 하나는 파일을 열고 편집하는 패널, 다른 하나는 앱을 종료해도 살아남는 터미널 세션이다. 그리고 이 시기에 **스스로 만든 것을 폐기하는 결정**이 두 번 나온다.
+
+## 파일 패널 FP1~FP8
+
+7월 17일 하루에 FP1부터 FP6까지 갔다. 단일 출처 문서를 새로 만들고 웹 스택을 vanilla TS + remark/rehype + 리치 렌더로 확정한 뒤, 모드명을 "읽기 / 소스 편집"으로 정확히 했다.
+
+| 슬라이스 | 내용 |
+|------|------|
+| FP1 | 도크 모델과 workspace 영속 |
+| FP2 | web renderer와 sanitizer |
+| FP3 | 도크 슬롯 배관 |
+| FP4 | 격리 뷰어 브리지 |
+| FP5 | HTML 열기 라우팅 |
+| FP6 | Markdown 편집 |
+| FP7·FP8 | 프로젝트 트리, 도크 분할 UI (7/18) |
+
+이어 7월 19~20일에 라이브 프리뷰 축을 열었다. 계약 문서 → 프리뷰 기반 → Markdown 라이브 프리뷰 worker → 기본 활성화 순으로 올리고 Mermaid helper 기반을 깔았으며, 다음 날 Obsidian형 라이브 프리뷰를 CM6 투영으로 본격 구현했다(원자형 프리뷰, 표 상호작용, Mermaid 연결, 전용 하니스와 성능 게이트).
+
+## 영속 세션 호스트 P1~P3
+
+7월 21일, 계약과 범위를 문서로 먼저 확정했다 — 호스트 프로토콜, 워크스페이스 상세, 외부 attach·resize 범위, P1 제거 계약. 그다음 provider 세션 연속성 잔여를 걷어내고 P2로 `TermRuntimeBackend` seam 계약과 in-process 어댑터를 만들어 GUI를 handle 계약으로 배선했다. P3는 MRSH wire codec부터 순서대로 쌓았다.
+
+7월 22일에 `session.keep-alive-after-quit` 게이트가 들어가면서 실제로 살아남기 시작했다. connect-or-launch 오케스트레이션, host 연결을 앱 전역으로 승격해 멀티 윈도우 지원, workspace에 `runtime_id`를 영속시켜 재접속 경로를 열었다.
+
+다음 날은 패리티 정리다. IME 조합 표시가 영속 터미널과 구 host 양쪽에서 깨져 있던 것을 복구하고, host-backed 마우스 리포팅(휠·클릭·드래그·우클릭)과 붙여넣기의 bracketed-paste 패리티를 맞췄다.
+
+### live-upgrade
+
+7월 24일은 실행 중인 host를 무중단으로 갈아끼우는 작업이다. U0 계약을 고정하고 U1·U2 기반을 구현한 뒤, 업그레이드 타깃 inode 고정, staged target preflight, handoff 권위 저장과 attempt 기록, 승인·호스트별 업그레이드 권위 연결로 트랜잭션을 강화했다. 실패 대비도 같은 비중으로 다뤄 rollback self-image 권위와 rollback image staging을 함께 넣었다.
+
+### 사라진 세션은 어떻게 되는가
+
+7월 25일은 "세션이 사라졌을 때 무슨 일이 벌어지는가"를 계약으로 못박은 날이다. R0 영속 계약을 정렬하고 durable ended tombstone을 영속시켰으며, 복구 세션 inventory와 secure recovery discovery 코어, manifest runtime binding 검증을 붙였다. 복원이 누락된 runtime은 종료 placeholder로 잇고, 묘비에 화면 일부를 남겼다.
+
+7월 26일에는 외부 터미널에서 붙는 public attach 경로를 완성했다. attach 정책 파서와 controller 전환 capability 협상, canonical attachment 요청 조립, 원격 attachment 권위의 엄격 해석, attach host 결정을 완전증거로 제한, 동일 TTY 사전 검증까지 권위 경계를 닫았다.
+
+## 두 번의 철회
+
+**7월 27일 — FP16 계획 철회.** PoC 4건과 스파이크 6건을 돌려 `PanelKind` 확장을 철회했고, 2차 검증에서 rename 반례가 나오자 불변식을 한정하며 `EntryId` 삭제도 철회했다. 결론은 파일 콘텐츠를 워크스페이스 Term으로 되돌리고 도크는 탐색기 전용으로 축소하는 것. eviction 대신 "surface 수명 == Term 수명" 불변식을 택했다.
+
+다음 날 그 대공사를 하루에 끝냈다. Term에 파일 entry 소유 슬롯을 만들고 entry 창구·생성 경로·복원 파이프라인·entry 제거를 차례로 Term 쪽으로 옮기면서, 반대편에서 도크 editor chrome·기하·드래그 기계와 `DockGroup`/`DockTree`, `FocusOwner.dock_surface` 축, 옛 도크 포맷 읽기를 걷어냈다.
+
+**7월 29일 — 라이브 프리뷰 폐기.** 오래 붙들고 있던 라이브 프리뷰를 폐기로 확정하고 네이티브·웹 양쪽 구현을 걷어냈다. 그 자리에 셋째 모드로 리치 편집 모드를 들이고 툴바를 가진 편집기를 붙였다. 콘텐츠 영역 UI 스택은 React·Tailwind·shadcn으로 정하고 실제 빌드까지 세웠다.
+
+## 그리고 코드 에디터
+
+7월 31일, 코드 에디터·git diff surface Phase 0을 설계하고 첫 조각을 붙였다. 설계는 스스로를 여러 번 뒤집는 과정이었다 — 에디터 엔진은 Monaco를 기각하고 CodeMirror 6로 확정했고, PoC 3건으로 CSP 결론을 뒤집었다가 낡은 브랜치를 대조했음을 확인하고 CSP 결함 주장을 철회했다. 소켓 push 스트림 오인, file-panel 진행상태 오인, "전체 턴 enumerate" 과장 같은 자기 진술의 과장도 함께 정정했다.
+
+7월 30일에는 하루가 거의 통째로 session-host의 외부 RX 경로를 봉인하는 데 들어갔다. 게이트를 문서로 정의하고, 구현으로 봉인하고, 완료를 다시 문서에 표시하는 순환이 반복된다.

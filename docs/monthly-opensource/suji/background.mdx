@@ -1,0 +1,59 @@
+---
+title: 1. 개발 배경
+date: 2026-03-30
+---
+
+# 1. 개발 배경
+
+## 백엔드 언어를 고를 수 있는 데스크톱 프레임워크
+
+Suji는 2026년 3월 30일에 시작한 **Zig 코어 기반 올인원 데스크톱 앱 프레임워크**다. 이름은 한국어 "수지" — 이어붙이다에서 왔다.
+
+기존 프레임워크들은 대체로 백엔드 언어가 하나로 정해져 있다. 구현 계획서에 적어 둔 비교표가 출발점이다.
+
+| | Electron | Tauri | Wails | **Suji** |
+|---|---|---|---|---|
+| 브라우저 | Chromium 번들 | OS WebView | OS WebView | **CEF (Chromium)** |
+| 백엔드 | Node.js 전용 | Rust 전용 | Go 전용 | **아무 언어** |
+| 번들 크기 | ~150MB | ~3MB | ~8MB | 1~50MB (선택) |
+| 코어 언어 | C++ | Rust | Go | **Zig** |
+
+공식 지원 언어는 Zig, Rust, Go, C/C++, Node.js로 시작해 나중에 Lua와 Python까지 늘었다. C ABI로 export할 수 있는 언어라면 문서만 보고 붙일 수 있다.
+
+## 왜 CEF인가
+
+Tauri와 Wails는 OS WebView를 쓴다. 번들이 작아지는 대신 플랫폼마다 렌더링 엔진이 달라진다. Suji는 CEF(Chromium Embedded Framework)를 택했다. 세 OS에서 같은 Chromium이 돌기 때문에 "내 맥에서는 되는데" 문제가 줄어들고, DevTools·CDP를 그대로 쓸 수 있다. 대신 번들이 커지므로 CEF locale prune과 바이너리 strip 같은 다이어트를 따로 했다(4월 27일, 38MB 절감).
+
+## 왜 Zig인가
+
+코어가 하는 일은 창을 만들고, WebView를 붙이고, IPC를 중계하고, 백엔드 동적 라이브러리를 `dlopen`으로 불러 호출을 라우팅하는 것이다. C interop이 쉽고, 크로스컴파일이 표준 도구에 들어 있고, 결과 바이너리가 작아야 한다. Zig가 이 셋을 모두 만족했다.
+
+이 선택은 나중에 예상 밖의 곳에서 값을 했다. 5월에 CEF와 무관한 **임베드 코어**를 C ABI로 잘라내 iOS와 Android에 올릴 때, 크로스컴파일 타깃만 바꿔 빌드하면 됐다.
+
+```bash
+zig build lib                                  # libsuji_core.a (host)
+zig build lib -Dtarget=aarch64-ios             # iOS
+zig build lib -Dtarget=aarch64-linux-android   # Android
+zig build lib -Dtarget=x86_64-windows          # Windows
+```
+
+## 목표는 Electron 패리티
+
+API 설계는 Electron을 기준으로 삼았다. `handle/invoke/on/send` 스타일 IPC부터 `BrowserWindow`, `webContents`, `session`, `Menu`, `Tray`, `clipboard`, `powerMonitor`, `safeStorage`까지 이름과 동작을 맞춘다. 저장소에 `docs/electron-parity-audit.md`가 따로 있고, 6월에는 이 감사 목록을 하나씩 지우는 작업이 한 달 내내 이어졌다.
+
+Electron에서 Suji로 옮길 때 배울 것을 최소화하되, 백엔드는 아무 언어나 쓸 수 있게 하는 것 — 그게 이 프로젝트의 한 줄 요약이다.
+
+## 3개월 뒤
+
+| 항목 | 수치 |
+|------|------|
+| 시작일 | 2026-03-30 |
+| 마지막 커밋 | 2026-06-20 |
+| 커밋 | 821건 |
+| 백엔드 언어 | Zig · Rust · Go · C/C++ · Node.js · Lua · Python |
+| 플랫폼 | macOS · Windows · Linux · iOS · Android |
+| 공식 플러그인 | state, sqlite, log, store, http, os-info, autostart, notification-rich, window-state, positioner, upload, terminal |
+
+:::tip
+이 개발기는 git 이력과 저장소의 `docs/PLAN.md`·`CLAUDE.md`를 근거로 정리했다. 날짜별 작업 내역은 [오늘의 커밋](/today-commit/)에 원문이 남아 있다.
+:::

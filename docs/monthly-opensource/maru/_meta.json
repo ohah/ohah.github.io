@@ -1,0 +1,49 @@
+[
+  {
+    "type": "file",
+    "name": "background",
+    "label": "1. 개발 배경",
+    "tag": "26.06.03"
+  },
+  {
+    "type": "file",
+    "name": "tech-stack",
+    "label": "2. 기술 스택과 규율",
+    "tag": "26.06.03"
+  },
+  {
+    "type": "file",
+    "name": "development",
+    "label": "3. 개발 과정"
+  },
+  {
+    "type": "file",
+    "name": "development-1",
+    "label": "3-1. 빈 저장소에서 첫 글자까지",
+    "tag": "26.06.12"
+  },
+  {
+    "type": "file",
+    "name": "development-2",
+    "label": "3-2. 터미널다워지기",
+    "tag": "26.06.30"
+  },
+  {
+    "type": "file",
+    "name": "development-3",
+    "label": "3-3. 터미널 밖으로",
+    "tag": "26.07.16"
+  },
+  {
+    "type": "file",
+    "name": "development-4",
+    "label": "3-4. 파일 패널과 영속 세션",
+    "tag": "26.07.31"
+  },
+  {
+    "type": "file",
+    "name": "development-5",
+    "label": "3-5. 다시 뜯어고치기, 그리고 플랫폼 확장",
+    "tag": "26.08.17"
+  }
+]

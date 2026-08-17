@@ -1,0 +1,80 @@
+---
+title: 3-4. 세 OS와 일곱 언어, 그리고 전수 감사
+date: 2026-06-20
+---
+
+# 3-4. 세 OS와 일곱 언어, 그리고 전수 감사 (5/24 ~ 6/20)
+
+마지막 구간은 두 가지를 한다. macOS에만 있던 것을 Windows·Linux로 펴고, Electron 패리티 감사 목록을 하나씩 지운다.
+
+## 자식 창과 크로스 플랫폼 (5/24~5/25)
+
+5월 24일에 `WebContentsView`를 CEF Views 기반 자식 윈도우로 다시 세우고 생명주기 이벤트와 크로스 플랫폼 E2E를 붙였다.
+
+5월 25일은 **90커밋**, 이 프로젝트에서 가장 큰 날이다.
+
+- **Linux** — 윈도우 라이프사이클 이벤트, 클립보드, 셸 API
+- **Windows** — Win32 기반 클립보드·셸
+- 자동 업데이터
+- 크래시 리포터
+- 패키징
+
+이때부터 "macOS에서 되는 기능"과 "세 OS에서 되는 기능"의 간격을 좁히는 것이 기본 작업 단위가 된다.
+
+## 플러그인군과 IPC 개선 (5/27~5/29)
+
+- Linux GTK tray 백엔드
+- `plugin-log`, `plugin-store`, `plugin-http` 등 공식 플러그인 확장
+- **deferred response** — `printToPDF`/`capturePage`를 진짜 Promise 패턴으로(#16)
+- Linux/Windows GPU 가속 활성화(#12)
+
+5월 29일에는 deferred-response의 잠재 결함 — UAF, slot exhaustion, cross-kind, TTL — 을 찾아 고쳤다(PR #57). 비동기 응답 슬롯을 도입하면 따라오는 문제들을 한 번에 정리한 작업이다.
+
+## 언어가 둘 더 늘었다 (6/5)
+
+| 언어 | 방식 |
+|------|------|
+| **Lua** | vendored Lua 5.4 + cjson, 시스템 의존 0, 1급 outbound API(invoke/send/on) |
+| **Python** | embedded CPython 3.13 — GIL 처리, 번들 stdlib, packaged `.app`/CLI 번들, `PYTHONHOME` 자립 해석 |
+
+Python은 데스크톱에서 끝내지 않고 같은 날 **iOS·Android 임베드 백엔드**까지 붙여 시뮬레이터·에뮬레이터 e2e 5/5를 통과시켰다. 다음 날 `suji init`의 multi 스캐폴딩에 lua·python이 추가되면서 공식 지원 언어가 일곱이 됐다.
+
+배포 쪽도 함께 정리했다 — `app.minimumSystemVersion`으로 최소 배포 타겟 지정(6/4), `app.icon`으로 `.png → .icns` 생성(6/5), 프로덕션 `.app` 배포 안정화.
+
+## Electron 패리티를 갈아 넣은 사흘 (6/6~6/8)
+
+`docs/electron-parity-audit.md`의 목록을 대량으로 소화한 구간이다. 거의 모든 항목이 **전 5 SDK**에 동시에 노출됐다.
+
+| 영역 | 추가된 것 |
+|------|-----------|
+| BrowserWindow | focus/isNormal, getBounds/getSize/getPosition, isVisible/isFocused/blur, setAlwaysOnTop, getAllWindows/getFocusedWindow, getContentBounds/setContentBounds, destroy, setSize/setPosition + min/max, setResizable·Minimizable·Maximizable·Closable, setMovable·Focusable·Enabled·FullScreenable·Kiosk |
+| app | requestSingleInstanceLock 트리오, **second-instance 이벤트**(Windows는 named pipe), before-quit, setAsDefaultProtocolClient |
+| session | setProxy, setPermissionRequestHandler, setDownloadPath + will-download |
+| Menu | id/visible, accelerator, role, getApplicationMenu/getMenuItemById, sendActionToFirstResponder, icon, insert, will-show/will-close |
+| 기타 | screen.getDisplayMatching과 display-added/removed/metrics-changed, powerMonitor 배터리·shutdown 이벤트, nativeTheme·nativeImage 게터, globalShortcut registerAll/suspend, clipboard writeBookmark·writeFindText·multi, tray setToolTip·getBounds, notification groupId·removeGroup, webContents stop·insertCSS·setWindowOpenHandler, webRequest setRequestHeaders |
+
+## 플러그인 세 개와 PTY (6/9~6/10)
+
+- **window-state** — 창 bounds/maximized 저장·복원 (Electron/Tauri 동등)
+- **positioner** — 창을 화면/트레이/커서 위치로 배치 (Tauri positioner 동등)
+- **upload** — multipart 업로드/다운로드, URL·PATH allowlist deny-by-default, SSRF·traversal 검사
+- **terminal** — forkpty 기반 PTY 플러그인, 스트리밍 출력
+
+큰 IPC 페이로드를 청크 분할 + emit 동적 버퍼로 무제한화한 것도 이때다.
+
+## 콘텐츠 서빙 (6/14~6/18)
+
+- `main.ts` 진입점 지정, 인증 이벤트와 Window 정합
+- **로컬 파일 서빙** — `suji://app/__localfile__` + Range 요청, `allowFileAccess` 옵션, sqlite `busy_timeout`
+- **`suji-video://` 영상 전용 스킴** — 백엔드 재귀 Mach-O 서명으로 공증 통과, CSP(media/connect-src)와 교차출처 fetch CORS(ACAO)
+
+## 전수 감사로 닫는다 (6/20)
+
+마지막 작업일의 커밋 넷이 전부 감사다.
+
+1. 코어·보안 전수조사 1차 — loader / events / config / updater / util / fs 게이트
+2. 플랫폼·CEF 전수조사 2차 — session / clipboard / tray / page-output / auth / packaging
+3. `/code-review max` 발견 수정 — 1차·2차 수정에서 **새로 만든 버그**를 교정
+4. 재리뷰 발견 수정 — `canonicalizePath` root 회귀와 pool-full emit 정리
+
+고치는 과정에서 생긴 결함까지 다시 잡고 닫은 것이 이 프로젝트의 마지막 기록이다. 2026년 8월 17일 기준 6월 20일 이후 커밋은 없다 — 이후 시간은 [maru](../maru/background)와 [zntc](../zts/background)로 갔다.

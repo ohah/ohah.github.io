@@ -66,5 +66,19 @@
     "label": "ZNTC (구 ZTS · Zig TypeScript Transpiler)",
     "collapsed": true,
     "collapsible": true
+  },
+  {
+    "type": "dir",
+    "name": "suji",
+    "label": "Suji (멀티 백엔드 데스크톱 프레임워크)",
+    "collapsed": true,
+    "collapsible": true
+  },
+  {
+    "type": "dir",
+    "name": "maru",
+    "label": "Maru (Zig 네이티브 터미널)",
+    "collapsed": true,
+    "collapsible": true
   }
 ]
