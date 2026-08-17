@@ -63,7 +63,7 @@
   {
     "type": "dir",
     "name": "zts",
-    "label": "ZTS (Zig TypeScript Transpiler)",
+    "label": "ZNTC (구 ZTS · Zig TypeScript Transpiler)",
     "collapsed": true,
     "collapsible": true
   }
