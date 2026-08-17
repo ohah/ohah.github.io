@@ -11,6 +11,12 @@ date: 2026-05-19
 
 첫 커밋이 `feat(core): CEF 무관 embed C ABI 분리 (Phase 1+2)`다. 코어에서 CEF에 의존하는 부분을 걷어내 `libsuji_core`로 잘라냈다. 창도 브라우저도 모르는, IPC·이벤트·핸들러 레지스트리·플러그인만 가진 라이브러리다.
 
+방향은 zero-native(vercel-labs)를 벤치마킹하며 정했고, **동기는 모바일이 아니었다.** 당시 창과 IPC는 e2e로만 검증할 수 있어 테스트가 어려웠고, 결합도와 빌드 속도 문제도 있었다. CEF에서 코어를 떼면 그게 풀리고, 시스템 WebView 옵션과 모바일은 그 **부수 효과**로 따라온다는 판단이었다.
+
+Phase 1은 로직을 옮기지 않고 순수하게 추가하는 방식이었다. `src/embed.zig`에 `BackendRegistry` + `EventBus`를 감싸는 C ABI shim(`suji_core_init/destroy/invoke/free/emit/emit_to/on/off`)을 두고 `zig build lib`로 `libsuji_core.a`를 냈다 — CEF·Cocoa·Node 링크가 0인 라이브러리다. 헤드리스 테스트 3개를 `zig build test`에 연결했다.
+
+작업하면서 확인된 사실이 하나 있다. `src/core/*`와 `src/backends/loader.zig`에는 **이미 CEF import가 한 건도 없었다.** 분리선은 새로 긋는 게 아니라 이미 있던 것을 드러내는 일이었다.
+
 그 위에 하루 만에 다음이 올라갔다.
 
 - 모바일 크로스 컴파일 지원과 CI 회귀 방지
