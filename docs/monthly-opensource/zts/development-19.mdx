@@ -1,0 +1,180 @@
+---
+title: "3-19. 0.1.0을 실제로 눌렀다 — 그리고 만든 것을 되돌리는 이틀"
+date: 2026-05-31
+---
+
+# 3-19. 0.1.0을 실제로 눌렀다 — 그리고 만든 것을 되돌리는 이틀
+
+> **기간**: 2026년 5월 20일 ~ 5월 31일 (12일)
+> **커밋**: zntc 613개
+> **릴리즈**: **v0.1.0 · v0.1.1 (5/21)** — 3-17부터 "직전"에 머물던 npm publish를 실제로 실행
+> **핵심**: Rollup 스타일 다중 출력 API, `this.emitFile` chunk/asset(#1880·#3664), 코드 스플리팅 이름 정책 `[dir]/[name]`(breaking), `#3680` namespace 인덱스 공유로 link.populate −55%, **MCP 에픽을 만들고 이틀 만에 통째로 롤백**, mangler R1-a **8번째 NO-GO**, RFC #3940 라이프사이클 스코프 재설계(rename_table 단일 출처), **Zig 0.16 마이그레이션 + `std.Io` 오버홀**, lazy compilation RFC와 PR-1~5
+
+## 이 편의 위치
+
+[3-18](development-18)은 "배포해도 부끄럽지 않은 품질"을 만드는 7일이었고, 끝까지 publish 버튼은 누르지 않았다. 이 편에서 그 버튼을 누른다. 그리고 같은 12일 안에 **만든 것을 되돌리는 결정이 두 번** 나온다 — MCP 에픽 전체 롤백, mangler R1-a NO-GO.
+
+## 5/20 — 출력 API는 Rollup 쪽으로
+
+다중 포맷 빌드를 붙이면서 API 모양을 정하는 논의가 먼저 있었다. esbuild식 `output[]` 배열이 아니라 Rollup 스타일 체이닝을 택한다.
+
+```
+5/20 07:32 (930b528b)
+> "TS API output[] (esbuild-style)보다 롤다운 스타일을 원합니다"
+```
+
+결과가 `zntc(input).write(output).close()` API와 `OutputConfig` + `BundleOptions.output[]` 조합이다. 한 번의 빌드로 여러 포맷을 낼 수 있게 하면서, Module Federation과 multi-format의 조합은 거부하도록 막고 CSS 공유 자산 정책을 문서화했다.
+
+작업 방식에 대한 지시도 이날 다시 못박힌다.
+
+```
+5/20 04:40 (930b528b)
+> "반드시 디버그로그 벤치마크 찎어보면서 영향도 없는지 확인해가면서 매 PR마다 /simplify 해주시면서 오토머지로 진행해주세요 무조건 순차로"
+```
+
+## 5/21 — publish 버튼을 누르다
+
+```
+5/21 09:23 (3a7db7b2)
+> "이제 슬슬 배포할까 하는데 배포 가능할까? 메인으로 이동해줘"
+```
+
+그리고 바로 인증과 패키징에서 막힌다.
+
+```
+5/21 09:50 (3a7db7b2)
+> "https://github.com/ohah/zntc/actions/runs/... 일부 모듈에서 배포 삑났는데 확인해줘"
+```
+
+이날 하루가 배포 파이프라인 디버깅이었다 — `NPM_CONFIG_TOKEN` 환경변수, `.npmrc` 리터럴 토큰, `whoami` 검증, 그리고 `npm publish`와 `bun publish` 사이의 왕복. 최종적으로 **bun publish로 복귀**했는데, 이유는 workspace protocol(`workspace:*`)을 자동으로 실제 버전으로 변환해 주기 때문이다. 그 수정이 v0.1.1로 나갔다.
+
+```
+5/21 14:12 (3a7db7b2)
+> "그리고 다시 bun publish 하고 잘 되는지 확인해봐"
+```
+
+`@zntc/core`가 npm에 올라간 날이다. 3월 18일 "zig로 swc 같은걸 만들면 어떤 이득이 있을까요?"에서 64일째.
+
+## 5/22~5/23 — 플러그인이 파일을 낸다
+
+Rollup 플러그인 API의 나머지 절반, 즉 **플러그인이 산출물을 만드는 쪽**을 채웠다.
+
+| PR 계열 | 내용 |
+|------|------|
+| #1880 PR2·PR3 | `ModuleInfo.meta` + `this.getModuleInfo`(self-only) |
+| #1880 PR5 | `this.emitFile` asset 수집 |
+| #1880 PR7-2a~2d | EmitStore chunk 요청 수집 → 이미-graph 모듈을 별도 chunk로 → 상대/bare specifier resolution → 명시 fileName verbatim 출력 |
+| #3664 P3 | `implicitlyLoadedAfterOneOf` chunk bit-collapse |
+
+테스트는 남의 것을 빌려 왔다.
+
+```
+5/22 18:16 (4a69e6c4)
+> "어 그래 그럼 테스트케이스 롤다운 롤업에서 최대한가져와서 작업해줘"
+5/22 19:31 (4a69e6c4)
+> "watch+emit-chunk e2e 하니스 만들어서 테스트 추가해줘"
+```
+
+5/23에는 청크 이름 정책을 바꿨다. 기본 `entry_names`/`css_names`를 `[dir]/[name]`으로 돌리는 **breaking change**, CSS 청크 경로 충돌 자동 disambiguate, `--intro:js`/`--outro:js`. 그리고 debug 빌드용 leak detector(공유 DebugAllocator + atexit dump)를 napi에 넣었다 — watch dev 모드 누수를 추적하려고 메모리 기록까지 남겼다.
+
+```
+5/23 06:29 (1bb60253)
+> "메모리 기록: project_watch_dev_leak_investigation.md 생성 + MEMORY.md 인덱스 추가. 새 세션이 이거 한 줄만 봐도 다음 1번부터 GPA leak detector로 바로 시작"
+```
+
+## 5/24~5/25 — 링커 −55%
+
+`#3680` namespace access 인덱스 공유가 이 구간의 성능 성과다. **link.populate −55%, 전체 wall −20%.** 여기에 parser의 contextual keyword first-byte prefilter, RealpathCache 16-shard mutex(#3745 R2)가 붙었다.
+
+```
+5/24 15:08 (5f26a185)
+> "Phase 1+2 한 PR 으로 진행해주세요 그리고 끝나고 이전에 비해 얼마나 빨라졌는지 확인해주시고 리스크가 큰 만큼 코드리뷰 빡세게 해주세요"
+```
+
+dev 서버 쪽에서는 JS dev server의 module-level incremental HMR을 켜고, BoringSSL Zig 바인딩과 TLS 어댑터(`Io.Reader`/`Writer`)를 넣어 HTTPS dev server를 in-process로 세웠다.
+
+## 5/26~5/27 — MCP를 만들고, 이틀 만에 지웠다
+
+5월 26일부터 MCP app channel 에픽(#3867)이 시작된다. RN 앱을 에이전트가 조작할 수 있게 하는 축이었다.
+
+- server의 transport-agnostic dispatcher 분리, stdio transport와 `zntc mcp` 서브커맨드
+- WS endpoint(PR-E1), RN MCP runtime WS client(PR-E2), dev 빌드 entry 자동 주입
+- 툴 11종 — `find_element`, `inspect_state`, `eval_code`, `take_snapshot`, `get_logs`, `get_network`, `tap_element` …
+- `MCP.md` 문서, adb/idb 영역 분리
+
+만들면서도 범위 질문이 계속 붙었다.
+
+```
+5/26 05:50 (a40f12b2)
+> "e2e랑 vscode 익스텐션은 제외하고 단순 디버깅 기능만 일단 흡수할 예정임"
+5/26 07:03 (a40f12b2)
+> "네트워크요청을 감지할 수 있어요 거기서? RN 네트워크 요청을??"
+```
+
+그리고 5월 27일, 한 줄로 끝났다.
+
+```
+5/27 05:11 (a40f12b2)
+> "최근 2일 동안 추가했떤 mcp 기능 다 제거해주시면 됩니다"
+```
+
+커밋 로그에 `chore(mcp): MCP epic 전체 롤백 — PR-E1~F7 + infra 제거`가 남아 있다. 후속으로 EventRing 제거와 SSE 회귀 가드까지 정리했다. 번들러가 해야 할 일과 디버깅 도구가 해야 할 일의 경계를 다시 그은 결정이다.
+
+같은 날 mangler에서도 되돌림이 나왔다. R1-a free-var 분석은 **8번째 NO-GO 경로**로 기록됐다(RFC #3918 §9). 만들어 본 뒤 "이 방향으로는 크기가 줄지 않는다"를 확인하고 inert 상태로 남긴 것이다.
+
+## 5/28 — rename_table을 단일 출처로
+
+RFC #3940(라이프사이클 스코프 재설계)의 Sub-PR 시리즈가 이날 몰려 있다. 핵심은 **이름을 누가 소유하는가**를 하나로 모으는 것이다.
+
+- `Transformer.initFromOwnedAst` — ownership transfer로 복사 회피(PR-1)
+- `SymbolID` 타입 정의(L.2)
+- computeMangling dedup key를 rename_table lookup으로(L.4c-1)
+- carry-over를 rename_table 기반으로 재설계, `syncRenameTableFromCanonical` 폐기(L.5a)
+- **`Symbol.canonical_name` 필드 제거 — rename_table 단일 출처**(L.5c)
+
+여기에 식별자 slot 할당을 esbuild식 scope-nesting O(N)으로 교체했고, ProfileSnapshot API와 릴리스 프로파일링 하네스, devserver-HMR 벤치의 phase breakdown을 함께 세웠다. `emit incremental` RFC는 이 과정에서 CLOSED로 닫혔다 — PoC가 전부 noise/회귀였고 진짜 수정은 lifecycle redesign이라는 결론이었다.
+
+## 5/29 — Zig 0.16
+
+언어 버전을 올리면서 `std.Io`를 통째로 손봤다. 판단 기준은 늘 같다.
+
+```
+5/29 06:40 (fa4be61a)
+> "0.16으로 처음부터 구성했다면 어느 코드 구성이였을까요?"
+```
+
+같은 시기 [suji](../suji/background)도 Zig 0.16으로 넘어가 있었기 때문에, 옆 프로젝트의 해결을 그대로 참고했다.
+
+```
+5/29 12:33 (fa4be61a)
+> "그 상위폴더 수지 보면 새로 풀떙기시면 비슷한 이슈 해결한거 있는데 그게 맞나 확인한번 해주실래요?"
+```
+
+마이그레이션 뒤에는 성능 회귀부터 확인했다 — "그리고 바로 머지해주세요 그리고 로컬에서 이전 0.15에 비해 성능 저하없는지 확인"(5/29). managed HashMap 전체를 unmanaged로 옮기는 리팩터도 이 흐름에서 나왔다(napi·linker 포함).
+
+## 5/30~5/31 — lazy compilation
+
+마지막 이틀은 새 RFC 하나에 들어갔다. **동적 import 경계에서 컴파일을 멈추고, 요청이 오면 그때 청크를 만드는 것**이다.
+
+| PR | 내용 |
+|------|------|
+| PR-1·2 | dev_mode + code_splitting 경로, `#4038` 수정 |
+| PR-3a·3b | 미파싱 seed 남기기, `emitChunks` 단일 청크 emit(`restrict_to_chunk`), dev 서버 lazy on-demand 라우트 |
+| PR-4 | watch 기반 lazy 청크 캐시 무효화, 그래프 변경 entry 재계산 + TOCTOU 캐시 가드 |
+| PR-5 | `startDevServer`의 `lazyCompilation` 옵션 노출 |
+| D105 | napi build/watch API에 프리미티브 노출(`onReady`에 `lazySeeds`) |
+
+설계 단계에서 남의 구현부터 확인했고, 끝나고는 같은 조건으로 재봤다.
+
+```
+5/30 10:28 (dd07f6a0)
+> "docs/RFC_LAZY_COMPILATION.md 다른 번들러들과 동일한 계획 세우신거 아니예요?"
+5/30 12:24 (27bea48e)
+> "Rspack lazy-on dev server cold-start도 측정해줘 동일한 조건에서 시작해서 비교"
+```
+
+## 이 12일이 남긴 것
+
+- **배포는 이벤트가 아니라 파이프라인 문제였다.** 코드가 준비된 뒤에도 인증·workspace protocol·lockfile 동기화로 하루가 갔다.
+- **되돌리는 것도 산출물이다.** MCP 에픽 전체 롤백과 mangler 8번째 NO-GO가 같은 주에 나왔다. 두 경우 모두 "만들어 보고 확인한 뒤" 되돌렸고, 그 근거를 RFC에 남겼다.
+- **단일 출처는 이름에도 적용된다.** `canonical_name` 필드를 없애고 rename_table 하나로 모은 것이 이후 minify·code splitting 결함을 줄이는 토대가 된다.

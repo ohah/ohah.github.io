@@ -1,0 +1,126 @@
+---
+title: "3-20. \"1위가 하고싶어요\" — 위상 보존 HMR과 디스크 캐시, 0.1.2"
+date: 2026-06-30
+---
+
+# 3-20. "1위가 하고싶어요" — 위상 보존 HMR과 디스크 캐시, 0.1.2
+
+> **기간**: 2026년 6월 1일 ~ 6월 30일
+> **커밋**: zntc 280개 (5월의 1/7 — 이 시기부터 무게중심이 [maru](../maru/background)로 옮겨간다)
+> **릴리즈**: **v0.1.2 (6/7)**
+> **핵심**: lazy dev 모듈 HMR + 웹 React Fast Refresh, 재귀 AST walker를 반복 순회로 교체(스택 오버플로 제거 + CI tripwire), codegen precedence 재설계(#4042), **HMR 위상 보존 인프라**와 linker 계측(#4176), O(N²) 세 곳을 O(N)으로, **모듈 디스크 캐시**(#4438), ES2025 regex modifier 다운레벨, 그리고 벤치마크 순위 추격
+
+## 이 편의 위치
+
+[3-19](development-19)에서 0.1.0을 실제로 배포했고, lazy compilation 인프라를 깔아 뒀다. 6월은 그 위에서 **dev 경험(HMR)과 cold build 속도**를 파는 달이다. 동시에 커밋 수가 급감한다 — 6월 3일에 시작한 maru가 시간을 가져가면서, zntc는 "매일 붙는 프로젝트"에서 "덩어리로 붙는 프로젝트"가 된다.
+
+## 6/1~6/2 — 리로드 없이 상태를 지킨다
+
+전날 깔아 둔 lazy compilation 위에 HMR을 얹었다. dev+split 환경의 lazy 모듈을 전역 `__zntc_modules` 레지스트리에 등록해 **cross-chunk hot-replace**가 가능하게 하고(#4038 재해결), 그 위에 웹 네이티브 React Fast Refresh를 구현했다. 컴포넌트를 고쳐도 리로드 없이 state가 보존된다.
+
+6월 2일에는 파서·트랜스포머·코드젠·private-mangler의 **재귀 AST walker를 반복 순회로 전부 교체**했다(#4123 PR-1~2c). 깊은 좌결합 이항 체인이나 `keyof keyof …` 같은 prefix 타입 연산자에서 스택이 터지던 문제다. 고친 뒤에는 재귀 walker가 다시 들어오지 못하도록 CI tripwire를 세웠다 — 같은 결함이 재발하지 못하게 **게이트로 잠그는** 이 패턴은 3-14 이후로 계속 반복된다.
+
+같은 날 cross-chunk 전역 일관 네이밍 인프라(Inc-1)를 비활성 상태로 먼저 넣었다. 7월에 preserve-modules 결함을 잡을 때 이 스위치를 켜게 된다.
+
+## 6/3 — 괄호를 다시 계산한다
+
+codegen precedence 재설계(#4042)가 이날 들어갔다. Level enum과 연산자 테이블을 세우고(PR1), precedence 기반으로 괄호를 재유도하며(PR6a), `emitParen`을 투명화해 member/call/new/optional-chain에서 wrap이 발동하게 했다(PR7). 소스에 있던 괄호를 그대로 옮기는 대신 **출력 시점에 필요한 괄호를 계산**하는 구조다.
+
+## 6/4~6/6 — 위상을 보존한다
+
+HMR을 빠르게 만드는 방법은 "다시 만들지 않는 것"이다. 이 구간의 작업이 전부 그쪽을 향한다.
+
+| 작업 | 내용 |
+|------|------|
+| Phase A | HMR 위상 보존 인프라 — 정확성 토대, byte-identical |
+| PR-1·2 | RN asset metadata와 runtime polyfill roots를 위상 보존으로 |
+| emitter | 변경분만 방출 — cache hit 모듈은 emit/전송 skip |
+| linker | `injectPreservedRenames` 스냅샷 문자열 borrow, reuse-hit dead-write 제거 |
+| linker | `computeRenames`의 `hasNestedBinding`을 모듈당 union set으로 캐시 |
+| graph | renumber identity fast-path — 위상 보존-hit 시 realloc/remap skip |
+
+`hasNestedBinding`의 실제 비용을 직접 짚어 온 것도 이 시기다.
+
+```
+6/6 02:05 (774a5799)
+> "진짜 비용 = hasNestedBinding (src/bundler/linker.zig:1792): rename 후보 name$1이 모듈의 nested scope binding인지 확인하려고 매번 그 모듈의 모든 scope…"
+```
+
+측정도 실제 앱 기준을 요구한다.
+
+```
+6/6 08:59 (774a5799)
+> "RN hmr 실제로 얼마나 되는지 테스트 앱으로 확인해볼 수 있어? RN에서 가장 큰 테스트 앱 예제로"
+```
+
+프로파일도 링크 단계의 `other`를 chain_scan / rename_guard / inject_renames로 쪼개 계측했다(#4176). "느리다"가 아니라 **어느 단계가 몇 ms인지**를 보는 구조다.
+
+## 6/7 — v0.1.2
+
+```
+6/7 05:16 (774a5799)
+> "이제 0.1.3으로 배포 하려고 하는데 점검 해주세요"
+```
+
+점검 결과 이번 릴리즈는 v0.1.2로 나갔다. 배포 자체는 5월에 겪은 문제들이 정리돼 있어 조용히 지나갔고, 후속으로 `bun.lock` 동기화(platform/optionalDeps/root manual bump 반영)만 붙었다.
+
+## 6/14~6/16 — "1위가 하고싶어요"
+
+이 편에서 가장 성격이 뚜렷한 이틀이다. CI 벤치마크에서 목표 순위에 못 미친다는 관찰에서 시작한다.
+
+```
+6/14 13:00 (b5979ac9)
+> "지금 Ci 벤치마크 보면 속도 1등을 목표로 하는데 많이 느리거든요? 한번 확인해서 저한테 표로 그려주세요"
+6/14 13:55 (b5979ac9)
+> "그럼 병렬 문제가 아니라 병렬을 잘못 쓰고 있는게 문제인거죠?"
+6/14 17:10 (b5979ac9)
+> "그럼 더 개선할 부분 없나요. 1위가 하고싶어요"
+```
+
+진단은 추측이 아니라 syscall 수준에서 이뤄졌다. 경쟁 번들러를 dtrace로 직접 떠서 비교한다.
+
+```
+6/14 17:46 (b5979ac9)
+> "! sudo dtrace -n 'syscall:::entry /pid==$target/ { @[probefunc]=count(); }' -c 'bun build /tmp/b5000/entry.js --outdir /tmp/b5000/bo --splitting --format=esm' …"
+```
+
+나온 결과가 O(N²) 세 곳이다.
+
+- `mergeImportRecords` — import record identity 해시맵으로 O(N)
+- `isImportSpecifierUnused` — value-use symbol 집합 캐시로 O(N)
+- `requestDependencyExports` — record→bindings CSR 인덱스로 O(N)
+
+작업 규칙도 이날 통일됐다. maru에서 쓰던 PR 템플릿을 그대로 가져온다.
+
+```
+6/14 06:11 (bb6e7cee)
+> "아 그리고 진행하기전에 제 레포지토리의 마루의 풀리퀘스트 템플릿 먼저 복사하고 그걸 규칙으로 해서 진행해주세요!"
+```
+
+호환성 쪽은 `--rn-version` 타겟(RN 문서 기준 버전별 다운레벨)과 ES2025 regex modifier — `(?s:…)`, `(?m:…)`, duplicate named groups — 다운레벨이 들어갔다.
+
+## 6/16~6/23 — 디스크 캐시
+
+6월의 마지막 큰 축은 빌드 결과를 디스크에 남기는 것이다(#4438).
+
+1. **semantic 직렬화 codec** — relocatable 부분부터
+2. **module 결합 codec** — source + AST + semantic을 한 엔트리로
+3. **무효화 키** — 보수/정밀 두 모드와 차등 테스트
+4. **`compiler_build_id` 주입** — `build.zig`가 git SHA를 심어 컴파일러가 바뀌면 캐시가 무효화되게
+5. **store → load hit 배선**, 그리고 `ON == OFF` 동등성 검증
+6. **npm 표면** — NAPI/JS/config에 `experimentalCodeCache`로 노출
+
+캐시를 켜도 결과가 달라지지 않는다는 것(`ON==OFF`)을 먼저 증명하고 배선하는 순서다.
+
+이 시기에 릴리즈 채널 논의도 나왔다.
+
+```
+6/22 23:05 (c60720cb)
+> "그럼 나이틀리 개념이 뭔지? 어떻게 관리하겠다는건지 설명해줘요"
+```
+
+## 이 달이 남긴 것
+
+- **HMR은 "빠른 재빌드"가 아니라 "재빌드하지 않기"다.** 위상 보존 인프라와 변경분만 방출하는 emitter가 그 답이었다.
+- **순위는 프로파일로만 올라간다.** "1위가 하고싶어요"에서 dtrace syscall 카운트로 이어지고, 거기서 O(N²) 세 곳이 나왔다.
+- **속도가 붙은 대신 빈도는 줄었다.** 6월 하순부터 zntc 커밋은 며칠씩 비고, 그 시간은 maru가 가져간다. 7월부터는 성격이 다시 바뀐다 — 새 기능이 아니라 **등록된 이슈를 따라가는 구간**이다.

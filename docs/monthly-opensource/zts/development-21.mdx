@@ -1,0 +1,109 @@
+---
+title: "3-21. 이슈 큐를 따라가는 여름 — preserve-modules와 0.1.3·0.1.4"
+date: 2026-08-10
+---
+
+# 3-21. 이슈 큐를 따라가는 여름 — preserve-modules와 0.1.3·0.1.4
+
+> **기간**: 2026년 7월 1일 ~ 8월 10일
+> **커밋**: zntc 143개 (7월 115 · 8월 28)
+> **릴리즈**: **v0.1.3 (7/12) · v0.1.4 (7/19~20)**
+> **핵심**: `preserve-modules` × minify × splitting 조합에서 터지던 네이밍 붕괴를 **cross-file 네이밍 인프라를 켜서** 정리(#4532 시리즈), CJS interop 잔여(#4510), JSX namespace 결함(#4596), external 지정자 매핑·re-export(#4616·#4621), **다운레벨 ESM의 top-level await**(#4598) — 그리고 "증상이 아니라 원인을 막는다"는 규칙
+
+## 이 편의 위치
+
+[3-20](development-20)까지가 만드는 구간이었다면, 이 편은 **쌓인 이슈를 하나씩 닫는 구간**이다. 커밋 143개 중 대부분이 `fix(bundler)`고, 제목에 이슈 번호가 붙는다. 그 사이 무게중심은 완전히 [maru](../maru/background)로 넘어가 있어서, zntc 작업은 며칠 단위로 몰아서 들어온다 — 7월 4일 이후 열흘 공백, 7월 21일 이후 여드레 공백, 8월에는 세 번.
+
+## 7/12~7/13 — v0.1.3, 그리고 청크 export의 진실
+
+7월 12일에 v0.1.3이 나갔다. 릴리즈 자동화도 함께 손봤다 — root/platform/optionalDeps 버전 lockstep, publish 직후 `bun.lock` 자동 동기화.
+
+```
+7/12 14:58 (5424e58e)
+> "0.1.3에서 0.1.2 바라본다 뭐이런말하셨는데 아닌거죠?"
+```
+
+기술 쪽은 code splitting의 export 정합성이었다.
+
+- `#4492` — 같은 청크 소비자에게 크로스-청크 공개명을 적용하던 문제
+- `#4495` — const-inline이나 미사용 import로 DCE된 심볼이 청크 export에 남던 문제
+
+## 7/14~7/19 — preserve-modules라는 조합 폭탄
+
+이 구간의 주인공은 `preserve-modules`다. 모듈 구조를 그대로 유지해 출력하는 모드인데, **minify·splitting·CJS·RN 다운레벨과 겹치면** 이름이 붕괴한다. 이슈가 줄줄이 열렸다.
+
+| 이슈 | 증상 |
+|------|------|
+| #4510 | CJS interop 잔여 3건 — 크로스-청크 ns, 비-식별자 멤버명, 동적 import default |
+| #4524 | provider/consumer 술어가 `--format=cjs`에서 어긋남 |
+| #4528 | preserve-modules × wrap된 모듈의 잔여 결함 3건 |
+| #4532 | preserve-modules(ESM) **동명 심볼 붕괴** |
+| #4538·#4533 | 소비자-shadow deconflict의 edge 모드(헬퍼명·`require.context`·HMR fingerprint) |
+| #4541 | `--splitting` raw `require()` common-chunk CJS 썽크가 크로스-청크로 노출 |
+| #4574 | preserve-modules × RN downlevel class 헬퍼 이중선언·경로 오류 |
+| #4579 | preserve-modules minify default import body 참조 발산 |
+| #4586 | cjs `--minify` splitting 공유 RBM wrapper 명 mangle 발산 |
+
+해법은 6월 2일에 **비활성 상태로 넣어 뒀던 cross-file 네이밍 인프라를 켜는 것**이었다(#4532). 그다음 minify의 preserve-modules mangle을 splitting과 통합하고(증상1), 소비자-로컬 유일성을 집합 기반으로 바꾸고(#4576), export-line을 단일화했다(증상4).
+
+이 구간에 규칙 두 개가 반복해서 나온다.
+
+```
+7/14 21:15 (32b3c787)
+> "이슈들 수정할떄 반드시 루트커즈와 장기적으로 유지보수에 유리한 구조적 설계를 고려하고, 레퍼런스는 롤다운을 꼭 한번씩 참고…"
+7/16 12:19 (32b3c787)
+> "원인을 명확히 찾지못하고 증상이 나타나는곳에서 막으시면 안됩니다"
+```
+
+두 번째 문장이 이 편 전체의 기준이다. 같은 이슈에서 증상 1·2·4처럼 번호를 나눠 붙이는 것도, 각 증상이 서로 다른 원인에서 나온다는 것을 전제하기 때문이다.
+
+7월 19~20일에 **v0.1.4**가 나갔다. 릴리즈 과정에서 `bun.lock` 동기화와 sync-lockfile push 훅 우회가 또 걸렸다.
+
+## 7/21~8/1 — incremental과 JSX
+
+- `#4557` — const-baked 소비자를 provider가 바뀔 때만 evict(B-precise). incremental 빌드에서 불필요한 무효화를 줄이는 작업이다.
+- `#4596` — JSX namespace 멤버가 미선언 참조로 나오던 결함. 원인은 합성 import span 오염과 JSX 멤버 색인 누락 두 가지였다.
+- 8/1 — `jsx: preserve`에서 실체화된 namespace 변수가 intrinsic 태그로 해석되던 문제.
+
+작업을 이어 붙이는 방식도 이 시기부터 달라진다. 세션이 끊기면 **이전 세션 기록을 읽어 이어받는다**.
+
+```
+7/29 20:32 (bab1f5f7)
+> "가장 최근 클로드 작업 fix/4596 진행하던거 세션 대화내용 확인해서 이어서 작업 진행해주세요"
+```
+
+## 8/8~8/10 — external, 그리고 top-level await
+
+8월의 세 날에 네 건이 들어갔다.
+
+- `#4611` — CSS `@import`의 bare 지정자가 tsconfig paths에 가로채이던 문제
+- `#4616` — external 지정자를 다른 이름으로 방출하는 매핑
+- `#4621` — external re-export가 파싱 불가능한 출력을 내거나 재export를 잃던 문제
+- `#4598` — **다운레벨 ESM의 top-level await**
+
+마지막이 가장 까다로웠다. TLA는 모듈 평가를 비동기로 만드는데, 이를 낮은 타겟으로 내리면 "타겟 준수"와 "값 정확성"이 충돌한다. 1차 수정 뒤 code splitting 청크에서 SyntaxError 회귀가 나왔고, multi-format 가드는 철회했으며, 4차 리뷰에서 나온 회귀 4건을 더 잡고서야 닫혔다. 최종 결론은 범위를 좁히는 것이었다 — **"기다려 줄 기계가 있는 위상으로 한정"**.
+
+ES5(RN/Hermes) 소비자를 promise 체이닝으로 바꾸는 후속(#4631)은 8월 17일 기준 열린 PR이다.
+
+이 구간에서도 방법은 같다 — 남의 구현을 먼저 보고, 자기 결론을 의심한다.
+
+```
+8/9 05:01 (7dbd6eb0)
+> "rspack은 어떻게 설계 되어있나요 그걸 벤치마킹해서 재설계 했을때 위 리스크를 감지 못하나요?"
+8/9 12:18 (7dbd6eb0)
+> "RN 산출물이 정말 __commonJS에요? 실제 빌드해보니 esm_ 어쩌고도 나왔었는데요"
+8/9 13:18 (7dbd6eb0)
+> "정말인가요? 적대적 검증 한번 해주세요"
+```
+
+## 3월 18일부터 여기까지
+
+| 구간 | 성격 |
+|------|------|
+| 3/18~4/25 | 만들기 — 렉서·파서·Test262·번들러·RN·ES5 다운레벨 |
+| 4/26~5/19 | 다듬기 — minify 격차, Module Federation, 배포 준비 |
+| 5/20~5/31 | **배포**, 그리고 되돌리기(MCP 롤백·mangler NO-GO) |
+| 6월 | HMR 위상 보존·디스크 캐시·벤치마크 순위 |
+| 7~8월 | 이슈 큐 — preserve-modules 조합, external, TLA |
+
+2026년 8월 17일 기준 최신 배포는 **v0.1.4**, npm 패키지는 [`@zntc/core`](https://www.npmjs.com/package/@zntc/core)다. 커밋 총량은 약 5,200개(3월 1,073 · 4월 1,801 · 5월 1,932 · 6월 280 · 7월 115 · 8월 28)로, **다섯 달 중 두 달 반에 88%가 몰려 있다.** 프로젝트가 식었다기보다, 같은 방식으로 만들 다음 물건([maru](../maru/background))이 생긴 결과에 가깝다.
