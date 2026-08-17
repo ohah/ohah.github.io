@@ -37,7 +37,11 @@ date: 2026-06-20
 | **Lua** | vendored Lua 5.4 + cjson, 시스템 의존 0, 1급 outbound API(invoke/send/on) |
 | **Python** | embedded CPython 3.13 — GIL 처리, 번들 stdlib, packaged `.app`/CLI 번들, `PYTHONHOME` 자립 해석 |
 
-Python은 데스크톱에서 끝내지 않고 같은 날 **iOS·Android 임베드 백엔드**까지 붙여 시뮬레이터·에뮬레이터 e2e 5/5를 통과시켰다. 다음 날 `suji init`의 multi 스캐폴딩에 lua·python이 추가되면서 공식 지원 언어가 일곱이 됐다.
+새 언어를 들일 때 기준은 하나였다.
+
+> "파이썬 루아도 확인해보세요 모든 언어 플랫폼이 지원되어야 해요" — 2026-06-06
+
+그래서 Python은 데스크톱에서 끝내지 않고 같은 날 **iOS·Android 임베드 백엔드**까지 붙여 시뮬레이터·에뮬레이터 e2e 5/5를 통과시켰다. 다음 날 `suji init`의 multi 스캐폴딩에 lua·python이 추가되면서 공식 지원 언어가 일곱이 됐다.
 
 배포 쪽도 함께 정리했다 — `app.minimumSystemVersion`으로 최소 배포 타겟 지정(6/4), `app.icon`으로 `.png → .icns` 생성(6/5), 프로덕션 `.app` 배포 안정화.
 
@@ -81,7 +85,11 @@ Python은 데스크톱에서 끝내지 않고 같은 날 **iOS·Android 임베�
 
 ## 이 구간에서 부딪힌 천장
 
-패리티를 밀다 보면 "포팅할 수 없는 것"이 나온다. 가장 크게 걸린 것이 **CEF 동기 콜백**이다.
+패리티를 밀다 보면 "포팅할 수 없는 것"이 나온다. 이 질문 자체가 6월 8일 세션에서 명시적으로 나왔다.
+
+> "CEF 특성으로 인한 불가능이 있다면 말씀해주세요" — 2026-06-08
+
+가장 크게 걸린 것이 **CEF 동기 콜백**이다.
 
 `on_before_resource_load`나 `on_before_popup` 같은 CEF 콜백은 **동기 반환 이후의 수정을 무시한다.** 그래서 Electron의 동적 per-request/per-popup JS 콜백 패턴 — 요청마다 JS로 물어보고 그 답으로 결정하는 방식 — 은 구현이 불가능하다. async round-trip으로 답을 받아 적용하면 이미 늦다.
 

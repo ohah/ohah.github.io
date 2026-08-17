@@ -39,7 +39,13 @@ zig build lib -Dtarget=x86_64-windows          # Windows
 
 ## 목표는 Electron 패리티
 
-API 설계는 Electron을 기준으로 삼았다. `handle/invoke/on/send` 스타일 IPC부터 `BrowserWindow`, `webContents`, `session`, `Menu`, `Tray`, `clipboard`, `powerMonitor`, `safeStorage`까지 이름과 동작을 맞춘다. 저장소에 `docs/electron-parity-audit.md`가 따로 있고, 6월에는 이 감사 목록을 하나씩 지우는 작업이 한 달 내내 이어졌다.
+API 설계는 Electron을 기준으로 삼았다. 이건 작업 세션에서 반복해서 확인된 목표다.
+
+> "그리고 일렉트론 이랑 최대한 동일한 스펙을 제공할 예정인데 다른 부분이 있는지 한번 덫 ㅔ크" — 2026-04-06
+
+> "일렉트론이랑 비교헀을떄 덜 구현된 부분은?" / "문서에 적어줘 미구현 일렉트론 api" — 2026-04-28
+
+두 번째 지시에서 나온 문서가 `docs/electron-parity-audit.md`다. `handle/invoke/on/send` 스타일 IPC부터 `BrowserWindow`, `webContents`, `session`, `Menu`, `Tray`, `clipboard`, `powerMonitor`, `safeStorage`까지 이름과 동작을 맞추고, 6월에는 이 감사 목록을 하나씩 지우는 작업이 한 달 내내 이어졌다.
 
 Electron에서 Suji로 옮길 때 배울 것을 최소화하되, 백엔드는 아무 언어나 쓸 수 있게 하는 것 — 그게 이 프로젝트의 한 줄 요약이다.
 
@@ -57,5 +63,5 @@ Electron에서 Suji로 옮길 때 배울 것을 최소화하되, 백엔드는 �
 | 공식 플러그인 | state, sqlite, log, store, http, os-info, autostart, notification-rich, window-state, positioner, upload, terminal |
 
 :::tip
-이 개발기는 git 이력과 저장소의 `docs/PLAN.md`·`CLAUDE.md`를 근거로 정리했다. 날짜별 작업 내역은 [오늘의 커밋](/today-commit/)에 원문이 남아 있다.
+이 개발기는 git 이력, 저장소의 `docs/PLAN.md`·`CLAUDE.md`, 프로젝트 메모리, 그리고 남아 있는 작업 세션 기록을 근거로 정리했다. 인용문은 세션 원문 그대로라 구어와 오타가 섞여 있다 — 다듬지 않고 둔다. 날짜별 작업 내역은 [오늘의 커밋](/today-commit/)에 원문이 남아 있다.
 :::
