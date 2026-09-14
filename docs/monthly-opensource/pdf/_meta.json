@@ -1,0 +1,20 @@
+[
+  {
+    "type": "file",
+    "name": "background",
+    "label": "1. 개발 배경",
+    "tag": "26.08.30"
+  },
+  {
+    "type": "file",
+    "name": "tech-stack",
+    "label": "2. 기술 스택",
+    "tag": "26.08.30"
+  },
+  {
+    "type": "file",
+    "name": "development",
+    "label": "3. 개발 과정",
+    "tag": "26.09.14"
+  }
+]

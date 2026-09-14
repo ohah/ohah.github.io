@@ -63,5 +63,11 @@
     "name": "development-8",
     "label": "3-8. LineSeg 합성과 페이지네이션",
     "tag": "26.03.15"
+  },
+  {
+    "type": "file",
+    "name": "development-9",
+    "label": "3-9. Rust 를 접고 Zig 로 다시 쓰다",
+    "tag": "26.09.14"
   }
 ]

@@ -80,5 +80,12 @@
     "label": "Maru (Zig 네이티브 터미널)",
     "collapsed": true,
     "collapsible": true
+  },
+  {
+    "type": "dir",
+    "name": "pdf",
+    "label": "@ohah/pdf (Zig wasm PDF 엔진)",
+    "collapsed": true,
+    "collapsible": true
   }
 ]
