@@ -21,12 +21,14 @@ rc.10 을 3월 15일에 내고 hwpjs 는 멈춰 있었다. 그 사이 [zntc](../
 
 ## 열흘 (9/5 ~ 9/14) <Badge type="warning">424커밋</Badge>
 
+커밋 수는 [오늘의 커밋](/today-commit/)과 같은 `gh search commits` 기준이다.
+
 | 날짜 | 커밋 | 들어간 것 |
 |------|------|-----------|
-| 9/5 | 13 | CFB 모듈러 리더, 검색·검증 계약 통일, hwp5 DocInfo 속성과 버전별 ID 매핑, 바이너리·폰트 리소스 |
+| 9/5 | 15 | CFB 모듈러 리더, 검색·검증 계약 통일, hwp5 DocInfo 속성과 버전별 ID 매핑, 바이너리·폰트 리소스 |
 | 9/6 | 117 | hwp5 문서 구조 전수 검증 — ViewText·revision·connector·group·memo·drawing·arc·picture·history·인덱스 계층·표 격자 |
 | 9/7 | 59 | XML 입력·zlib 경계, PNG(iTXt·sPLT·IDAT·Adam7·gAMA·cHRM·sRGB), ICC(curves·XYZ·parametric), form controls·DocHistory |
-| 9/8 | 45 | ICC 역함수 — rational XYZ 행렬 역, parametric preimage, 정확한 root 비교; JPEG frame/scan·양자화·Huffman 테이블 |
+| 9/8 | 68 | ICC 역함수 — rational XYZ 행렬 역, parametric preimage, 정확한 root 비교; JPEG frame/scan·양자화·Huffman 테이블 |
 | 9/9 | 60 | 자체 JPEG 디코더 — 엔트로피·Huffman·프로그레시브·IDCT·샘플 복원; BMP RLE, V5 ICC |
 | 9/12 | 15 | hwp5 차트 파싱 — cell slot·type 선언·dual string·series v2·axis |
 | 9/13 | 83 | 차트 **편집** — grid string·series label 일괄 typed edit, BinData 원자적 교체, raw deflate 인코딩; WMF 검증 |
@@ -34,7 +36,7 @@ rc.10 을 3월 15일에 내고 hwpjs 는 멈춰 있었다. 그 사이 [zntc](../
 
 ## 구조: 책임을 파일로 가른다
 
-Rust 판은 `hwp-core` 크레이트 하나가 파싱과 렌더링을 함께 들고 있었다. Zig 판은 처음부터 층을 가른다.
+Rust 판은 `hwp-core` 크레이트가 파싱과 뷰어(`src/viewer/`)를 함께 들고 있었다. Zig 판은 처음부터 층을 가른다.
 
 ```text
 src/
@@ -58,7 +60,7 @@ js/            읽기·쓰기 API·편집 모델 변환·검색
 
 ## 이미지 디코더를 직접 짠 이유
 
-Rust 판은 이미지 디코딩을 크레이트에 맡겼다. Zig 판은 PNG·JPEG·BMP 를 직접 짰고, ICC 프로파일까지 읽는다. 9월 8일 하루가 ICC 역함수였다 — matrix TRC 를 정확·근사 두 경로로 forward 평가하고, full-width rational XYZ 행렬을 뒤집고, parametric curve 의 preimage 를 정확한 분수로 보존한다. HWP 문서 안의 그림을 한컴 원본과 같은 색으로 내려면 프로파일을 무시할 수 없었고, 의존성 없는 wasm 하나로 내려면 직접 짜야 했다.
+Rust 판의 `hwp-core` 는 CFB·DEFLATE·AES 를 크레이트(`cfb`·`flate2`·`aes`)에 맡겼고 이미지 디코더는 갖고 있지 않았다. Zig 판은 CFB 와 DEFLATE 부터 직접 짜고, PNG·JPEG·BMP 디코더와 ICC 프로파일 읽기까지 안에 뒀다. 9월 8일 하루가 ICC 역함수였다 — matrix TRC 를 정확·근사 두 경로로 forward 평가하고, full-width rational XYZ 행렬을 뒤집고, parametric curve 의 preimage 를 정확한 분수로 보존한다. 왜 직접 짰는지를 적은 대화 기록은 없다. 결과물로 보이는 것은 둘이다 — 의존성 없는 wasm 하나로 나가고, 색 프로파일까지 읽어 원값을 보존한다.
 
 JPEG 은 9월 9일에 프로그레시브까지 풀었다. 경계 계층(마커 분류·세그먼트·바이트 스터핑)과 프레임/스캔 상태, 픽셀 복호화를 문서에서부터 분리해 두고, "HWP 이미지 지원 완료를 대신하지 않는다" 고 적었다.
 
