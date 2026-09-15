@@ -197,7 +197,7 @@
 | 08-14 | [ohah/maru](https://github.com/ohah/maru) | 네이티브 diff 본문(N1.5) — 자체 differ, 나란한 비교 렌더, 불변식 무작위 검증 |
 | 08-15 | [ohah/maru](https://github.com/ohah/maru) | [#2205](https://github.com/ohah/maru/pull/2205) iOS·Android 모바일 라인 161커밋 main 합류(M0~M4) + Windows 플랫폼 계약 착수(W1.5·W2) |
 | 08-16 | [ohah/maru](https://github.com/ohah/maru) | UI 국제화 착수(I3-0·I3a) — notice 97건 키 이전, `ui.language` 배선 + Windows ConPTY 백엔드(W4)·셸 통합 주입(W5) |
-| 08-17 | [ohah/maru](https://github.com/ohah/maru) | i18n 확대(I3b·I3c, 225/339) + 모바일 제스처·터치 소유권을 코어로 이관(G0\~G5·R0\~R3) |
+| 08-17 | [ohah/maru](https://github.com/ohah/maru) | i18n 사실상 완료(I3a 337/339·I5 CLI 영어화) + **Windows 첫 터미널 화면**(W7.1\~W7.6 — D3D11·DirectWrite·입력·ConPTY) + 자체 SSH 클라이언트 착수(S0\~S6b) + 모바일 제스처·터치를 코어로(G0\~G5·R0\~R3) |
 | 08-17 | [ohah/cheolsu-proxy](https://github.com/ohah/cheolsu-proxy) | tauri 계열 crate·npm 의존성 최신화 + nightly cargo build-dir 레이아웃 대응 — PR [#376](https://github.com/ohah/cheolsu-proxy/pull/376), [#377](https://github.com/ohah/cheolsu-proxy/pull/377) merged (08-17) |
 | 08-18 | [ohah/maru](https://github.com/ohah/maru) | 자체 SSH 클라이언트 착수(S7\~S9) — session 채널·흐름 제어·재키잉, 일회용 sshd 로 8MiB 왕복 검증, 상태기계를 C ABI 로 모바일에 공유 |
 | 08-19 | [ohah/maru](https://github.com/ohah/maru) | 모바일 SSH — 기기에서 키 생성·Keystore 봉인·서버 지문 승인(S9b·S9c) + 텍스트 파일을 네이티브 편집기로 여는 것을 기본으로 전환 |
@@ -218,6 +218,7 @@
 | 09-01 | [ohah/pdf](https://github.com/ohah/pdf) | 바닥 메모리 112MB → 38MB, 빽빽한 쪽 백지 결함·레거시 전수조사 5건 |
 | 09-02 | [ohah/pdf](https://github.com/ohah/pdf) | ICC 색 프로파일(53/255 → 0.8), 문서 JavaScript 를 자체 해석기로 실행(관공서 양식), 동적 XFA, 프로그레시브 JPEG |
 | 09-02 | [ohah/maru](https://github.com/ohah/maru) | 소스 컨트롤이 원격 저장소의 워크트리를 그 기계에서 읽고 씀(RS5) + 폰 뷰포트로 세션 열 조정(S11-6) |
+| 09-05 | [ohah/zerolist](https://github.com/ohah/zerolist) | [perf: ZeroList 통합과 Android 배치 최적화 검증 #1](https://github.com/ohah/zerolist/pull/1) — open |
 | 09-05 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | **Rust 를 `legacy/` 로 보관하고 Zig 워크스페이스로 재출발** — CFB 모듈러 리더, hwp5 DocInfo·리소스 파싱 |
 | 09-05 | [ohah/maru](https://github.com/ohah/maru) | 편집기 열/블록 선택(§3.2a)·다중 커서(§3.2b) + 원격 파일 트리 설계(RF1) + 테스트 인프라 — pty teardown 4,077ms → 15ms, 픽스처 189s → 2.7s |
 | 09-06 | [ohah/maru](https://github.com/ohah/maru) | 원격 파일 트리 v1(RF2b\~RF6f — 실물 sshd 왕복, 원격 삭제·생성) + 모바일 접근성 서술자·스크린 리더(M9) |
