@@ -7,9 +7,9 @@ import { Badge } from '@theme';
 
 # 3-9. Rust 를 접고 Zig 로 다시 쓰다
 
-## 다섯 달의 공백, 그리고 archive
+## 다섯 달 반의 공백, 그리고 archive
 
-rc.10 을 3월 15일에 내고 hwpjs 는 멈춰 있었다. 그 사이 [zntc](../zts/background)·[suji](../suji/background)·[maru](../maru/background)·[@ohah/pdf](../pdf/background)가 전부 Zig 로 만들어졌고, 9월 5일 hwpjs 도 같은 길로 갔다.
+rc.10 을 3월 15일에 낸 뒤 3월 20일까지 HWPX 데모 페이지와 clippy 정리를 손보고, hwpjs 는 멈춰 있었다. 그 사이 [zntc](../zts/background)·[suji](../suji/background)·[maru](../maru/background)·[@ohah/pdf](../pdf/background)가 전부 Zig 로 만들어졌고, 9월 5일 hwpjs 도 같은 길로 갔다.
 
 첫 커밋이 `chore: archive Rust and initialize Zig workspace` 다. Rust `crates/`, Node/RN `packages/`, 예제, Cargo·Bun manifest, 문서, 벤치마크, CI 워크플로까지 통째로 `legacy/rust/` 로 옮겼다. 지우지 않고 옮긴 것이라, 이동 직후 추적 파일 1,652개의 경로 정규화 내용 해시가 이동 전과 같음을 확인했다. 레거시는 지금도 `cd legacy/rust && cargo test -p hwp-core` 로 돈다.
 
