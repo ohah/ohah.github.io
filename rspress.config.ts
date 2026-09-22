@@ -14,13 +14,6 @@ export default defineConfig({
       path.join(__dirname, 'src/components/Comment/CommentFooter.tsx'),
     ],
   },
-  builderConfig: {
-    resolve: {
-      alias: {
-        'lodash-es': require.resolve('lodash'),
-      },
-    },
-  },
   themeConfig: {
     socialLinks: [
       {
