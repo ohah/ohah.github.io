@@ -51,5 +51,11 @@
     "name": "development-6",
     "label": "3-6. 원격으로, 그리고 밖으로",
     "tag": "26.09.14"
+  },
+  {
+    "type": "file",
+    "name": "development-7",
+    "label": "3-7. 언어 서버가 붙는다",
+    "tag": "26.09.21"
   }
 ]
