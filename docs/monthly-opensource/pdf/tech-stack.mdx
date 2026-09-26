@@ -14,7 +14,7 @@ src/          TypeScript — client·worker·draw·textlayer·annotlayer·viewpo
               react.ts · vue.ts · svelte.ts   화면 갈래
 cmaps/        미리 정의된 CMap — 문서가 실제로 쓰는 이름만 그때그때 받는다
 docs/         support.md(무엇까지 되나) · compare.md(pdf.js 와 맞댄 표)
-tests/        기능 단언 397개 · pdf.js 화소 비교 · 붙임감(fixture)
+tests/        기능 단언 · pdf.js 화소 비교 · 실문서 대조 · 붙임감(fixture)
 ```
 
 엔진은 wasm 하나로 굽고 **웹 워커에서 돌린다.** 주 스레드는 `client.ts` 로 워커에 부탁하고 결과를 받아 캔버스에 올린다. Node.js 에서도 같은 wasm 을 돌린다.
@@ -44,8 +44,9 @@ Times·Courier·Symbol 은 Type1(`.pfb`)뿐인데 브라우저 셋 다 거부한
 
 ## 검증
 
-- **기능 단언 397개** — `docs/support.md` 의 "된다" 는 전부 이것이 근거
+- **기능 단언** — 9월 26일 확인한 [검증 스크립트](https://github.com/ohah/pdf/blob/2a817c78/tests/run.sh#L143-L150)는 최소 434개를 요구한다. `docs/support.md`에 남은 397개 표기는 현재 스크립트와 다르다
 - **pdf.js 화소 비교** — `docs/compare.md`, 크게 다른 것은 `tests/pdfjs-known.json` 에 까닭과 함께
+- **실문서 텍스트·그리기 대조** — 9월 22일에는 문서 100편에서 pymupdf·pdf.js와 비교했다. [개발 과정](./development)의 해당 절에 표본과 측정 규칙을 정리했다
 - **퍼저** — 첫 커밋의 wasm32 넘침을 잡은 것이 무작위 퍼저(r8)다
 - **환경이 깨진 자리 열세 가지** — 9월 1일에 두들기다 셋을 고쳤다
-- **아직 없는 기능을 미리 못 박는 빈틈 견본** — 9월 5일, 되지 않는 것도 테스트로 적어 둔다
+- **빈틈 견본에서 회귀 시험으로** — 9월 5일에는 미지원 기능 여섯을 견본으로 남겼다. 현재 검증 스크립트에는 그 여섯을 구현해 일반 시험으로 옮겼고 빈틈 견본은 0개라고 기록돼 있다. 이것이 모든 PDF 기능의 구현 완료를 뜻하지는 않는다

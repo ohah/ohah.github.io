@@ -81,10 +81,14 @@ Rust를 선택한 이유:
 | `proxy_daemon` | 백그라운드 프록시 데몬 |
 | `scripting` | TypeScript 스크립팅 엔진 (Deno Core + V8) |
 | `mcp_server` | AI 어시스턴트 연동 (MCP 프로토콜) |
+| `cheolsu_ops` | CLI와 MCP가 함께 쓰는 프록시 조작 계층 |
+| `cli` | 명령행 프록시 제어 |
 | `tui` | 터미널 UI (Ratatui) |
 | `desktop/src-tauri` | 데스크톱 앱 (Tauri + React) |
 
-하나의 프록시 코어를 TUI, 데스크톱, MCP 서버 세 가지 인터페이스로 감싸는 구조다.
+하나의 프록시 코어를 TUI, 데스크톱, MCP 서버, CLI로 감싸는 구조다.
+
+2026년 9월 26일 확인한 최신 릴리즈는 [v0.1.2](https://github.com/ohah/cheolsu-proxy/releases/tag/v0.1.2)(6/16)이고, 공개 `main`의 마지막 변경은 8/17이다. 3월 이후의 안정성 수정과 릴리즈는 [3-12. 출시 뒤의 안정성 점검](./development-12)에 이어 적었다.
 
 :::info 1줄 요약
 2년간 방치된 proxelar를 포크해서, 3명이 시작했다가 혼자 남아 폭풍 개발로 완전히 다른 프로젝트로 키운 Rust MITM 프록시다.

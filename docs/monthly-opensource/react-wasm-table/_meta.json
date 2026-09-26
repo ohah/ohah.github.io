@@ -33,5 +33,11 @@
     "name": "development-3",
     "label": "3-3. TanStack API 호환과 컴포넌트",
     "tag": "26.03.05"
+  },
+  {
+    "type": "file",
+    "name": "development-4",
+    "label": "3-4. 모바일 터치 수명과 배포 준비",
+    "tag": "26.03.10"
   }
 ]

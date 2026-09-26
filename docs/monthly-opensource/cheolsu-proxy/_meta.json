@@ -9,7 +9,7 @@
     "type": "file",
     "name": "tech-stack",
     "label": "2. 기술 스택",
-    "tag": "25.10.14"
+    "tag": "26.09.26"
   },
   {
     "type": "file",
@@ -81,5 +81,11 @@
     "name": "development-11",
     "label": "3-11. CLI 통합과 인증서 안정화",
     "tag": "26.03.21"
+  },
+  {
+    "type": "file",
+    "name": "development-12",
+    "label": "3-12. 출시 뒤의 안정성 점검",
+    "tag": "26.09.26"
   }
 ]

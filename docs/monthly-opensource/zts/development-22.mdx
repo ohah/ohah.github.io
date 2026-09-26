@@ -33,6 +33,8 @@ v0.1.10에서 dev 서버의 CSS 흐름을 고친 뒤, 다음 닷새는 트랜스
 
 알려진 실패는 이슈 번호와 함께 **fixture의 어느 조합이 실패하는지**를 기록한다. 실패 집합이 달라지면 실패하고, 고쳐져도 목록을 정리해야 한다. 테스트가 통과했다는 말만으로 모든 조합이 정상이라고 읽히지 않게 한 것이다. 이 스위트를 추가하는 중에도 구조 분해 관련 결함을 더 찾았다.
 
+같은 날 [단일 파일 변환 경로](https://github.com/ohah/zntc/commit/decc0cdb)도 비교에 넣었다. 번들러의 이름 변경과 `transpile`의 이름 변경은 다른 경로이므로 한쪽만 정상이어도 충분하지 않다. 실행 기준은 Node 24 이상이며, 최신 Node가 ES5 산출물에 남은 최신 문법을 실행해 버릴 수 있어 **타겟 문법 준수는 이 오라클만으로 검증되지 않는다**. [현재 스위트의 범위](https://github.com/ohah/zntc/blob/80042462/tests/integration/tests/downlevel-oracle.test.ts)
+
 `for-of`·상태 기계 `for-in`·`for-await`를 공통 AST 풀이로 바꾸는 작업도 이 검증 기반 위에서 진행했다. 변환 경로마다 같은 반복문의 의미를 따로 구현하던 부담을 줄이는 방향이다.
 
 ## 이름 문자열 대신 어느 변수를 가리키는지
@@ -47,6 +49,14 @@ v0.1.10에서 dev 서버의 CSS 흐름을 고친 뒤, 다음 닷새는 트랜스
 4. 낮춘 뒤의 함수 스코프를 기준으로 심볼별 이름을 정하고, 기존 문자열 스택을 제거한다.
 
 9월 25일에는 새 심볼 표와 옛 이름 스택을 병행 비교한 뒤, [이름 스택을 완전히 제거](https://github.com/ohah/zntc/commit/24e2acb8)했다. `direct eval`이 있는 블록은 이름을 바꾸면 문자열로 참조하는 변수의 의미가 바뀔 수 있어 별도 처리가 필요했다. minify 역시 낮추기 전 스코프에서 이름을 정하면 서로 다른 블록이 같은 `var`로 합쳐진다. [변환 뒤 재분석](https://github.com/ohah/zntc/commit/be9ec116)과 export·import·클래스 식 이름 보존 보완이 함께 들어갔다.
+
+## 실제 번들에서 사라진 코드도 복구했다
+
+9월 25일에는 트리 셰이킹 결함 둘도 고쳤다. 클래스의 computed key가 별도 문장으로 이동하면 원래 소스 위치로 추정한 사용 문장이 틀려 namespace export가 사라졌다. 이를 [분석기의 실제 참조로 찾도록](https://github.com/ohah/zntc/commit/3c858cf8) 바꿨다.
+
+또 `const proto = Ctor.prototype` 같은 별칭을 통한 쓰기를 죽은 쓰기로 지워, minify한 axios에서 `AxiosURLSearchParams.append`가 없어지는 경우가 있었다. [새 객체에 대한 쓰기만 제거하도록 범위를 좁혔다](https://github.com/ohah/zntc/commit/b124f445). 문법 변환의 내부 정리와 함께 실제 라이브러리의 동작을 복구한 변경이다.
+
+같은 날 구조 분해의 나머지 요소가 대입에서 빠지거나, 객체 rest 선언을 낮추며 `let`·`const`가 `var`로 바뀌는 문제도 고쳤다. [배열 rest 수정](https://github.com/ohah/zntc/commit/9b56c5f1), [선언 종류 보존](https://github.com/ohah/zntc/commit/e5661bb8)이 각각 들어갔다. 클래스 밖으로 옮긴 static 필드 초기값의 `this`·`super`도 [원래 클래스 기준으로 낮추도록](https://github.com/ohah/zntc/commit/f4819d2c) 수정했다.
 
 ## 변환 중에도 살아 있는 심볼과 스코프
 

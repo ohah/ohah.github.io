@@ -33,5 +33,11 @@
     "name": "development-3",
     "label": "3-3. 토큰 최적화와 안정성",
     "tag": "26.03.05"
+  },
+  {
+    "type": "file",
+    "name": "development-4",
+    "label": "3-4. 연결 진단과 Snapshot·Refs CLI",
+    "tag": "26.03.21"
   }
 ]

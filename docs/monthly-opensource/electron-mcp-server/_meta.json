@@ -33,5 +33,11 @@
     "name": "development-3",
     "label": "3-3. 토큰 최적화 대작전",
     "tag": "26.03.05"
+  },
+  {
+    "type": "file",
+    "name": "development-4",
+    "label": "3-4. 객체 탐색과 연결 준비 다듬기",
+    "tag": "26.03.18"
   }
 ]

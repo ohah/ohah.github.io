@@ -15,17 +15,17 @@ date: 2026-08-30
 
 ## 무엇을 하려는가
 
-README 첫 줄이 목표다.
+9월 26일 확인한 [README](https://github.com/ohah/pdf/blob/2a817c78/README.md)의 첫 줄이 목표다.
 
-> 브라우저에서 PDF 를 읽고, 그리고, 고친다. 엔진은 Zig 로 짜 wasm 하나(301KB)로 굽고 웹 워커에서 돌린다.
+> 브라우저에서 PDF 를 읽고, 그리고, 고친다. 엔진은 Zig 로 짜 wasm 하나(328KB)로 굽고 웹 워커에서 돌린다.
 
 세 동사가 각각 범위다.
 
-- **읽기** — 쪽 그리기, 글자 뽑기(읽는 차례로 줄 세우기), 링크·목차·문서 속성, 레이어 켜고 끄기, 딸린 파일, 전자 서명 확인, 암호 문서(RC4·AES-128·AES-256).
+- **읽기** — 쪽 그리기, 글자 뽑기(읽는 차례로 줄 세우기), Markdown·블록 JSON 출력, 링크·목차·문서 속성, 레이어 켜고 끄기, 딸린 파일, 전자 서명 확인, 암호 문서(RC4·AES-128·AES-256).
 - **그리기** — 박힌 TrueType·CFF·Type1·Type3 와 CID 글꼴, 세로쓰기, DCT·JPX(JPEG 2000)·JBIG2·CCITT 그림, 투명 그룹과 혼합 모드, ICC 색.
 - **고치기** — 쪽 고르기·회전·이어붙이기, 워터마크, 주석, 양식 칸 채우기와 새 칸 만들기, 암호 걸기.
 
-pdf.js 가 이미 있는데 왜 만드는가에 대한 답은 저장소가 직접 하지 않는다. 대신 `docs/compare.md` 에 pdf.js 와 화소를 맞댄 표를 두고, 크게 다른 것과 그 까닭을 `tests/pdfjs-known.json` 에 하나씩 적는다. "된다" 는 말은 `tests/run.sh` 가 도는 기능 단언 397개가 근거다.
+pdf.js 가 이미 있는데 왜 만드는가에 대한 답은 저장소가 직접 하지 않는다. 대신 `docs/compare.md` 에 pdf.js 와 화소를 맞댄 표를 두고, 크게 다른 것과 그 까닭을 `tests/pdfjs-known.json` 에 하나씩 적는다. 기능 지원은 실행 가능한 시험으로 확인한다. 9월 26일 확인한 [검증 스크립트](https://github.com/ohah/pdf/blob/2a817c78/tests/run.sh#L143-L150)는 기능 단언 수가 최소 434개인지 검사한다. 이는 스크립트의 기준이며, 이번 글 갱신에서 직접 시험을 실행한 결과는 아니다.
 
 ## 도구 사슬이 전부 자기 것이다
 
@@ -45,7 +45,7 @@ zntc 는 `--outdir` 로 주면 `--sourcemap` 을 무시하고, 한 줄짜리 `} 
 |------|------|
 | 시작일 | 2026-08-30 |
 | 커밋 | 163건 (9/26 확인, 마지막 반영 9/22) |
-| 엔진 | `c/*.zig` + miniz, wasm 301KB |
+| 엔진 | `c/*.zig` + miniz, wasm 328KB ([v0.2.2 소스의 README 표기](https://github.com/ohah/pdf/blob/2a817c78/README.md)) |
 | 화면 갈래 | 바닐라 · React · Vue · Svelte, Node.js |
 | npm | [`@ohah/pdf`](https://www.npmjs.com/package/@ohah/pdf) — v0.1.0(9/20) 첫 출시, v0.2.0(9/21) PDF → Markdown/JSON, **v0.2.2(9/22)** 실문서 텍스트·그리기 및 입력 처리 수정 |
 

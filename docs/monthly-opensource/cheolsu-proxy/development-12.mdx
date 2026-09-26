@@ -1,0 +1,42 @@
+---
+title: 3-12. 출시 뒤의 안정성 점검
+date: 2026-09-26
+---
+
+# 3-12. 출시 뒤의 안정성 점검 (4/24 ~ 8/17)
+
+[앞 편](./development-11)은 3월 26일까지를 다뤘다. 그 뒤 공개 `main`에는 57개 커밋이 더 들어갔다. 기능을 크게 늘리기보다 TLS 자동 통과, 스크립트 실행, 손상된 입력과 연결 수명처럼 프록시가 오래 켜져 있을 때 문제가 되는 경로를 고쳤다.
+
+이 편은 2026년 9월 26일 공개 저장소를 확인해 빠진 후속 기록을 보충한 글이다. 마지막 코드 반영은 8월 17일이며, 최신 GitHub 릴리즈는 [v0.1.2](https://github.com/ohah/cheolsu-proxy/releases/tag/v0.1.2)다. 아래 날짜는 한국 시간이다.
+
+## 4월 — 화면과 TLS 자동 통과
+
+Monaco 에디터의 사용자 정의 테마를 공통으로 적용하고, 규칙 저장소 테스트의 상태 복원 경쟁과 격리 문제를 고쳤다. 이어 [TLS 자동 통과 경로](https://github.com/ohah/cheolsu-proxy/commit/c9c7e30b)를 보강했다. 자동 전환은 연속 실패가 최소 두 번 쌓인 뒤에 허용하고, 실패 기록은 한 시간이 지나면 만료되게 했다. `Never Passthrough`가 전환을 막은 상태도 스냅샷과 화면에 드러낸다. 연결 실패와 사용자가 허용한 우회를 구분하는 작업이다.
+
+4월 30일에는 [v0.1.1](https://github.com/ohah/cheolsu-proxy/releases/tag/v0.1.1)을 냈다. 릴리즈 뒤에도 안정성 검토는 계속됐다.
+
+## 6월 14일 — 경계와 수명 점검
+
+6월의 수정은 여러 화면 기능보다 그 아래 공통 경로에 집중됐다.
+
+| 영역 | 고친 문제 |
+|------|-----------|
+| 프록시 코어 | 패닉·요청 무결성·압축 폭탄, 인증서 SAN 불일치, mTLS 실패를 허용하던 경로 |
+| 스크립팅 | 무한 루프·메모리 폭주에서 데몬 보호, 멈춘 엔진을 종료하다 무한 대기하는 문제 |
+| 데이터와 스트림 | UTF-8 경계, HAR의 Set-Cookie, SSE·WebSocket 연결 식별자와 수명 |
+| 운영 상태 | 재시작 뒤 throttle 프리셋 유실, 세션 규칙 동기화, 동시 프록시 시작의 연결 누수 |
+| 화면 | 바이너리 이미지·multipart 크기, 필터 문자열 왕복, 취소·정리·상태 동기화 |
+
+[코어 경계 수정](https://github.com/ohah/cheolsu-proxy/commit/ae05aee0), [인증서·mTLS 수정](https://github.com/ohah/cheolsu-proxy/commit/ee5c939d), [스크립팅 보호](https://github.com/ohah/cheolsu-proxy/commit/67a24381)가 대표적인 근거다. 수정 제목의 High·Medium·Low는 당시 검토의 분류이며, 이 표가 모든 입력에 대한 안전성을 보증하는 것은 아니다.
+
+수정 뒤 생긴 회귀도 다시 잡았다. CONNECT 안의 평문 GET에서 ClientHello를 기다리며 멈추는 문제, 스크립트가 본문을 바꿨는데 이전 Content-Length·Content-Encoding이 남는 문제, WebSocket 연결 ID를 UUID로 바꾸자 화면에도 UUID가 노출된 문제다. [ClientHello 대기](https://github.com/ohah/cheolsu-proxy/commit/54da09b2), [본문 헤더 정리](https://github.com/ohah/cheolsu-proxy/commit/c0d570cc), [표시 URL 복원](https://github.com/ohah/cheolsu-proxy/commit/dda861ad).
+
+기능 설명도 구현과 맞췄다. MCP 도구 문서는 당시 실제 구현인 48개를 기준으로 고치고, CLI 문서는 clap 정의, 스크립팅·SSE 문서는 실제 API를 따라 정리했다. 비어 있던 테스트 가이드도 채웠다. [MCP 문서 동기화](https://github.com/ohah/cheolsu-proxy/commit/0769a27b), [CLI 문서 동기화](https://github.com/ohah/cheolsu-proxy/commit/77650235).
+
+6월 16일에는 이 후속 작업을 담은 **v0.1.2**가 공개됐다.
+
+## 8월 17일 — 개발 환경에서 다시 실행하기
+
+마지막 후속은 로컬 실행과 타입 검사였다. nightly Cargo의 새 build-dir 레이아웃 때문에 실행 경로가 어긋나는 문제를 설정에서 조정하고, breakpoint 저장소의 `syncToProxy` 반환 타입과 네트워크 대화상자 테스트의 타입 단언을 고쳤다. [Cargo 경로 수정](https://github.com/ohah/cheolsu-proxy/commit/9cd61242), [저장소 타입 수정](https://github.com/ohah/cheolsu-proxy/commit/35e3b605).
+
+8월 변경은 6월의 v0.1.2 릴리즈 이후 `main`에 들어간 내용이다. 9월 26일 확인 시점에는 이를 담은 새 GitHub 릴리즈가 없었다. 사용자가 내려받는 릴리즈와 저장소의 최신 상태를 구분해 둔다.

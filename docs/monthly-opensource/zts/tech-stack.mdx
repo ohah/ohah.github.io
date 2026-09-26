@@ -5,7 +5,9 @@ date: 2026-03-18
 
 # 2. 기술 스택과 설계 철학
 
-## Zig 0.15.2 — "왜 Zig인가"
+초기 선택과 대화는 2026년 3월의 기록이다. 구현 설명은 9월 26일 공개 `main`의 [`80042462`](https://github.com/ohah/zntc/commit/80042462)와 대조했다. 아래 초기 테스트 성적은 당시 측정이며, 최신 실행 결과가 아니다.
+
+## Zig — "왜 Zig인가"
 
 ### 트랜스파일러에 Zig가 필요한 이유
 
@@ -22,11 +24,11 @@ date: 2026-03-18
 > "zig로 swc 같은걸 만들면 어떤 이득이 있을까요?" — 3/18 최초 질문
 > "설계를 어떻게 해야 oxc보다 앞설 수 있죠? 번은 앞서나요?" — 성능 목표
 
-1. **SIMD `@Vector` 직접 제어**: Zig는 SIMD 벡터 연산을 언어 수준에서 지원한다. 렉서에서 공백 스킵, 식별자 스캔을 16바이트씩 한 번에 처리할 수 있다. Rust에서는 `packed_simd` 크레이트가 필요하지만 Zig는 내장이다.
+1. **SIMD `@Vector` 직접 제어**: Zig는 벡터 연산을 언어 수준에서 지원한다. 렉서에서 공백 스킵, 식별자 스캔을 여러 바이트씩 처리하는 코드를 표현할 수 있다.
 
-2. **comptime(컴파일 타임 실행)**: Zig의 가장 강력한 기능. `comptime` 파라미터로 JS/JSX/TS/TSX 4개의 파서를 **컴파일 타임에 각각 생성**한다. 런타임에 "지금 TS 모드인가?" 같은 분기가 전혀 없다. Rust의 제네릭/트레잇으로도 비슷하게 할 수 있지만, Zig의 comptime은 임의의 코드를 실행할 수 있어 더 유연하다.
+2. **comptime(컴파일 타임 실행)**: 타입과 테이블을 빌드 시점에 구성하고 고정 조건을 검사할 수 있다. 다만 현재 JS/JSX/TS/TSX 처리는 아래 설명처럼 단일 파서의 모드 설정을 사용한다.
 
-3. **C/C++ 직접 링크**: `@cImport`로 C/C++ 라이브러리를 직접 링크할 수 있다. 이것은 Flow 지원에 핵심적이다 — Hermes(Meta의 Flow 파서, C++ 128개 파일)를 별도 빌드 시스템 없이 `build.zig`로 직접 컴파일할 수 있다.
+3. **C/C++ 연동**: Zig 빌드에서 C/C++ 소스와 라이브러리를 함께 다룰 수 있다. 초기에는 Hermes를 Flow 지원의 참고 대상으로 조사했다. 현재 Flow 타입 파싱은 [Zig의 `src/parser/flow.zig`](https://github.com/ohah/zntc/blob/80042462/src/parser/flow.zig)에 구현돼 있다.
 
 4. **WASM 빌드 네이티브**: `zig build -Dtarget=wasm32-wasi`로 별도 툴체인 없이 WASM 바이너리를 생성한다. 브라우저에서 트랜스파일러를 실행하거나, Node.js NAPI 바인딩 없이 WASM으로 배포할 수 있다.
 
@@ -37,37 +39,32 @@ date: 2026-03-18
 처음에는 Zig 0.14.0으로 시작했고, 3월 21일에 0.15.2로 업그레이드:
 > "지그 버전업 진행해주세요 최신버전으로" — 3/21
 
+9월 26일 현재 [CI의 빌드 도구 버전](https://github.com/ohah/zntc/blob/80042462/.github/workflows/ci.yml#L102)은 **0.16.0**이다. 저장소 README와 `build.zig.zon`에는 0.15.2가 남아 있어, 여기서는 실제 CI 설정을 기준으로 구분한다.
+
 ## 메모리 전략: Arena + Index 기반 AST (D004)
 
 ### Arena Allocator — 왜 필요한가
 
 트랜스파일러는 "파싱 → 변환 → 출력" 단계를 거친다. 각 단계에서 수만 개의 AST 노드, 문자열, 심볼 테이블을 할당한다. 일반적인 `malloc/free`로는 할당/해제 오버헤드가 크고, 메모리 단편화가 발생한다.
 
-**Arena allocator**는 큰 메모리 블록을 미리 잡아두고, 그 안에서 순차적으로 할당만 한다. 해제는 단계가 끝날 때 한 번에 한다. 개별 `free`가 없으므로:
-- 할당이 O(1) (포인터만 이동)
-- 해제가 O(1) (블록 전체를 한 번에)
-- 메모리 단편화 없음
-- `errdefer` 누락으로 인한 메모리 누수 원천 차단 (Arena가 알아서 해제)
+**Arena allocator**는 확보한 블록 안에서 순차적으로 할당하고, 객체별 `free` 대신 arena 수명 끝에 블록들을 함께 반납한다. 남은 공간에서의 할당은 포인터 이동으로 처리하지만, 공간이 모자라면 새 블록을 확보해야 한다. 개별 객체의 해제를 추적하는 부담은 줄어도 arena 자체의 해제와 외부 자원 정리는 여전히 필요하다.
 
-```zig
-const ast = try arena.create(Ast);
-const node_idx: NodeIndex = ast.addNode(tag, main_token, data);
-```
+AST는 노드 배열과 그 배열을 가리키는 `NodeIndex`로 참조를 표현한다. 메모리 수명은 arena가, 노드 관계는 인덱스가 맡는 구조다.
 
 ### 24바이트 고정 노드 — 왜 고정 크기인가
 
 모든 AST 노드가 **정확히 24바이트**. 가변 크기 노드 대신 고정 크기를 선택한 이유:
 
 1. **배열 인덱스 접근**: `nodes[i]`로 O(1) 접근. 가변 크기면 오프셋 테이블이 필요
-2. **캐시 라인 최적화**: 64바이트 캐시 라인에 2~3개 노드가 들어감. 트리 순회 시 캐시 히트율 극대화
-3. **인덱스 기반 참조**: 포인터(8바이트) 대신 `NodeIndex`(u32, 4바이트)로 참조. use-after-free 원천 차단 + 메모리 절약
+2. **밀집 저장**: 24바이트 노드 두 개는 48바이트다. 고정 크기로 연속 저장하지만 실제 캐시 효율은 정렬과 접근 패턴에 따라 달라진다
+3. **인덱스 기반 참조**: 포인터 대신 `NodeIndex`(u32, 4바이트)로 참조한다. 노드 배열의 재할당으로 주소가 바뀌어도 인덱스를 유지할 수 있지만, 배열의 수명과 인덱스 유효성 검사는 필요하다
 4. **제로 코스트 변환**: Cover Grammar에서 expression→pattern 변환 시 새 노드 할당 없이 `setTag`로 태그만 교체
 
 ```
-| tag (u8) | flags (u8) | main_token (u32) | data (16 bytes) |
+| tag (u16) | padding (2 bytes) | span (8 bytes) | data (12 bytes) |
 ```
 
-16바이트 data 영역에 들어가지 않는 추가 정보는 `extra_data` 배열에 저장한다 (3/22에 D082에서 결정).
+현재 [Node 정의](https://github.com/ohah/zntc/blob/80042462/src/parser/ast.zig#L46-L71)는 `tag`·`span`·`data`로 구성되며, 컴파일 시점에 `@sizeOf(Node) == 24`를 검사한다. 인라인 data에 들어가지 않는 추가 정보는 `extra_data` 배열에 저장한다. 초기 `main_token` 중심 설명과 현재 필드 배치는 다르지만 24바이트 크기는 유지된다.
 
 > "24, 32로 갔을때 차이점 및 성능 트레이드오프 다 말해줘" — 3/18
 > "근데 bun에는 지나?" — Bun도 24바이트
@@ -104,7 +101,7 @@ const node_idx: NodeIndex = ast.addNode(tag, main_token, data);
 
 ### SIMD로 공백 스킵
 
-소스 코드의 상당 부분은 공백이다. SIMD로 16바이트(16문자)를 한 번에 비교하면 공백 스킵이 16배 빨라진다:
+소스 코드의 상당 부분은 공백이다. 다음은 16바이트를 벡터로 비교하는 방식을 설명한 예시다. 한 번에 비교하는 바이트 수가 실제 처리 속도의 배수를 뜻하지는 않는다:
 
 ```zig
 const chunk: @Vector(16, u8) = source[pos..][0..16].*;
@@ -120,7 +117,7 @@ const mask = spaces | tabs;
 361057f feat(lexer): SIMD 공백 스킵 + 식별자 스캔 (@Vector 16바이트)
 ```
 
-## 파서: comptime 제네릭
+## 파서: 하나의 구현과 명시적 모드
 
 ### 파서란?
 
@@ -131,28 +128,13 @@ JS/TS 파서가 어려운 이유:
 - **TypeScript 확장**: 제네릭 `<T>` vs JSX `<Component>` 모호성, 타입 어노테이션, 데코레이터
 - **JSX 확장**: HTML-like 구문이 JS 안에 혼재
 
-### comptime으로 4개 파서 자동 생성
+### 현재 구현의 입력 모드
 
-```zig
-pub fn Parser(comptime mode: Mode) type {
-    return struct {
-        // mode == .ts 일 때만 타입 어노테이션 파싱 코드가 포함됨
-        // mode == .jsx 일 때만 JSX 파싱 코드가 포함됨
-        // 런타임에 "지금 TS 모드인가?" 분기가 전혀 없다
-    };
-}
-```
+9월 26일의 [Parser](https://github.com/ohah/zntc/blob/80042462/src/parser/parser.zig#L45-L68)는 하나의 `struct`다. `SourceMode`로 명시적 JavaScript·TypeScript·기존 관대한 JS 모드를 나누고, `is_jsx`와 `is_flow`를 별도로 둔다. 확장자와 loader 설정을 받아 이 모드를 구성한다.
 
-컴파일 결과물은 4개의 독립적인 파서 바이너리다. `.ts` 파일을 파싱할 때 JSX 관련 코드가 바이너리에 아예 존재하지 않는다. 이것이 Zig `comptime`의 위력이다.
+초기 설계 설명에 적었던 "네 개의 독립 파서 바이너리"와 "런타임 모드 분기 없음"은 현재 코드의 구조가 아니다. JS·JSX·TS·TSX를 지원하는 것과 구현을 네 벌로 특수화하는 것은 구분해야 한다.
 
-RegExp 파서도 동일한 패턴:
-
-```zig
-fn RegExpParser(comptime emit_ast: bool) type {
-    // emit_ast=false: 검증만 (현재)
-    // emit_ast=true: AST 빌드 (Phase 6에서 활성화 예정)
-}
-```
+RegExp를 별도 파서로 다루려는 초기 판단도 같은 맥락이었다.
 
 > "C로 가자 이런건 좀 크더라도 유지보수나 안정성을 생각해야해" — 3/19, RegExp 풀 파서 선택
 
@@ -177,7 +159,7 @@ const Context = packed struct(u8) {
 };
 ```
 
-함수 경계에서 save/restore가 단일 u8 복사로 끝난다. 이 리팩터링은 3/19에 수행:
+문법 파라미터 묶음 자체는 u8이다. 다만 현재 함수 경계의 저장·복원은 [별도 `SavedState`](https://github.com/ohah/zntc/blob/80042462/src/parser/parser.zig#L301-L317)를 사용하며 strict mode·loop·switch·class field·super 허용 상태도 함께 보존한다. 함수 문맥 전체가 단일 u8 복사로 끝나는 것은 아니다. packed 문법 파라미터로 정리한 초기 작업은 3/19에 수행했다:
 
 > "Context bitflags 리팩터링 시작해줘" — 3/19 세 번째 세션
 
@@ -201,7 +183,7 @@ esbuild + oxc의 하이브리드:
 src/bundler/
   graph.zig      — 모듈 그래프 (DFS 순회, 양방향 인접 리스트)
   resolver.zig   — node_modules + package.json exports/imports 해석
-  scanner.zig    — AST에서 import/require 추출
+  import_scanner.zig — AST에서 import/require 추출
   linker.zig     — scope hoisting + 심볼 바인딩 + 이름 충돌 해결
   tree_shaker.zig — @__PURE__/@__NO_SIDE_EFFECTS__ + 미사용 export 제거
   emitter.zig    — 청크 생성 + 최종 JS 출력
@@ -213,7 +195,9 @@ src/bundler/
 
 ## 테스트 전략
 
-### 5단계 테스트 피라미드
+### 초기 5단계 테스트 피라미드
+
+아래 수치는 3월 개발 당시의 기록이다. 현재 성적으로 다시 집계한 표가 아니다.
 
 | 레벨 | 도구 | 역할 | 달성 |
 |------|------|------|------|
@@ -228,6 +212,8 @@ src/bundler/
 - 적합성은 "TS의 `enum Color { Red }`가 올바른 JS IIFE로 변환되는가"를 검증
 - 스모크는 "lodash-es를 번들링한 결과가 `node`로 실행하면 정상 동작하는가"를 검증
 - E2E는 "번들 결과물을 `<script>` 태그로 넣으면 브라우저에서 에러 없이 로드되는가"를 검증
+
+9월에는 Node 실행 결과와 타겟별 번들·단일 파일 변환 결과를 비교하는 다운레벨 오라클이 추가됐다. 심볼 누락과 식별자 생성 경로 감사도 함께 사용한다. 현재 의미론 검증의 범위와 알려진 실패 처리는 [3-22](./development-22)에 정리했다.
 
 > "왜 95? **100% 통과 목표가 아닌가요?**" — 3/18, 최초 Test262 목표 설정
 > "테스트 먼저 작성하고, 코드 고쳐서 통과시켜" — 3/22, TDD 요구
