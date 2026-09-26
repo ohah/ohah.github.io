@@ -35,15 +35,18 @@ ZTS(2026-05-07부터 **zntc**) 개발 과정을 시간 순서대로 기록한다
 | [3-17. 0.1.0을 향해 — 플러그인 통일·파일 분리·배포 파이프라인·Codex 회고](./development-17) | 5/8\~12 | \~392 | plugin 통일, 대규모 파일 분리, TS Project References, 배포 파이프라인(OIDC/9-platform prebuilt), react-refresh, MetafileAnalyzer, 문서 대보강, **0.1.0 publish prep** + Codex 병행 회고 |
 | [3-18. minify 격차 추격과 Module Federation — 0.1.0은 아직 preview](./development-18) | 5/13\~19 | \~217 PR | mangler 크기 격차 루트커즈(M/N/K 시리즈), TSC conformance audit, 코드 스플리팅 P3 → **Module Federation**, 청크 무결성 sidecar |
 
-## 배포 이후 (5/20 ~ 9/21) — 릴리즈·성능·이슈 큐
+## 배포 이후 (5/20 ~ 9/26) — 릴리즈·성능·이슈 큐
 
 | 편 | 기간 | 커밋 | 핵심 성과 |
 |------|------|------|----------|
 | [3-19. 0.1.0을 실제로 눌렀다 — 그리고 만든 것을 되돌리는 이틀](./development-19) | 5/20~31 | 613 | **v0.1.0·v0.1.1 npm 배포**, Rollup 스타일 출력 API, `this.emitFile` chunk/asset, link.populate −55%, **MCP 에픽 전체 롤백**, mangler 8번째 NO-GO, rename_table 단일 출처, **Zig 0.16**, lazy compilation |
 | [3-20. "1위가 하고싶어요" — 위상 보존 HMR과 디스크 캐시, 0.1.2](./development-20) | 6월 | 280 | **v0.1.2**, lazy dev HMR + React Fast Refresh, 재귀 walker 제거 + CI tripwire, precedence 재설계, HMR 위상 보존, O(N²)×3 제거, 모듈 디스크 캐시 |
 | [3-21. 이슈 큐를 따라가는 여름 — preserve-modules와 0.1.3·0.1.4](./development-21) | 7/1~9/21 | 197 | **v0.1.3·v0.1.4**, preserve-modules 조합 결함 시리즈(#4532 외), CJS interop, JSX namespace, external 매핑·re-export, 다운레벨 ESM의 top-level await |
+| [3-22. 다운레벨링의 의미를 지키는 심볼 표](./development-22) | 9/22~26 | 95 | async/generator·ES5 의미론, 실행 결과 오라클, 심볼 기반 블록 이름 변경, 변환 중 스코프·참조 추적 |
 
 타임라인 한눈에 보기와 일별 작업 강도는 [1. 개발 배경과 동기](./background)에 정리돼 있다.
+
+9월 26일에는 다운레벨링과 심볼 추적 후속 변경이 `main`에 반영돼 있다. 최신 GitHub 릴리즈는 여전히 **v0.1.10**이며, [3-22](./development-22)는 이후 미출시 변경을 따로 다룬다. 아래 누적 통계는 집계 기준을 섞지 않도록 9월 21일 수치를 보존했다.
 
 ## 통계
 

@@ -57,5 +57,11 @@
     "name": "development-7",
     "label": "3-7. 언어 서버가 붙는다",
     "tag": "26.09.21"
+  },
+  {
+    "type": "file",
+    "name": "development-8",
+    "label": "3-8. 다시 켜도 이어지는 작업",
+    "tag": "26.09.26"
   }
 ]

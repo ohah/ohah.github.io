@@ -211,7 +211,7 @@
 | 08-31 | [ohah/zntc](https://github.com/ohah/zntc) | [zntc v0.1.5, v0.1.6](https://github.com/ohah/zntc/releases/tag/v0.1.6) 릴리즈 (08-31) — 한 줄 블록 주석 뒤 소스맵 밀림 수정, bun.lock 동기화 PR 화 |
 | 08-31 | [ohah/pdf](https://github.com/ohah/pdf) | 주석 층·이름 목적지·XMP·표준 14종 AFM 자간·URL 열기 진행률·Node.js 지원, 열기 34MB 기준 417ms → 120ms |
 
-### 2026년 9월
+### 2026년 9월 (9/1~9/21)
 
 | 날짜 | 프로젝트 | 활동 |
 |------|---------|------|
@@ -249,3 +249,28 @@
 | 09-21 | [ohah/zntc](https://github.com/ohah/zntc) | [zntc v0.1.10](https://github.com/ohah/zntc/releases/tag/v0.1.10) 릴리즈 (09-21) — dev 서버 CSS 결함 일곱(#4660·#4671\~#4683) |
 | 09-21 | [ohah/maru](https://github.com/ohah/maru) | LSP 열두 조각 완성(접힘 3층·didSave·참조 피커·구현/타입 정의) + `build.zig` 21,352 → 8,835줄 + 원격 tmux pane 훅 슬롯(RA7·RA8) |
 | 09-21 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | EMF 레코드 wire 분류·Path 기하 조립, hwp5 가 EMF+ world transform 을 replay |
+
+### 2026년 9월 하순 (9/22~9/26)
+
+아래 추가 기록은 한국 시간 기준이다. Maru는 `main` 병합일, Hwpjs·ZNTC·PDF는 `main` 커밋일을 따른다. 9월 26일은 확인 시점까지의 기록이며, ZNTC의 이번 변경은 아직 최신 배포판 v0.1.10에 포함되지 않았다.
+
+| 날짜 | 프로젝트 | 활동 |
+|------|---------|------|
+| 09-22 | [ohah/maru](https://github.com/ohah/maru) | [미저장 문서 백업 #3858](https://github.com/ohah/maru/pull/3858), SSH 문서 저장·턴 목록 영속화·LSP 인레이 힌트 |
+| 09-22 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | EMF+ 장치 좌표 변환과 [곡선 평가·분할](https://github.com/ohah/hwpjs/commit/1f62228e) — 렌더링 전 기하 처리 |
+| 09-22 | [ohah/pdf](https://github.com/ohah/pdf) | **v0.2.1·[v0.2.2](https://github.com/ohah/pdf/commit/2a817c78)** — 실문서 100편의 텍스트·그리기 대조에서 나온 결함과 퍼저가 찾은 입력 처리 결함 수정 |
+| 09-22 | [ohah/zntc](https://github.com/ohah/zntc) | async generator·클래스 필드 타겟 판정, [위임 반환값 보존](https://github.com/ohah/zntc/commit/4127fcac), ES5 interop 문법 수정 |
+| 09-23 | [ohah/maru](https://github.com/ohah/maru) | 미저장·이름 없는 문서 복원, [재부팅 뒤 로컬 에이전트 대화 재개 #3894](https://github.com/ohah/maru/pull/3894), 구조 기반 선택 확장 |
+| 09-23 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | **[HWPX ZIP 읽기](https://github.com/ohah/hwpjs/commit/a2c213a9)**와 manifest·리소스·차트 관계 검사 — Zig 코어 검사 계층 |
+| 09-23 | [ohah/zntc](https://github.com/ohah/zntc) | [iterator 조기 종료](https://github.com/ohah/zntc/commit/33a7378c), 객체 메서드의 `super`, `using` 다운레벨 변환 수정 |
+| 09-24 | [ohah/maru](https://github.com/ohah/maru) | sticky scroll·현재 줄·짝 괄호 강조, [보이지 않는 탭의 불필요한 전체 렌더링 제거 #3918](https://github.com/ohah/maru/pull/3918) |
+| 09-24 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | [HWPX 본문 이벤트](https://github.com/ohah/hwpjs/commit/bdecc435), XML·패키지 무결성, 조건부 분기와 표 격자 검사 |
+| 09-24 | [ohah/zntc](https://github.com/ohah/zntc) | [Node 실행 결과 대조](https://github.com/ohah/zntc/commit/3aed812c)로 다운레벨 변환 검증, 생성된 사용자 식별자의 심볼 누락 검사 |
+| 09-25 | [ohah/maru](https://github.com/ohah/maru) | 들여쓰기 안내선, [중첩 괄호 색 #3946](https://github.com/ohah/maru/pull/3946), 공백·탭 표시 |
+| 09-25 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | [HWPX 바탕쪽·표](https://github.com/ohah/hwpjs/commit/1ed714ad), 구역 설정과 이미지 참조·형식 검사 |
+| 09-25 | [ohah/zntc](https://github.com/ohah/zntc) | ES5 블록 이름 변경을 심볼 표로 옮기고 [문자열 이름 스택 제거](https://github.com/ohah/zntc/commit/24e2acb8) |
+| 09-26 | [ohah/maru](https://github.com/ohah/maru) | 괄호 이동, 비교·병합 뷰 줄 번호 저장소 수정, [죽은 원격 tmux pane의 이벤트 오귀속 차단 #3960](https://github.com/ohah/maru/pull/3960) |
+| 09-26 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | JPEG·PNG 픽셀 검사, 본문·바탕쪽 텍스트 스냅샷 대조, [수식 script 검사](https://github.com/ohah/hwpjs/commit/6383b4dd) |
+| 09-26 | [ohah/zntc](https://github.com/ohah/zntc) | 변환 중 심볼 편집, 스코프 소유자와 [복사된 참조의 원래 노드 추적](https://github.com/ohah/zntc/commit/80042462) |
+
+구현 범위와 검증 조건은 [Maru 3-8](./maru/development-8), [Hwpjs 3-10](./hwpjs/development-10), [ZNTC 3-22](./zts/development-22), [PDF 개발 과정](./pdf/development)에 정리했다.

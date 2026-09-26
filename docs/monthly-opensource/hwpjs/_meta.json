@@ -69,5 +69,11 @@
     "name": "development-9",
     "label": "3-9. Rust 를 접고 Zig 로 다시 쓰다",
     "tag": "26.09.21"
+  },
+  {
+    "type": "file",
+    "name": "development-10",
+    "label": "3-10. HWPX를 열고, 읽었다는 것을 검증하다",
+    "tag": "26.09.26"
   }
 ]
