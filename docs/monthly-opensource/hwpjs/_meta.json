@@ -75,5 +75,11 @@
     "name": "development-10",
     "label": "3-10. HWPX를 열고, 읽었다는 것을 검증하다",
     "tag": "26.09.26"
+  },
+  {
+    "type": "file",
+    "name": "development-11",
+    "label": "3-11. 문서를 다시 검증하고, 실험용 편집기를 열다",
+    "tag": "26.10.05"
   }
 ]

@@ -1,0 +1,72 @@
+---
+title: 3-23. 이름은 마지막에 — 합성 변수까지 심볼로 잇는 #4819
+date: 2026-10-05
+---
+
+# 3-23. 이름은 마지막에 — 합성 변수까지 심볼로 잇는 #4819
+
+[3-22](./development-22)에서 블록 이름 변경을 심볼 표로 옮겼다면, 이어진 아흐레는 그 원칙을 **변환기가 새로 만드는 변수**까지 넓힌 구간이다. `_this`·`_loop`·`_a` 같은 합성 변수와 런타임 helper, namespace IIFE 매개변수에도 심볼을 붙이고, 이름은 출력 직전에 한 번 정하는 방향으로 움직였다.
+
+이 편은 3-22의 기준 [`80042462`](https://github.com/ohah/zntc/commit/80042462)(9월 26일 16:40 KST) 이후부터 10월 4일 23:49 KST의 [`a9802a2e`](https://github.com/ohah/zntc/commit/a9802a2e)까지 공개 `main`에 들어간 281커밋, 218개 PR을 다룬다. 아래 변경은 `main`에 반영됐지만, 10월 6일 확인한 최신 GitHub 릴리즈는 여전히 [v0.1.10](https://github.com/ohah/zntc/releases/tag/v0.1.10)이다.
+
+| 날짜 | 커밋 | 핵심 |
+|------|------|------|
+| 9/26 | 75 | 상태 기계·클래스 IIFE·private 메서드·매개변수 기본값의 생성 스코프와 심볼, TS namespace 멤버 연결 |
+| 9/27 | 17 | ES5 클래스 self·구조 분해 임시 변수·`for-of` 단계 심볼, 단일 파일 minify의 그래프 재사용 |
+| 9/28 | 8 | 이름 변경을 지나도 정확한 참조 유지, 임시 변수 이름 충돌 방지 |
+| 10/1 | 30 | 낮추기 중 심볼 유지 PR, 단일 파일 helper 충돌, 재분석 전후 rename 이관 |
+| 10/2 | 48 | namespace·enum IIFE 매개변수 심볼, Flow·React Refresh·worklet 경로, 정체성 게이트와 minify 후 감사 |
+| 10/3 | 45 | codegen namespace 접두사를 SymbolId로, 번들러 사전 처리의 그래프 유지, CI 통합 |
+| 10/4 | 58 | CI 회귀 정리, 네이티브 문법별 그래프 유지, 보정 경로 제거 조건 문서, 매개변수 평가 환경 수정 |
+
+날짜와 개수는 위 커밋까지의 `main` 커미터 시각을 한국 시간으로 집계했다. 9월 29일과 30일에는 `main`에 들어간 커밋이 없다.
+
+## 에픽 #4819 — 정체성과 이름을 끝까지 분리한다
+
+9월 26일 열린 [#4819](https://github.com/ohah/zntc/issues/4819)는 이 구간의 지도다. 사용자 변수에는 심볼이 있었지만, 변환이 만든 합성 변수는 이름 문자열만 갖고 있었다. 그래서 합성 이름 충돌 회피, 심볼 누락 검사, 변환 뒤 재분석 같은 보완 장치가 겹겹이 필요했고, 이름을 고르는 곳도 블록 스코핑·클래스 낮추기·제너레이터·번들러·minify·codegen으로 흩어져 있었다.
+
+이슈는 같은 계열의 결함을 묶어 둔다. 합성 이름이 사용자 변수를 가리는 #4814, 재분석 뒤 `_default` 리네임이 사라지는 #4804, codegen이 TS namespace 이름을 문자열로 치환하는 #4795·#4818, 단일 파일 변환의 helper 이름이 고정 문자열이라 충돌하는 #4817이다. esbuild·oxc가 변환 중에도 같은 심볼 표를 쓰고 이름은 마지막에 정한다는 점을 참조로 삼되, 착수 전에 소스로 직접 확인하라고 적었다.
+
+진행 방식은 두 갈래로 제시됐다. 재분석까지 없애는 A안과, 재분석을 당분간 두고 전후 심볼을 잇는 B안이다. 이후 PR 본문은 대부분 "A안 전체 완료를 뜻하지 않는다"는 범위 문장으로 끝난다.
+
+## 만드는 순간 심볼을 붙인다
+
+9월 26일 저녁부터 27일 새벽까지는 생성 경로를 하나씩 옮겼다. 상태 기계 콜백과 생성 함수 스코프, 클래스 IIFE의 스코프 소유, 클래스 내부 self 바인딩의 구분이 차례로 들어갔다.
+
+[private 메서드 PR #4854](https://github.com/ohah/zntc/pull/4854)는 추출된 private 메서드도 일반 함수 변환을 거치게 하고, 임시 참조를 생성 기록으로 바인딩에 연결했다. 같은 PR에서 `Object.prototype`의 get·set·writable을 오염시킨 fixture는 수정 전 20개 조합 중 14개가 네이티브 실행과 달랐고, 수정 후 모두 일치했다. 매개변수 기본값을 다룬 [#4855](https://github.com/ohah/zntc/pull/4855)는 기본값 임시 바인딩에 원본 함수 스코프를 연결하면서 Hermes 프리셋의 async generator 변환을 빠짐없이 적용했고, 이미 해결된 Hermes 실패 예상 27개를 목록에서 지웠다.
+
+TypeScript namespace도 같은 날 들어왔다. [#4861](https://github.com/ohah/zntc/pull/4861)은 namespace 본문의 선언·참조를 실제 IIFE 스코프와 SymbolId에 연결하고, 여러 번 선언되거나 병합된 namespace의 멤버를 공유 owner 심볼로 이었다. 9월 27일에는 ES5 `for-of`의 iterator·step·completion·catch 변수에, 28일에는 이름 변경을 지나는 참조와 임시 변수 이름 충돌에 같은 방식이 적용됐다.
+
+## 10월 1일 — 낮추기 전체에서 그래프를 편집한다
+
+이틀 공백 뒤 10월 1일 아침 [#4887](https://github.com/ohah/zntc/pull/4887)이 들어갔다. 60개 파일, 7,488줄이 추가된 한 커밋이다. 변환기가 AST를 낮출 때 SymbolId·ScopeId·참조·스코프 소유 정보를 의미 그래프와 함께 편집하고, 오라클 fixture 270개 × 6개 타깃에서 정확한 커버리지 불변식을 검사한다. PR은 후분석 제거와 codegen 문자열 치환 제거까지 끝났다고 주장하지 않는다.
+
+같은 날 에픽의 개별 항목도 닫혀 나갔다.
+
+- [#4890](https://github.com/ohah/zntc/pull/4890) — 단일 파일 변환에서 사용자 바인딩이 `__extends`·`__values` 같은 인라인 helper 이름과 겹치면 helper에 쓰지 않는 별칭을 배정한다(#4817).
+- [#4903](https://github.com/ohah/zntc/pull/4903) — 재분석 전후 리네임을 이름·위치 문자열로 짝짓던 `captureRenamesToPending`을 선언 노드와 SymbolId 연결로 바꿨다. 모호한 연결은 옮기지 않는다(#4804).
+- TS static block·private 요소·auto-accessor·decorator와 Flow 단일 파일 변환이 변환기의 의미 그래프를 재사용하게 됐다.
+
+9월 27일 새벽 먼저 들어간 [#4870](https://github.com/ohah/zntc/pull/4870)은 그 출발점이다. 다운레벨·구문 축약이 없는 네이티브 JS 스크립트에 한해 `--minify-identifiers`가 변환 후 AST를 다시 분석하지 않고 편집된 그래프를 쓴다. 20개 사례에서 기존 경로와 출력 바이트가 같았다.
+
+## 재분석을 문법 단위로 줄여 간다
+
+10월 2일부터 4일까지는 번들러 사전 처리에서 **어떤 문법이면 재분석 없이 그래프를 유지해도 되는지**를 넓혔다. 9월 27일부터 10월 4일 사이 커밋 제목에 그래프 유지·재사용을 적은 것만 60개가 넘는다. TS 타입 제거, enum·namespace, type-only import, JSX 런타임, 화살표 함수, 객체 리터럴, 템플릿, 네이티브 class·`await`·제너레이터·`for-of`·구조 분해 순이고, 10월 4일 오후부터는 ES5 `for-of`·`for-in`·구조 분해를 낮추는 경로 일부까지 이어졌다.
+
+각 PR은 지원 여부를 기능별로 따진다. [네이티브 class PR #5016](https://github.com/ohah/zntc/pull/5016)은 public·private field, private 메서드, static block, class 자체의 타겟 지원을 각각 확인하고, 하나라도 낮추기 대상이면 기존 재분석 경로를 유지한다. 유지 플래그를 지우면 ES2022 기대가 실패하는지도 확인했다. 이 PR들은 제목이 `perf`여도 본문에 실행 시간 측정값을 싣지 않으므로, 여기서는 속도 수치를 말하지 않는다.
+
+그래프 유지가 넓어지면서 그동안 이름 문자열에 기대던 곳도 드러났다. [#4964](https://github.com/ohah/zntc/pull/4964)는 namespace IIFE 매개변수를 고정 이름에서 빼 mangler가 SymbolId로 이름을 정하게 했고, 이어 codegen의 namespace 접두사도 SymbolId로 풀었다. [#4984](https://github.com/ohah/zntc/pull/4984)는 CJS wrapper가 `$e`·`$m`을 고정으로 써서 `const $m = 1; module.exports = $m;` 같은 입력에서 구문 오류가 나던 문제를 고쳤다.
+
+## 통과했다는 말을 좁게 만드는 검사
+
+검증 장치도 함께 조였다. [#4948](https://github.com/ohah/zntc/pull/4948)은 strict 커버리지 보고에 `symbol_identity_complete`를 추가해 SymbolId 누락·오분류와 새 상태값을 실패로 처리한다. [#4959](https://github.com/ohah/zntc/pull/4959)는 minify 뒤 살아 있는 AST를 새로 분석한 결과와 ID 연결을 비교해, 제거된 별칭 심볼이 참조에 남거나 같은 이름의 다른 바인딩에 붙으면 실패하게 했다. 10월 4일에는 순환 AST와 잘못된 간선을 감사가 거부하도록 보강했다.
+
+CI 구성도 바뀌었다. [#5004](https://github.com/ohah/zntc/pull/5004)는 중복 실행하던 검사를 Ubuntu 중심으로 합쳐 일반 코드 변경의 최대 job 수를 PR 34개에서 26개, `main` 39개에서 29개로 줄이고, 릴리즈 빌드를 플랫폼별 NAPI·CLI 묶음으로 18개에서 9개로 줄였다. 10월 4일에도 캐시·체크아웃·정리 작업을 다듬는 CI 커밋이 이어졌다. CI에서 재현된 Bun·NAPI 프로세스 중단과 통합 테스트 88건 실패는 [#5010](https://github.com/ohah/zntc/pull/5010)이 원인별 커밋 7개로 나눠 고쳤다.
+
+## 무엇이 남았는지 문서로
+
+10월 4일 [#5056](https://github.com/ohah/zntc/pull/5056)은 `docs/SYMBOL_IDENTITY_MIGRATION.md`를 추가했다. 주요 이름 생성자 계열별로 현재 심볼 연결과 남은 보정 경로를 표로 정리하고, 생성 후 이름 검색·재분석과 rename handoff·codegen 이름 치환·`resolveSyntheticName`을 언제 지울 수 있는지 조건을 적었다. 전체 생성자 전수조사나 에픽 완료를 주장하지 않는다고 못 박았다.
+
+같은 날 마지막 [#5058](https://github.com/ohah/zntc/pull/5058)은 ES5로 낮춘 매개변수 기본값이 같은 이름의 본문 선언에 가려지는 결함을 고쳤다. `var x = 3; function f(value = x) { var x = 4; return [value, x]; }`의 `f()`가 `[undefined, 4]`에서 원본과 같은 `[3, 4]`로 돌아왔다. 다만 [문서](https://github.com/ohah/zntc/blob/a9802a2e/docs/SYMBOL_IDENTITY_MIGRATION.md)는 매개변수의 클로저가 같은 이름의 본문 `var`와 얽히는 경우 원본은 `[3, 4]`인데 ES5 출력은 여전히 `[4, 4]`이고, 본문 lexical 선언의 TDZ도 남은 결함이라고 기록한다.
+
+#4819는 10월 6일 확인 시점에도 열려 있다. 최종 이름 결정기 통합과 재분석 제거는 아직이고, [ES5/RN TLA 소비자를 promise로 잇는 PR #4631](https://github.com/ohah/zntc/pull/4631)도 여전히 열려 있다. 매개변수 수정 PR에 patch changeset이 추가됐지만, 이 구간의 변경을 담은 새 릴리즈는 확인되지 않았다.
