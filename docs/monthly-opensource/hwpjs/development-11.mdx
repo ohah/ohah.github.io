@@ -14,8 +14,8 @@ date: 2026-10-05
 | 날짜 | 커밋 | 들어간 것 |
 |------|------|-----------|
 | 9/26 | 10 | 수식 shape 필드·캡션·주석, 구역·필드 파라미터 목록, 인라인 문자열 컨트롤, 단 정의, 구역 번호 컨트롤 검사 |
-| 9/27 | 177 | 각주·미주 본문과 내부 번호 검사, 문서 검증 현황 도구, HWP5·PNG·ICC·WMF·EMF 계약 문서 재검증 170개 |
-| 9/28 | 102 | EMF·HWP5 차트·HWPX·JPEG 문서 재검증 93개, EMF·ZIP 결함 수정, HWP5 읽기 전용 문단 텍스트 API |
+| 9/27 | 177 | 각주·미주 본문과 내부 번호 검사, 문서 검증 현황 도구, ICC·HWP5·HWPX·PNG·EMF 등 계약 문서 재검증(`docs` 커밋 170개) |
+| 9/28 | 102 | EMF·HWP5 차트·HWPX·JPEG 문서 재검증(`docs` 커밋 93개), EMF·ZIP 결함 수정, HWP5 읽기 전용 문단 텍스트 API |
 | 9/29 | 3 | zlib 래퍼 스트림 호환, `DocumentProperties` 길이 진단, 읽기 전용 문서 모델 투영 |
 | 9/30 | 3 | 스타일 참조 보존 실험, 단순 문단 텍스트 splice 실험, 문단 소유권 경계 수정 |
 | 10/1 | 27 | 기존 글자 모양 적용, Canvas 미리보기, JS/WASM 실험용 편집 API, 직접 입력, HWPX 원문 보존 편집·저장 |
@@ -25,7 +25,7 @@ date: 2026-10-05
 
 ## 검사 범위의 마지막 확장
 
-9월 26일 저녁부터 27일 새벽까지는 3-10의 HWPX 검사 계층이 이어졌다. 수식의 shape 필드·캡션 하위 목록·주석, 구역과 필드의 파라미터 목록, metaTag 텍스트, 인라인 문자열 컨트롤, 필드 marker 연결, 단 정의와 구역 번호 컨트롤을 차례로 읽었다. [각주·미주 본문 검사](https://github.com/ohah/hwpjs/commit/376778ec) 뒤에는 note 안의 번호 컨트롤과 텍스트, 원문 위치를 보존했고 HWP5 쪽에도 note 내부 자동 번호 진단을 붙였다.
+9월 26일 오후 늦게부터 27일 새벽까지는 3-10의 HWPX 검사 계층이 이어졌다. 수식의 shape 필드·캡션 하위 목록·주석, 구역과 필드의 파라미터 목록, metaTag 텍스트, 인라인 문자열 컨트롤, 필드 marker 연결, 단 정의와 구역 번호 컨트롤을 차례로 읽었다. [각주·미주 본문 검사](https://github.com/ohah/hwpjs/commit/376778ec) 뒤에는 note 안의 번호 컨트롤과 텍스트, 원문 위치를 보존했고 HWP5 쪽에도 note 내부 자동 번호 진단을 붙였다.
 
 이 묶음도 성격은 3-10과 같다. 원값을 읽고 관계를 확인하는 검사이고, 이 요소들을 화면에 그리는 기능은 아니다.
 
@@ -67,13 +67,13 @@ date: 2026-10-05
 
 같은 날 저녁 HWPX도 공개 API에 올라왔다. 먼저 section 텍스트 이벤트를 [공개 읽기 API와 읽기 전용 Canvas](https://github.com/ohah/hwpjs/commit/5c8ba1f7)에 연결했다. 추적 HWPX 45개 중 비암호화 44개가 읽혔고 암호화 1개는 거부된다.
 
-저장은 기존 ZIP을 다시 만드는 대신 [선택한 항목만 교체](https://github.com/ohah/hwpjs/commit/fb829cae)하는 방식으로 했다. 바뀌지 않은 local record·extra·주석·순서를 그대로 복사하고, 바뀐 항목의 CRC·크기만 갱신한다. XML도 변경한 텍스트 조각 밖의 원문을 그대로 복사한다. 그래서 무변경 저장과 원래 텍스트로 되돌린 저장은 원본 ZIP과 바이트 단위로 같다. 독립 Python `zipfile`·XML 파서로 비암호화 44개 파일의 499개 항목을 비교해 변경 XML 외의 payload와 메타데이터가 일치함을 확인했다.
+저장은 기존 ZIP을 다시 만드는 대신 [선택한 항목만 교체](https://github.com/ohah/hwpjs/commit/fb829cae)하는 방식으로 했다. 바뀌지 않은 local record·extra·주석·순서를 그대로 복사하고, 바뀐 항목의 CRC·크기만 갱신한다. XML도 변경한 텍스트 조각 밖의 원문을 그대로 복사한다. 그래서 무변경 저장과 원래 텍스트로 되돌린 저장이 원본 ZIP과 바이트 단위로 같은지를 실제 픽스처로 확인했다. 독립 Python `zipfile`·XML 파서로 비암호화 44개 파일의 499개 항목을 비교해 변경 XML 외의 payload와 메타데이터가 일치함을 확인했다.
 
 [편집 세션을 WASM과 Canvas에 연결](https://github.com/ohah/hwpjs/commit/1fd8cb1b)한 뒤에는 단 설정·쪽 번호 설정을 보존하는 문단, 필드 라벨과 계산 필드, 각주·미주 본문, 머리말·꼬리말 소유 문단, 보호 개체 앞뒤의 입력 위치로 범위를 넓혔다. 편집 이력 전수 검사에서는 1,379문단 중 1,174건이 편집, undo 후 원본 ZIP 복원, redo 후 편집본 바이트 일치까지 확인됐다. 거부는 `UnsupportedParagraphControl` 157건과, 숫자 셀에 비숫자 접두어를 넣어 생긴 `InvalidFormulaNumber` 48건이다. HWPX 저장은 원본 줄 배치를 재계산하지 않으므로 결과는 재조판이 필요한 상태로 안내한다.
 
 ## 10월 2일 새벽: 다운로드, 이력, Enter
 
-마지막 7커밋은 실험용 편집기의 기본 동작을 채웠다. Canvas에서 편집한 문서를 [`.edited.hwp`·`.edited.hwpx`로 내려받고](https://github.com/ohah/hwpjs/commit/2a1f3ce1), HWPX와 HWP5에 native undo/redo를 붙였다. 두 포맷은 같은 이력 스택 모듈을 쓰고, 복원값은 JS의 역명령이 아니라 native 체크포인트다.
+10월 2일 새벽 7커밋 중 둘은 위의 머리말·꼬리말과 보호 개체 주변 입력이고, 나머지 다섯은 실험용 편집기의 기본 동작을 채웠다. Canvas에서 편집한 문서를 [`.edited.hwp`·`.edited.hwpx`로 내려받고](https://github.com/ohah/hwpjs/commit/2a1f3ce1), HWPX와 HWP5에 native undo/redo를 붙였다. 두 포맷은 같은 이력 스택 모듈을 쓰고, 복원값은 JS의 역명령이 아니라 native 체크포인트다.
 
 HWP5에는 [문단 분할(Enter)](https://github.com/ohah/hwpjs/commit/576d4597)과 [경계 삭제로 인한 병합](https://github.com/ohah/hwpjs/commit/7bf1d632)이 들어갔다. 새 문단의 Instance ID를 원본과 겹치지 않게 고르고, 같은 논리 목록에 속한 인접 문단만 합친다. 필드·보호 컨트롤·계산 결과가 걸린 문단의 구조 편집과 HWPX 구조 편집은 아직 거부한다.
 

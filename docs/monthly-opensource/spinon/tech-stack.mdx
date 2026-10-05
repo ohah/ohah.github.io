@@ -11,7 +11,7 @@ date: 2026-10-05
 
 ## 전체 흐름
 
-[코어 아키텍처 결정](https://github.com/ohah/spinon/blob/24a91bef/docs/architecture.md)의 그림이 목표 구조다.
+[코어 아키텍처 결정](https://github.com/ohah/spinon/blob/e33f44da/docs/architecture.md)의 그림이 목표 구조다.
 
 ```text
 React / Vue / Svelte 어댑터 · DOM façade · Fetch API
@@ -44,11 +44,11 @@ Rust는 `mise.toml`로 `1.96.1`에 고정했다. 10월 4일 기준 워크스페�
 
 의존 방향도 문서에 고정했다. `spinon-ffi → spinon-runtime → spinon-core`, `spinon-style → spinon-core`처럼 코어가 맨 아래에 있고, 스타일·레이아웃·렌더 연결 크레이트가 그 위에 얹힌다. 원칙은 "실제 코드·내부 계약·테스트가 준비된 크레이트만 구성원으로 추가"하는 것이다.
 
-[프로젝트 규칙](https://github.com/ohah/spinon/blob/24a91bef/docs/project-rules.md)은 Rust 파일을 보통 300~500줄을 권장 상한으로 두고, 넘으면 책임 경계로 나눌 수 있는지 먼저 검토하게 한다. 스타일 계열 크레이트는 `unsafe_code = "deny"`, FFI·런타임 쪽은 `unsafe_op_in_unsafe_fn = "deny"`를 건다.
+[프로젝트 규칙](https://github.com/ohah/spinon/blob/e33f44da/docs/project-rules.md)은 Rust 파일을 보통 300~500줄을 권장 상한으로 두고, 넘으면 책임 경계로 나눌 수 있는지 먼저 검토하게 한다. `spinon-core`는 `unsafe_code = "forbid"`, 스타일·렌더 계열 크레이트는 `unsafe_code = "deny"`, FFI·런타임·레이아웃은 `unsafe_op_in_unsafe_fn = "deny"`를 건다.
 
 ### 왜 Rust인가에 대한 기록
 
-저장소는 "Rust로 한다"는 결정은 적었지만, 그게 속도 때문이라고 적지는 않았다. 오히려 [Rust·C++·Zig 코어 비교](https://github.com/ohah/spinon/blob/24a91bef/spikes/core-language-bench/README.md)의 결론은 언어 차이가 작다는 쪽이다. 같은 합성 트리 커널을 세 언어로 짜서 돌린 결과, 1000개 노드 직접 접근 기준 이벤트당 시간이 이랬다.
+저장소는 "Rust로 한다"는 결정은 적었지만, 그게 속도 때문이라고 적지는 않았다. 오히려 [Rust·C++·Zig 코어 비교](https://github.com/ohah/spinon/blob/e33f44da/spikes/core-language-bench/README.md)의 결론은 언어 차이가 작다는 쪽이다. 같은 합성 트리 커널을 세 언어로 짜서 돌린 결과, 1000개 노드 직접 접근 기준 이벤트당 시간이 이랬다.
 
 | 기기·실행 환경 | Rust / C++ / Zig |
 | --- | --- |
@@ -60,9 +60,9 @@ Rust는 `mise.toml`로 `1.96.1`에 고정했다. 10월 4일 기준 워크스페�
 
 ## JavaScript 엔진: V8
 
-모바일 JS 엔진은 V8이다. [V8 빌드 기준](https://github.com/ohah/spinon/blob/24a91bef/native/v8/VERSION.md)은 공식 V8 저장소의 커밋 하나를 `tools/v8/v8-revision.txt`에 고정하고(문서는 V8 `15.6.0` 후보 빌드라고 적는다), 저장소에는 소스를 넣지 않은 채 로컬에서 플랫폼별 `v8_monolith` 정적 라이브러리를 만든다.
+모바일 JS 엔진은 V8이다. [V8 빌드 기준](https://github.com/ohah/spinon/blob/e33f44da/native/v8/VERSION.md)은 공식 V8 저장소의 커밋 하나를 `tools/v8/v8-revision.txt`에 고정하고(문서는 V8 `15.6.0` 후보 빌드라고 적는다), 저장소에는 소스를 넣지 않은 채 로컬에서 플랫폼별 `v8_monolith` 정적 라이브러리를 만든다.
 
-- 시뮬레이터·에뮬레이터 빌드는 JIT를 켠다(`v8_jitless=false`). iOS 실기기용은 JIT 없는 설정을 별도 스크립트로 둔다.
+- Android 빌드와 iOS 시뮬레이터 빌드는 JIT를 켠다(`v8_jitless=false`). iOS 실기기용은 JIT 없는 설정을 별도 스크립트로 둔다.
 - 첫 부트스트랩 빌드는 GN 설정에서 Intl, Temporal, WebAssembly를 껐다.
 - V8 C++ API는 `native/v8`의 어댑터가 직접 다루고, Rust와는 엔진 내부 C ABI로 만난다.
 
@@ -79,7 +79,7 @@ React Native의 JSI는 쓰지 않는다. 아키텍처 문서는 "스피논은 V8
 
 CSS 선택자 매칭·cascade·상속·computed style은 Servo/Firefox 계열의 **Stylo** `0.22.0`(`stylo_dom` `0.22.0`, `selectors` `0.41.0`, `cssparser` `0.38.0`)로 한다. Rust `HostDocument`의 불변 snapshot을 Stylo의 DOM trait에 연결하는 어댑터를 직접 만들었다. Blitz DOM은 런타임 의존성으로 넣지 않는다.
 
-처음엔 다른 길도 실험했다. [스타일·레이아웃 실험](https://github.com/ohah/spinon/blob/24a91bef/spikes/style-layout/README.md)은 Lightning CSS `1.33.0`으로 CSS AST를 읽어 지원하는 값만 JSON으로 바꾼 뒤 Taffy에 넣는 경로였다. 아키텍처 문서는 이 AST 변환을 제품 경로로 선택하지 않았고, Lightning CSS는 "동등성 확인이 필요한 빌드 변환 후보"로 남긴다고 정리했다.
+처음엔 다른 길도 실험했다. [스타일·레이아웃 실험](https://github.com/ohah/spinon/blob/e33f44da/spikes/style-layout/README.md)은 Lightning CSS `1.33.0`으로 CSS AST를 읽어 지원하는 값만 JSON으로 바꾼 뒤 Taffy에 넣는 경로였다. 아키텍처 문서는 이 AST 변환을 제품 경로로 선택하지 않았고, Lightning CSS는 "동등성 확인이 필요한 빌드 변환 후보"로 남긴다고 정리했다.
 
 ## GPU: wgpu
 
@@ -95,8 +95,8 @@ CSS 선택자 매칭·cascade·상속·computed style은 Servo/Firefox 계열의
 ## JS·CSS 빌드 도구와 기준 브라우저
 
 - **Bun** `1.4.2`, **Node.js** `24.20.0` — 부트스트랩 예제 번들(`bun build`)과 테스트, 문서 사이트.
-- **Vite** `8.3.1`, **Rspack** `2.2.7` — [CSS 번들러 실험](https://github.com/ohah/spinon/blob/24a91bef/spikes/css-bundler/README.md)에서 같은 fixture의 CSS·JS 산출 그래프를 비교한다. 제품 번들러 어댑터는 아니다.
-- **Chromium** `154.0.8037.95` — CSS 계산값과 레이아웃 좌표의 기준(oracle). revision과 실행 파일 SHA-256까지 고정해 reference JSON을 만든다.
+- **Vite** `8.3.1`, **Rspack** `2.2.7` — [CSS 번들러 실험](https://github.com/ohah/spinon/blob/e33f44da/spikes/css-bundler/README.md)에서 같은 fixture의 CSS·JS 산출 그래프를 비교한다. 제품 번들러 어댑터는 아니다.
+- **Chromium** 154 — CSS 계산값과 레이아웃 좌표의 기준(oracle). 10월 1일 첫 비교는 `154.0.8037.92`, 10월 2일 이후 레이아웃·cascade 기준은 주로 `154.0.8037.95`였다. 비교마다 revision과 실행 파일 SHA-256까지 기록해 reference JSON을 만든다.
 
 ## 플랫폼과 도구 체인
 
@@ -112,7 +112,7 @@ iOS 실기기 검증은 "R02 iOS 실기기 V8 검증"으로 아직 남아 있다
 
 ## 계획 문서에만 있는 것
 
-[CLI·MCP 설계](https://github.com/ohah/spinon/blob/24a91bef/docs/cli-mcp.md)는 TypeScript/Node.js CLI(`create`·`dev`·`build`·`doctor`)와 에이전트용 MCP 서버를 같은 서비스의 두 인터페이스로 두는 설계지만, 문서 스스로 "현재 CLI 명령과 MCP 서버는 계획이며 구현 완료 기능이 아니다"라고 적는다. 기능별 청크 OTA, HMR, V8 Inspector 연결도 설계 단계다.
+[CLI·MCP 설계](https://github.com/ohah/spinon/blob/e33f44da/docs/cli-mcp.md)는 TypeScript/Node.js CLI(`create`·`dev`·`build`·`doctor`)와 에이전트용 MCP 서버를 같은 서비스의 두 인터페이스로 두는 설계지만, 문서 스스로 "현재 CLI 명령과 MCP 서버는 계획이며 구현 완료 기능이 아니다"라고 적는다. 기능별 청크 OTA, HMR, V8 Inspector 연결도 설계 단계다.
 
 :::info 1줄 요약
 Rust 워크스페이스(8개 크레이트) 위에 V8(고정 리비전)·Stylo 0.22·Taffy 0.14를 얹고, GPU는 wgpu 30.0.1(Android Vulkan, iOS Metal) 실험 크레이트로 그린다. 기준값은 고정 버전 Chromium 154에서 뽑는다.
