@@ -31,7 +31,7 @@ date: 2026-06-03
 
 브라우저의 현재 렌더러는 초기 표의 장기 구상인 WebGPU와 다르다. `@maru/core`와 React·Vue·Svelte·Lit 연결 코드가 저장소에 있고, `CanvasRenderer`가 `getContext("2d")`를 쓴다. 이는 저장소 구현에 대한 설명이며 npm 배포 여부를 뜻하지 않는다. [브라우저 패키지](https://github.com/ohah/maru/tree/6485c447575efe54a02f27b94a1614033e3e529f/packages), [Canvas 렌더러](https://github.com/ohah/maru/blob/6485c447575efe54a02f27b94a1614033e3e529f/packages/core/src/render/canvas.ts), [Windows 계약](https://github.com/ohah/maru/blob/6485c447575efe54a02f27b94a1614033e3e529f/docs/windows-platform.md), [모바일 계약](https://github.com/ohah/maru/blob/6485c447575efe54a02f27b94a1614033e3e529f/docs/mobile-platform.md), [네이티브 편집기](https://github.com/ohah/maru/blob/6485c447575efe54a02f27b94a1614033e3e529f/docs/native-editor.md).
 
-앱 안의 Chromium 웹 패널은 또 다른 축이다. 9월 26일 확인 시점에 [통합 PR #3867](https://github.com/ohah/maru/pull/3867)이 열려 있어, 개발 브랜치의 CEF 작업을 위 `main`의 구현에 포함하지 않았다.
+앱 안의 Chromium 웹 패널은 또 다른 축이다. 10월 5일 확인 시점에도 [통합 PR #3867](https://github.com/ohah/maru/pull/3867)이 열려 있어, 개발 브랜치의 CEF 작업을 위 `main`의 구현에 포함하지 않았다.
 
 ## 경계: 코어는 PTY를 모른다
 
