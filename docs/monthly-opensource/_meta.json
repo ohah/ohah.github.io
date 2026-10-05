@@ -87,5 +87,12 @@
     "label": "@ohah/pdf (Zig wasm PDF 엔진)",
     "collapsed": true,
     "collapsible": true
+  },
+  {
+    "type": "dir",
+    "name": "spinon",
+    "label": "Spinon",
+    "collapsed": true,
+    "collapsible": true
   }
 ]
