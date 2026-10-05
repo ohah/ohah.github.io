@@ -91,7 +91,7 @@
   {
     "type": "dir",
     "name": "spinon",
-    "label": "Spinon",
+    "label": "Spinon (GPU 기반 UI 프레임워크 실험)",
     "collapsed": true,
     "collapsible": true
   }
