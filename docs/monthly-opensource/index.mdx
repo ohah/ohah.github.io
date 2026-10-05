@@ -283,36 +283,39 @@
 
 ### 2026년 9월 말·10월 초 (9/26 저녁~10/4)
 
-이 구간은 [오늘의 커밋](/today-commit/)과 같은 UTC 날짜 기준이다. 리베이스 병합 때문에 9월 26일 작업 상당수가 27일 행에 잡혀 있다. Maru·ZNTC·Spinon은 `main` 병합, Hwpjs는 `main` 커밋을 따른다. Hwpjs는 10월 2일 이후 공개 커밋이 없고, 이 기간 새 GitHub 릴리스는 없다(ZNTC 최신 배포판은 여전히 v0.1.10).
+위 구간과 같이 한국 시간 기준이다. Maru·ZNTC·Spinon은 `main` 병합일, Hwpjs는 `main` 커밋일을 따른다. 9월 26일 행은 위 구간의 확인 시점 이후분만 담았다. Hwpjs는 10월 2일 이후 공개 커밋이 없고, 이 기간 새 GitHub 릴리스는 없다(ZNTC 최신 배포판은 여전히 v0.1.10).
 
 | 날짜 | 프로젝트 | 활동 |
 |------|---------|------|
+| 09-26 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | (3-10 이후) HWPX 수식 shape·캡션·주석, 구역·필드 파라미터, [단 정의·구역 번호 검사](https://github.com/ohah/hwpjs/commit/8a2db8df) |
+| 09-26 | [ohah/zntc](https://github.com/ohah/zntc) | (3-22 이후) 에픽 #4819 착수 — 상태 기계·클래스 IIFE·private 메서드·매개변수 기본값·TS namespace의 [생성 심볼 연결 #4854](https://github.com/ohah/zntc/pull/4854) |
 | 09-26 | [ohah/spinon](https://github.com/ohah/spinon) | **새 저장소 시작** — 웹 문법으로 모바일·웹 앱을 만드는 GPU 기반 UI 프레임워크 실험, [V8 언어 연결 PoC #1](https://github.com/ohah/spinon/pull/1) 생성 |
-| 09-27 | [ohah/maru](https://github.com/ohah/maru) | 세션 호스트 `owner.lock` 자가 치유, 판정자 규율 단일 출처, [괄호 판정 통일 #3983](https://github.com/ohah/maru/pull/3983) |
-| 09-27 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | HWP5·PNG·ICC·WMF·EMF 계약 문서를 코드와 재대조(문서 커밋 195개), EMF 결함 4건과 [드라이브 접두부 ZIP 경로](https://github.com/ohah/hwpjs/commit/a12bdf4a) 수정 |
-| 09-27 | [ohah/zntc](https://github.com/ohah/zntc) | for-await·async generator 임시 변수 심볼 결속, [이름 변경 뒤 참조 보존 #4879](https://github.com/ohah/zntc/pull/4879) |
-| 09-27 | [ohah/spinon](https://github.com/ohah/spinon) | V8 연결·네이티브 뷰 동적 트리 PoC와 벤치 병합, 명세 0.1 초안·상태 대장, [Cargo·Bun 모노레포 #3](https://github.com/ohah/spinon/pull/3) |
-| 09-28 | [ohah/maru](https://github.com/ohah/maru) | 편집기·스크롤백 [PCRE2 정규식 찾기 #3988](https://github.com/ohah/maru/pull/3988), 팔레트 fuzzy·한국어 별칭 |
-| 09-28 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | [HWP5 읽기 전용 문단 텍스트 API](https://github.com/ohah/hwpjs/commit/08f397cc), CFB 메타데이터 편차를 복사본에서 보정, zlib 래퍼 스트림 허용 |
-| 09-28 | [ohah/spinon](https://github.com/ohah/spinon) | Android·iOS V8 부트스트랩, [Rust UI 트리 코어 #5](https://github.com/ohah/spinon/pull/5), GPU 렌더러 계획, Taffy 실험 |
-| 09-29 | [ohah/maru](https://github.com/ohah/maru) | 다중 커서 한글 조합 표시, [창 크기 복귀 시 연결 끊김 수정 #4001](https://github.com/ohah/maru/pull/4001), 한글 글리프 아틀라스 결함 |
-| 09-29 | [ohah/spinon](https://github.com/ohah/spinon) | [wgpu 모바일 GPU 경로 검증 #10](https://github.com/ohah/spinon/pull/10), 생명주기·GPU 복구 실험, 공통 호스트 계약 초안 |
-| 09-30 | [ohah/maru](https://github.com/ohah/maru) | 업그레이드 스캔 수정·[호환 host 재사용으로 host 하나 유지 #4030](https://github.com/ohah/maru/pull/4030), 비교 뷰 좌우 찾기 |
-| 09-30 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | HWP5 스타일 참조 보존·[텍스트 splice 편집 실험](https://github.com/ohah/hwpjs/commit/b4860169), 기존 글자 모양 적용 |
-| 09-30 | [ohah/zntc](https://github.com/ohah/zntc) | [낮추기 중 심볼 정체성을 보존하는 대형 PR #4887](https://github.com/ohah/zntc/pull/4887) 병합 |
+| 09-27 | [ohah/maru](https://github.com/ohah/maru) | [편집기 한글 Enter 확정 #3968](https://github.com/ohah/maru/pull/3968), 하이퍼링크 능력 알림·`term-program` 설정, 괄호 판정 통일 |
+| 09-27 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | 각주·미주 본문 검사, [문서 검증 현황 도구](https://github.com/ohah/hwpjs/commit/d51cf6be), 계약 문서 재검증(`docs` 커밋 170개) |
+| 09-27 | [ohah/zntc](https://github.com/ohah/zntc) | ES5 클래스 self·구조 분해 임시 변수·`for-of` 단계 심볼, [단일 파일 minify의 그래프 재사용 #4870](https://github.com/ohah/zntc/pull/4870) |
+| 09-28 | [ohah/maru](https://github.com/ohah/maru) | [편집기 PCRE2 찾기·바꾸기 #3988](https://github.com/ohah/maru/pull/3988)와 스크롤백 정규식, IME 재변환·한자 후보 |
+| 09-28 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | [HWP5 읽기 전용 문단 텍스트 API](https://github.com/ohah/hwpjs/commit/08f397cc) — 791경로 중 677 미리보기, EMF·ZIP 경로 결함 수정 |
+| 09-28 | [ohah/zntc](https://github.com/ohah/zntc) | [이름 변경 뒤에도 정확한 참조 유지 #4879](https://github.com/ohah/zntc/pull/4879), 임시 변수 이름 충돌 방지 |
+| 09-28 | [ohah/spinon](https://github.com/ohah/spinon) | V8 PoC 병합, Cargo·Bun 모노레포, Android·iOS V8 부트스트랩, [Rust UI 트리 코어 #5](https://github.com/ohah/spinon/pull/5) |
+| 09-29 | [ohah/maru](https://github.com/ohah/maru) | [팔레트 fuzzy·한국어 검색 #3995](https://github.com/ohah/maru/pull/3995), 다중 커서 한글 조합, 창 크기 복귀 시 연결 끊김·한글 글리프 깨짐 수정 |
+| 09-29 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | zlib 래퍼 호환, DocumentProperties 진단, [읽기 전용 문서 모델 투영](https://github.com/ohah/hwpjs/commit/4b494bd6) |
+| 09-29 | [ohah/spinon](https://github.com/ohah/spinon) | Taffy R10 실험, [wgpu 모바일 GPU 경로 검증 #10](https://github.com/ohah/spinon/pull/10), GPU 복구 실험, 공통 호스트 계약 초안 |
+| 09-30 | [ohah/maru](https://github.com/ohah/maru) | [세션 호스트 업그레이드 스캔 수정 #4023](https://github.com/ohah/maru/pull/4023), `main` CI 실패 알림, 비교 뷰 좌우 찾기 |
+| 09-30 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | 원본 보존 스타일·[텍스트 splice 편집 실험](https://github.com/ohah/hwpjs/commit/b4860169), 문단 소유권 결함 수정 |
 | 09-30 | [ohah/spinon](https://github.com/ohah/spinon) | R06 스레드·소유권 위험 표, [V8 세션 우선순위 스케줄러 #15](https://github.com/ohah/spinon/pull/15) |
-| 10-01 | [ohah/maru](https://github.com/ohah/maru) | 공유 문서 설계와 [연결된 뷰 편집·Undo #4055](https://github.com/ohah/maru/pull/4055) |
-| 10-01 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | **[HWP5·HWPX 실험용 Canvas 편집](https://github.com/ohah/hwpjs/commit/26d33808)** — 직접 입력, 원문 보존 저장, undo·redo, HWP5 문단 분할·병합(재조판 없음) |
-| 10-01 | [ohah/zntc](https://github.com/ohah/zntc) | 단일 파일 helper 이름 충돌, [재분석 전후 rename을 심볼 정체성으로 이관 #4903](https://github.com/ohah/zntc/pull/4903) |
-| 10-01 | [ohah/spinon](https://github.com/ohah/spinon) | Taffy 레이아웃 모듈, HostDocument 모델, [Stylo DOM 어댑터 #21](https://github.com/ohah/spinon/pull/21) |
-| 10-02 | [ohah/maru](https://github.com/ohah/maru) | [`workspace.restore` 설정·복원 실패 기록 #4067](https://github.com/ohah/maru/pull/4067), 이름 없는 문서 백업 유실 방지 |
-| 10-02 | [ohah/zntc](https://github.com/ohah/zntc) | namespace·enum IIFE 매개변수 심볼, 정체성 게이트와 [minify 뒤 감사 #4959](https://github.com/ohah/zntc/pull/4959) |
-| 10-02 | [ohah/spinon](https://github.com/ohah/spinon) | [Vite·Rspack 번들러 그래프 결합 #33](https://github.com/ohah/spinon/pull/33), 계산 스타일을 Taffy 입력에 연결 |
-| 10-03 | [ohah/maru](https://github.com/ohah/maru) | [DECSET 2048 크기 통지 #4085](https://github.com/ohah/maru/pull/4085), kitty 이미지 reflow 추종, 복구 ID 백업 |
-| 10-03 | [ohah/zntc](https://github.com/ohah/zntc) | 번들러 그래프 유지 확대, CJS wrapper 이름 충돌 수정, [Ubuntu 중심 CI 통합 #5004](https://github.com/ohah/zntc/pull/5004) |
-| 10-03 | [ohah/spinon](https://github.com/ohah/spinon) | [CSS → 정적 스냅샷 → Android·iOS wgpu fixture #41](https://github.com/ohah/spinon/pull/41) (S04, 제품 renderer 아님) |
-| 10-04 | [ohah/maru](https://github.com/ohah/maru) | [`⌘\` 공유 분할 #4126](https://github.com/ohah/maru/pull/4126), 미저장 편집 수동 복구, 마지막 창 Dock 유지, 테스트 HOME 격리 |
-| 10-04 | [ohah/zntc](https://github.com/ohah/zntc) | 네이티브 문법별 그래프 유지, [보정 경로 제거 조건 문서 #5056](https://github.com/ohah/zntc/pull/5056), ES5 매개변수 평가 환경 수정 |
-| 10-04 | [ohah/spinon](https://github.com/ohah/spinon) | [제한 DOM façade 시제품 #48](https://github.com/ohah/spinon/pull/48), DOM 노드 수명 계약과 V8 약한 wrapper 회수 |
+| 10-01 | [ohah/maru](https://github.com/ohah/maru) | 공유 문서 설계와 Undo·본문·핸들 소유 분리, [연결된 두 뷰 편집 #4054](https://github.com/ohah/maru/pull/4054), 호환 host 재사용 |
+| 10-01 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | **[HWP5·HWPX 실험용 Canvas 미리보기·직접 입력](https://github.com/ohah/hwpjs/commit/37bbf123)**, HWPX 원문 보존 저장(재조판 없음) |
+| 10-01 | [ohah/zntc](https://github.com/ohah/zntc) | [낮추기 전체에서 심볼 그래프 편집 #4887](https://github.com/ohah/zntc/pull/4887), helper 충돌, 재분석 전후 rename 이관, namespace·enum codegen 결함 수정 |
+| 10-01 | [ohah/spinon](https://github.com/ohah/spinon) | Taffy 레이아웃 모듈, HostDocument 모델, [Stylo DOM 어댑터 #21](https://github.com/ohah/spinon/pull/21), Vite·Rspack CSS 비교 |
+| 10-02 | [ohah/maru](https://github.com/ohah/maru) | 공유 IME·뷰별 검색, 이름 없는 문서 백업 보존, [`workspace.restore` 설정 #4065](https://github.com/ohah/maru/pull/4065), 모바일 링크 탭 |
+| 10-02 | [ohah/hwpjs](https://github.com/ohah/hwpjs) | [편집본 다운로드](https://github.com/ohah/hwpjs/commit/576d4597), HWP5·HWPX undo/redo, HWP5 문단 분할·병합 |
+| 10-02 | [ohah/zntc](https://github.com/ohah/zntc) | enum·namespace 심볼, Flow·React Refresh·worklet 경로, [정체성 게이트 #4948](https://github.com/ohah/zntc/pull/4948)와 minify 뒤 감사 |
+| 10-02 | [ohah/spinon](https://github.com/ohah/spinon) | CSS inventory, Chromium 레이아웃 기준, [청크 OTA 호환 모델 초안 #27](https://github.com/ohah/spinon/pull/27), 번들러 모듈 그래프 어댑터 |
+| 10-03 | [ohah/maru](https://github.com/ohah/maru) | [DECSET 2048 크기 통지 #4085](https://github.com/ohah/maru/pull/4085), 공유 pane 복원 codec, kitty 이미지 reflow 추종 |
+| 10-03 | [ohah/zntc](https://github.com/ohah/zntc) | codegen namespace 접두사를 SymbolId로, 번들러 그래프 유지 확대, [Ubuntu 중심 CI 통합 #5004](https://github.com/ohah/zntc/pull/5004) |
+| 10-03 | [ohah/spinon](https://github.com/ohah/spinon) | 계산 스타일을 Taffy 입력으로, S03.1 V8 문서 변경 묶음, [CSS → 정적 스냅샷 → Android·iOS wgpu fixture #41](https://github.com/ohah/spinon/pull/41) (제품 renderer 아님) |
+| 10-04 | [ohah/maru](https://github.com/ohah/maru) | [`⌘\` 공유 문서 분할 #4126](https://github.com/ohah/maru/pull/4126), ID 기반 백업·수동 복구, 마지막 창 Dock 유지, 심볼 미리 보기 |
+| 10-04 | [ohah/zntc](https://github.com/ohah/zntc) | CI 회귀 수정, 네이티브·ES5 문법별 그래프 유지, 보정 경로 제거 조건 문서, [ES5 매개변수 평가 환경 수정 #5058](https://github.com/ohah/zntc/pull/5058) |
+| 10-04 | [ohah/spinon](https://github.com/ohah/spinon) | 스타일·환경 revision으로 오래된 계산 차단, [제한 DOM façade 시제품 #48](https://github.com/ohah/spinon/pull/48), DOM 노드 수명 계약 |
 
 구현 범위와 검증 조건은 [Maru 3-9](./maru/development-9), [Hwpjs 3-11](./hwpjs/development-11), [ZNTC 3-23](./zts/development-23), [Spinon 3-1](./spinon/development-1)에 정리했다.
