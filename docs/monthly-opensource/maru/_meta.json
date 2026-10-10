@@ -69,5 +69,11 @@
     "name": "development-9",
     "label": "3-9. 한 문서를 두 칸에서",
     "tag": "26.10.04"
+  },
+  {
+    "type": "file",
+    "name": "development-10",
+    "label": "3-10. 프로젝트 검색과 저장소 신뢰",
+    "tag": "26.10.09"
   }
 ]
