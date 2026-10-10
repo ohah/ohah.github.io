@@ -1,0 +1,130 @@
+---
+title: 3-2. 지연을 쪼개 재고, CSS를 런타임에 넣은 닷새
+date: 2026-10-09
+---
+
+import { Badge } from '@theme';
+
+# 3-2. 지연을 쪼개 재고, CSS를 런타임에 넣은 닷새 <Badge type="tip">2026-10-05 ~ 10-09</Badge>
+
+이 편은 10월 5일 00:00부터 10월 9일 23:59(한국 시간)까지 작성한 커밋 64개와, 그 사이에 병합된 PR #53\~#95(43개)를 다룬다. 날짜는 [3. 개발 과정](./development)과 같이 커밋 작성 시각을 한국 시간으로 바꿔 셌다.
+
+경계가 두 군데 걸쳐 있다. [3-1](./development-1) 끝에 적은 [Rust 회수 경로](https://github.com/ohah/spinon/pull/51)(#51)와 [V8 약한 wrapper 회수](https://github.com/ohah/spinon/pull/52)(#52)는 10월 5일 01시께 병합됐지만 3-1에서 다뤘으므로 여기서는 반복하지 않는다. 반대로 10월 9일 23:54에 연 #96(C04.10, 제한 CSS 장면을 모바일 wgpu에 연결)은 자정을 넘긴 10월 10일 00:01에 병합돼 다음 편으로 넘긴다. 작성 시각 기준이라 #96의 커밋 세 개 중 두 개는 10월 9일 커밋 수에 들어 있다. 10월 6일에는 작성한 커밋이 없다.
+
+첫 9일이 "이 경계가 성립하나"를 확인한 기간이었다면, 이 닷새는 "얼마나 걸리고 어디서 막히나"를 쪼개 재는 데 대부분을 썼다. 43개 PR 가운데 절반 넘게가 R05(계측 계약과 원본 수집)와 R06(스레드·스케줄러) 검증이었다. CSS는 마지막 날 오후에 몰아서 런타임 세션 안으로 들어왔다.
+
+## 10월 5일: DOM 노드 수명의 남은 숙제
+
+3-1 마지막에 Rust 회수 경로와 V8 약한 wrapper 회수가 들어왔지만, 반복 생성·회수, 세션 종료 경합, 대량 wrapper의 scan 비용이 남아 있었다. 새벽부터 그 셋을 차례로 처리했다.
+
+- **반복 회수**([#53](https://github.com/ohah/spinon/pull/53)) — 요소·텍스트 노드 32쌍을 만들고 붙였다가 떼어 버리는 과정을 6회 반복하고, 매회 Rust 노드 수(10개)·UTF-16 문자열 코드 단위(226개)·살아 있는 wrapper 수(9개)가 기준선으로 돌아오는지 확인했다. `spinon.onEvent()`에 넘긴 callback closure가 떼어 낸 노드의 wrapper를 붙잡고 있다가, handler를 바꾸면 함께 회수되는 것도 봤다.
+- **세션 종료 경합**([#54](https://github.com/ohah/spinon/pull/54)) — 무한 루프를 평가하는 중에 세션을 닫으면 활성 평가는 취소(`-8`)되고, 대기 중이던 작업 세 건과 닫힌 뒤의 호출은 `-6`으로 거부된다. 반복 close와 worker join도 확인했다. raw C ABI 포인터를 동시에 해제하는 경우는 "금지 계약"이라 실행하지 않았다.
+- **고정 상한 제거**([#55](https://github.com/ohah/spinon/pull/55)) — Rust 문서와 C++ wrapper registry에 있던 16,384개 상한을 없애고 버퍼를 필요한 만큼 늘리게 했다. 실제 V8에서 wrapper 16,385개를 만들고 회수했다.
+
+세 PR 모두 Android 16/API 36 ARM64 에뮬레이터와 iPhone 17 Pro/iOS 26.2 시뮬레이터에서 실제 V8로 확인했다. #55는 scan 시간도 반복해 쟀는데, [반복 측정 기록](https://github.com/ohah/spinon/blob/e1ba2a09/spec/internal/evidence/s03-dynamic-registry-repeat-measurements-2026-10-05.md)에서 Android 에뮬레이터는 프로세스 재시작 7회 중앙값 63.153ms에 최소 8.043ms, 최대 133.193ms로 편차가 컸다. PR은 이 값으로 CPU 비용이나 플랫폼 순위를 단정할 수 없고, 매 실행 뒤 전체 scan을 도는 구조가 큰 트리에서 비용 위험이 있다는 정도로만 정리한다. Android 대량 검증은 에뮬레이터에서 생긴 `SIGILL` 때문에 V8 CFI를 끈 테스트 설정이었다는 단서도 붙어 있다.
+
+[상태 대장](https://github.com/ohah/spinon/blob/e1ba2a09/spec/STATUS.md)에서 S03.3 아래 하위 검증 줄들은 체크됐지만 S03.3과 J10(DOM 노드 모델) 자체는 미완료다. 이벤트 리스너·외부 root 수명, 버퍼 할당 실패 주입, scan 비용 특성화, 실기기가 남았다.
+
+저녁에 연 [#56](https://github.com/ohah/spinon/pull/56)은 10월 7일에 병합됐다. 호스트가 `None`·`Moderate`·`Critical` 중 하나를 골라 V8 `MemoryPressureNotification()`에 전달하는 내부 경로를 Rust·C ABI·Android JNI·iOS에 이었지만, 실제 V8 런타임 호출은 두 플랫폼 모두 실행하지 않았고 빌드와 가짜 경계 테스트까지만 했다. 같은 PR에서 Android 긴 JS 진단 화면의 취소 버튼이 안 먹는 것처럼 보이던 문제를 찾았는데, 원인은 V8 취소 실패가 아니라 취소된 평가를 "완료"로 표시하던 UI였다.
+
+## 10월 7일: 프레임 지연은 어디서 오나
+
+10월 7일 오전 #56이 병합되면서 R05의 [프레임 지연 귀속 계측](https://github.com/ohah/spinon/blob/e1ba2a09/spec/internal/0022-r05-benchmark-attribution.md)이 같이 들어왔다. 탭 하나가 화면 갱신으로 이어지기까지를 입력 접수 → 스케줄러 큐 → V8 호출 → JNI/FFI → 응답 전달 → Android 메인 스레드 후속 처리로 쪼개고, 각 구간에 앱 trace marker와 런타임 보고서를 붙였다. Perfetto 수집 설정, Android View만 쓰는 대조 화면, 같은 화면에서 런타임 dispatch만 뺀 UI-only 조건도 만들었다.
+
+Android API 36 ARM64 에뮬레이터에서 50 dispatch를 돌린 결과, 런타임 큐 체류는 최대 977µs, V8 호출은 최대 1.186ms였다. 반면 기본 `runOnUiThread` 후속 callback은 p50 16.125ms였고, `Handler.createAsync`로 바꾼 대조에서는 75µs로 줄었다. 상태 대장은 이를 sync barrier의 영향으로 적는다. 가장 길었던 129.711ms 사례도 [실행 기록](https://github.com/ohah/spinon/blob/e1ba2a09/spec/internal/evidence/r05-android-frame-attribution-2026-10-06.md)을 보면 worker·FFI·V8은 각각 0.2ms 미만이었고, 시간은 Android View의 메인 스레드·프레임 경로에 있었다. 앞쪽 72.057ms `doFrame` 대기의 원인은 아직 확정하지 못했다.
+
+이어서 계측 자체를 의심했다.
+
+- [#57](https://github.com/ohah/spinon/pull/57) — Perfetto의 `ftrace_setup_errors=37`이 `atrace_categories: "gfx"` 한 줄 때문임을 5초 A/B로 좁혔다. 에뮬레이터(AVD)가 지원하지 않는 vendor driver 이벤트였다.
+- [#58](https://github.com/ohah/spinon/pull/58) — 100회 입력에서 별도의 113ms Composer VSync 공백을 찾았고, macOS `xctrace` System Trace가 기본 Windowed 모드에서 요청보다 짧은 0.214초만 저장한다는 것을 확인했다.
+- [#59](https://github.com/ohah/spinon/pull/59) — actor가 응답을 보낸 시점부터 Rust 호출자가 받는 시점까지를 cookie로 1:1 연결했다. 에뮬레이터에서 10회 반복한 [결과](https://github.com/ohah/spinon/blob/e1ba2a09/spec/internal/evidence/r05-reply-handoff-repeat-2026-10-07.md)는 p50/p95/최대 48.292/352.541/411.541µs였고, 앞서 한 번 본 63.009ms는 재현되지 않았다.
+
+#59로 R05의 하위 항목 R05.1·R05.2가 체크됐다. 상위 R05는 실기기·release 빌드·입력에서 화면 표시까지의 측정이 남아 미완료다.
+
+## 10월 7일 저녁: 고정 fixture에 세로 좌표와 터치
+
+3-1의 GPU fixture는 가로로 놓인 Flex 자식 세 개였다. 저녁에는 세로 방향과 입력을 붙였다.
+
+- **S04.8 비대칭 y 좌표**([#60](https://github.com/ohah/spinon/pull/60)) — 세로 위치·높이·간격이 모두 다른 fixture를 Chromium `154.0.8037.98`, Rust snapshot, GPU 좌표 변환으로 비교하고, Android 에뮬레이터(CPU `llvmpipe` adapter)·iOS 시뮬레이터에서 각각 RGBA 표본 36개를 맞췄다.
+- **S04.9 hit-test**([#61](https://github.com/ohah/spinon/pull/61)) — 표면 터치 좌표를 렌더링과 같은 배율·여백 변환으로 CSS 좌표로 되돌려 어떤 `NodeId`가 맞았는지 판정한다. [실행 기록](https://github.com/ohah/spinon/blob/e1ba2a09/spec/internal/evidence/s04-hit-test-platforms-2026-10-07.md)은 Chromium `document.elementFromPoint()` 11개 점과 결과가 일치했다고 적는다. 제품 DOM 이벤트가 아니라 고정 snapshot 위의 내부 fixture다.
+- **S05.1 이벤트 전달 계약**([#62](https://github.com/ohah/spinon/pull/62)) — React 첫 어댑터(S05)로 가기 전에, 루트 하나·손가락 하나의 tap → click callback 범위에서 FrameId와 revision, 제출 frame과 확인 frame의 구분, 대상·handler 수명, 실패 처리를 [내부 계약 0023](https://github.com/ohah/spinon/blob/e1ba2a09/spec/internal/0023-s05-event-delivery.md)으로 정리했다. 상태 대장은 S05.1을 체크하면서도 "런타임 구현·public onClick API·웹 이벤트 적합성을 뜻하지 않습니다"라고 적는다. 실제 실행(S05.2)과 화면에 표시된 frame 확인(S04.10)은 별도 미완료 항목으로 나눴다.
+
+밤 10시께에는 S04 GPU fixture를 처음으로 Android 실기기에 올렸다([#63](https://github.com/ohah/spinon/pull/63)). [조사 기록](https://github.com/ohah/spinon/blob/e1ba2a09/spec/internal/evidence/s04-10-presentation-signal-audit-2026-10-07.md)에 따르면 기기는 Samsung SM-S731N(Android 16/API 36)이고, wgpu가 고른 adapter는 Vulkan `Samsung Xclipse 940`이었다. 에뮬레이터에는 없던 `VK_GOOGLE_display_timing` 확장을 이 기기는 제공했다. 화면 제출과 앱 재진입 뒤 표면 재생성(generation 1·2) 양쪽에서 오프스크린 RGBA 표본 36개가 정확히 맞았다. 다만 `Queue::present` 호출은 "화면에 표시됐다"는 증거가 아니라서 S04.10은 미완료로 남았다.
+
+## 10월 8일 오전: 큐는 공정한가
+
+R06 스케줄러는 3-1에서 세 등급(`user-blocking`·`user-visible`·`background`) strict-priority 큐로 시작했다. 이날 오전은 이 큐가 실제로 어떻게 막히는지를 봤다.
+
+먼저 Android 실기기(SM-S731N)에서 `simpleperf --trace-offcpu`와 `atrace sched`로 JS owner 스레드를 추적했다([#64](https://github.com/ohah/spinon/pull/64)). [기록](https://github.com/ohah/spinon/blob/e1ba2a09/spec/internal/evidence/r06-android-physical-scheduler-2026-10-08.md)의 결론은 분명하다. 긴 동기 JS 조건에서 dispatch의 큐 체류 p50은 1,100,059µs였지만 owner 스레드의 off-CPU 구간은 p50 15.117µs에 불과했다. OS가 스레드를 늦게 깨운 게 아니라, 실행 중인 동기 JS가 끝나기 전까지 같은 Isolate의 다음 작업이 기다리는 head-of-line blocking이 주원인이었다. 디버그 앱·실기기 한 대의 진단이라는 단서가 붙는다.
+
+이어진 네 PR은 에뮬레이터·시뮬레이터에서 실제 V8로 큐를 몰아붙였다.
+
+- [#65](https://github.com/ohah/spinon/pull/65)·[#66](https://github.com/ohah/spinon/pull/66) — `background` 1개와 `user-blocking` 63개로 큐 64칸을 채운 뒤 높은 등급 96개를 더 넣었다. 먼저 들어온 `background`는 `user-blocking` 159개가 모두 끝난 뒤 실행됐다. Android 에뮬레이터·iOS 시뮬레이터에서 각 5회.
+- [#67](https://github.com/ohah/spinon/pull/67) — 늦게 넣는 작업을 1,024개로 늘리자 `background`는 1,088번째에 실행됐다. 같은 PR에서 [정책 후보 비교](https://github.com/ohah/spinon/blob/e1ba2a09/spec/internal/evidence/r06-priority-policy-comparison-2026-10-08.md)도 했다. 같은 4,096회 지속 입력을 결정론적 모델에 넣었을 때 strict-priority는 `background`를 한 번도 고르지 않았고, aging(8회 대기마다 한 단계)은 17번째, 가중 순환(8:4:1)은 13번째 선택에서 처음 `background`를 처리했다. aging 간격과 가중치는 예시값이며 제품 정책이 아니다.
+- [#68](https://github.com/ohah/spinon/pull/68) — 큐 포화. 대기 64개까지 받고, 65번째 요청은 `-5`로 거부되며, 비운 뒤에는 다시 받는다.
+
+공정성 정책도, 꽉 찬 큐에서 무엇을 버릴지(backpressure)도 아직 정하지 않았다. R06과 E05(스레드 스케줄러)는 미완료다.
+
+## 10월 8일 오후부터 9일 새벽까지: 화면에 "언제" 보였나
+
+오후부터는 R05.3, 즉 "입력 하나가 GPU 화면 표시까지 이어지는 시점"을 플랫폼 신호로 연결하는 작업이었다. [#70](https://github.com/ohah/spinon/pull/70)의 [계획](https://github.com/ohah/spinon/blob/e1ba2a09/plan/r05-input-to-presentation.md)은 입력 이벤트와 GPU render revision을 플랫폼 표시 신호에 정확히 짝짓는 방법을 정하고, 표시 시각과 frame 정체성을 직접 얻지 못하는 경로는 미지원으로 기록한다고 먼저 못 박았다.
+
+시뮬레이터 probe([#71](https://github.com/ohah/spinon/pull/71))에서는 바로 벽에 부딪혔다. Android의 현재 `SurfaceView` 경로에서는 Perfetto FrameTimeline 표시 신호를 쓸 수 없었고, Xcode 26.2 Simulator SDK의 Metal drawable에도 표시 callback이 없었다. 그래서 입력 → revision → 제출 호출까지만 연결하고, 표시 완료 신호가 없으니 지연값은 내지 않았다.
+
+이후 Android 쪽에서 `TransactionStats` callback과 present fence를 대안으로 파고들었다.
+
+- **표시 신호 probe와 16KB page**([#72](https://github.com/ohah/spinon/pull/72)) — API 36·37.2 에뮬레이터에서 WGPU/GLES 조합별 입력·제출·fence를 대조했다. API 37.2 JankData의 VSync ID는 맞았지만 `presentTimeNanos`는 모두 알 수 없음(`-1`)이었다. 같은 PR에서 16KB page 기기용으로 기존 APK의 GNU_RELRO 끝이 16KB 경계에 맞지 않는 문제를 찾아 고정 V8을 다시 빌드했고, API 37.2 16KB 에뮬레이터에서 로드를 확인했다.
+- **callback 실패 주입**([#73](https://github.com/ohah/spinon/pull/73)·[#74](https://github.com/ohah/spinon/pull/74)) — 실제 Handler timeout·취소와 합성한 늦은·중복·오래된 callback, callback 실행기 포화를 일부러 만드는 디버그 전용 fixture를 API 37.2 에뮬레이터에서 만들고 API 35·37.0·37.1로 넓혔다.
+- **적용된 transaction 수명주기**([#75](https://github.com/ohah/spinon/pull/75)\~[#77](https://github.com/ohah/spinon/pull/77)) — 실제로 화면에 적용된 transaction의 `TransactionStats` callback을 기다리는 중에 표면을 뗐다 붙여, 이전 generation의 늦은 callback을 걸러 내고 새 generation으로 복구하는지 API 37.2·37.1·35·37.0 에뮬레이터에서 확인했다. 매번 12개 검사, timeout과 callback 경합 100회, 60초 idle 관찰을 통과했다. 입력은 fixture가 합성한 `MotionEvent`다.
+- **API 29 링크 수정**([#82](https://github.com/ohah/spinon/pull/82)) — API 29에서 `_Unwind_Resume` 로드 실패가 나서, 고정 NDK의 `libunwind.a`를 정적으로 링크했다. API 29·34 에뮬레이터에서 GLES fallback 그리기까지 확인했고, API 30\~33은 아직 재지 않았다.
+
+자정 무렵부터는 Android 실기기(SM-S731N, Android 16/API 36, `SDK_INT_FULL` 36.1) 차례였다. 실기기 callback fixture 12개 검사 통과([#78](https://github.com/ohah/spinon/pull/78)), 비동기 fence 대기 worker로 입력·제출·callback·fence 33/33 정확 결합([#79](https://github.com/ohah/spinon/pull/79)), 재검증 11/11([#80](https://github.com/ohah/spinon/pull/80)), API 29 수정 APK로 13/13([#82](https://github.com/ohah/spinon/pull/82)), 다시 10/10([#84](https://github.com/ohah/spinon/pull/84))이 이어졌다. 고정 V8 revision으로 만든 Release 빌드도 실기기에서 실행해 기본 화면과 디버그 전용 경로 거부를 확인했다([#81](https://github.com/ohah/spinon/pull/81)).
+
+그런데 이 결합은 모두 ADB로 주입한 합성 탭이었다. #81에서 32분 30초 동안 raw 터치스크린 이벤트를 수집했지만 직접 손가락 입력은 0건이었다. 게다가 API 36 기기에서 `target_vsync_id=-1`이라 VSync·표시 지연·scanout은 계산하지 않았다.
+
+## 10월 9일 낮: 진짜 손가락
+
+10월 9일 낮, R05.3 수집에서 처음으로 직접 손가락 입력이 raw 이벤트로 잡혔다. 12시 18분 탐색 실행에서 GPU 사각형을 탭한 다섯 입력이 raw `sec_touchscreen` 해제 → 앱 `ACTION_UP` → WGPU 제출 → 같은 표면 generation의 transaction callback → 사용 가능한 fence까지 5/5 연결됐다. 다만 이미 56분 넘게 돌던 프로세스에서 얻은 표본이라 [기록](https://github.com/ohah/spinon/blob/e1ba2a09/spec/internal/evidence/r05-android-direct-touch-exploration-2026-10-09/README.md)은 이를 본 표본에 넣지 않았다.
+
+본 수집은 미리 정한 "새 프로세스 12 block × 30회, 후보 300개"다. 수집기와 정확 결합 분석기([#86](https://github.com/ohah/spinon/pull/86))를 넣고 block 01에서 28/30, block 02([#87](https://github.com/ohah/spinon/pull/87))에서 30/30이 결합돼 10월 9일 기준 누적 58/300, 유효 block 2/12다. 300개가 모이기 전에는 p95를 계산하지 않으며, PR은 이 결과를 제품 입력 지연이나 React Native·Lynx 대비 성능으로 주장하지 않는다고 적는다. R05.3은 미완료다.
+
+## 10월 9일 오후: CSS가 런타임 세션 안으로
+
+새벽 4시께 들어온 [R01 웹 호환 범위 인벤토리](https://github.com/ohah/spinon/pull/83)가 CSS 작업의 바탕이다. [웹 표면 명세](https://github.com/ohah/spinon/blob/e1ba2a09/spec/0003-web-surface.md)에 WHATWG HTML 요소 113개의 목표 매핑 분류를 넣었지만, 첫 구현 범위와 요소별 적합성은 아직 "미정"이다. 정오에는 [C01.3](https://github.com/ohah/spinon/pull/85)으로 Chrome `154.0.8037.98`의 `div` 계산 스타일 CSSOM 속성 이름 478개를 기준 자료로 고정했다.
+
+오후 2시 36분부터 7시 14분까지 PR 여덟 개가 연달아 병합됐다. 앞의 다섯 개는 3-1의 C04.1·C04.2처럼 고정 fixture 위의 Rust 내부 API다.
+
+| PR | 상태 ID | 내용 | Chromium 대조 |
+| --- | --- | --- | --- |
+| [#88](https://github.com/ohah/spinon/pull/88) | C04.3 | `align-items`·`justify-content` 제한 값을 Taffy로 전달 | 16개 case, frame 64개 |
+| [#89](https://github.com/ohah/spinon/pull/89) | C04.4 | `@layer` named·anonymous·nested 순서와 normal/important 승자 | 16개 case, frame 64개 |
+| [#90](https://github.com/ohah/spinon/pull/90) | C04.5 | 내장 HTML UA 규칙을 Stylo UserAgent origin으로 계산 | 요소 9개, 계산값 19개 |
+| [#91](https://github.com/ohah/spinon/pull/91) | C04.6 | margin·logical margin·음수 margin을 Taffy 네 방향에 전달 | 13개 case, 상자 51개 |
+| [#92](https://github.com/ohah/spinon/pull/92) | C04.7 | `prefers-color-scheme`·`pointer`·`hover` 제한 `@media` | desktop/mobile × light/dark 4개 case |
+
+다섯 모두 Android·iOS는 Rust 교차 컴파일만 확인했고 앱 실행이나 화면 표시는 없다. 지원하지 않는 값이 하나라도 있으면 부분 결과 없이 전체를 거부하는 원칙은 그대로다. #91에는 규칙 하나도 같이 들어갔다. [프로젝트 규칙](https://github.com/ohah/spinon/blob/e1ba2a09/docs/project-rules.md)에 "출시 전 내부 인터페이스·계약의 숫자 버전은 `0.1.0`으로 고정"한다고 적고, 구현이 늘 때마다 계약 버전을 올리던 것을 멈췄다.
+
+나머지는 성격이 다르다. 3-1의 "HTML → Stylo → Taffy → wgpu"는 런타임 세션 밖에서 고정 fixture를 단계별로 이은 경로였고 V8을 거치지 않았다. 이번에는 V8에서 JS가 DOM façade로 만든 문서를 런타임 세션이 직접 계산한다.
+
+- **C04.8 런타임 UA cascade**([#93](https://github.com/ohah/spinon/pull/93)) — `RuntimeSession`이 CSS viewport·media 입력과 revision을 소유하고, JS 작업 뒤 문서 revision이 바뀌면 세션별 CSS worker가 내장 UA cascade를 비동기로 계산해 내부 C ABI JSON으로 돌려준다. 검증 중 HostRoot 바로 아래 `<span>`이 Stylo의 문서 루트로 취급돼 `display: block`이 되는 차이를 찾아, 루트 직속 요소를 fragment 자식으로 계산하도록 고쳤다. [실행 기록](https://github.com/ohah/spinon/blob/e1ba2a09/spec/internal/evidence/c04-runtime-ua-cascade-simulators-2026-10-09.md)은 Android API 37.1 ARM64 에뮬레이터(16KB page)와 iOS 26.2 시뮬레이터의 실제 V8에서 revision 9 → 265를 확인했다고 적는다.
+- **계획과 기준값**([#94](https://github.com/ohah/spinon/pull/94)) — 구현 전에 [계획](https://github.com/ohah/spinon/blob/e1ba2a09/plan/c04-runtime-style-layout.md)을 검토하고 Chromium 기준 135개 계산값과 geometry를 먼저 수집했다.
+- **C04.9 런타임 CSS → Taffy**([#95](https://github.com/ohah/spinon/pull/95)) — 같은 cascade에서 제한 inline CSS를 계산하고 같은 CSS worker에서 Taffy로 넘겨 CSS px frame snapshot을 JSON으로 읽는다. Chromium과 노드 5개의 계산값·좌표를 비교했고, [실행 기록](https://github.com/ohah/spinon/blob/e1ba2a09/spec/internal/evidence/c04-runtime-css-taffy-simulators-2026-10-09.md) 기준 Android API 37 ARM64 에뮬레이터(16KB page)와 iOS 26.2 시뮬레이터에서 통과했다.
+
+상태 대장은 C04.8·C04.9를 체크했지만, C04.9 항목에 "이는 GPU scene·화면 표시, 공개 CSS 지원, 전체 layout, 실기기 또는 성능 검증이 아니다"라고 덧붙인다. 그 결과를 실제로 화면에 그리는 C04.10(#96)은 같은 날 밤 11시 53분에 작성됐지만, 병합이 10월 10일 00:01이라 이 편에는 넣지 않는다.
+
+## 닷새 뒤의 위치
+
+| 영역 | 10월 4일 | 10월 9일 |
+| --- | --- | --- |
+| DOM 수명 | 회수 경로 구현 | 반복·종료 경합·16,385개 회수 확인. S03.3·J10 미완료 |
+| JS 스케줄러 | 세 등급 strict-priority 큐 | 지속 유입·포화 거부 확인, 실기기에서 head-of-line blocking 확인. 공정성·backpressure 미정 |
+| 계측(R05) | 근거 없음 | R05.1·R05.2 체크. 실기기 직접 입력 58/300, 표시 시각은 아직 없음 |
+| GPU·입력 | 가로 fixture, 시뮬레이터 | 세로 fixture·hit-test, Android 실기기 첫 제출·readback |
+| CSS | 고정 fixture cascade·Flex | 고정 fixture slice 다섯 개 추가, 런타임 세션 안의 UA cascade·Taffy 연결 |
+| 공개 API·프레임워크 어댑터 | 없음 | 없음 |
+
+상태 대장의 기준일은 2026-10-09로 바뀌었지만 첫 줄은 그대로 "현재 제품 지원 완료: 없음"이다. 하위 항목 체크는 늘었고, 상위 항목은 3-1 때와 같은 자리에 머물러 있다.
+
+:::info 1줄 요약
+DOM 수명 검증을 마무리한 뒤, 탭 하나가 화면에 이르기까지의 지연을 Perfetto·simpleperf·present fence로 쪼개 재고 JS 큐의 head-of-line blocking을 실기기에서 확인했다. 마지막 날에는 CSS cascade와 Taffy 레이아웃을 V8 런타임 세션 안에 연결했다. 다만 모두 내부 진단과 시제품 범위이고, 상태 대장의 제품 지원 완료는 여전히 없다.
+:::

@@ -21,5 +21,11 @@
     "name": "development-1",
     "label": "3-1. PoC와 명세로 보낸 첫 9일",
     "tag": "26.10.04"
+  },
+  {
+    "type": "file",
+    "name": "development-2",
+    "label": "3-2. 지연을 쪼개 재고, CSS를 런타임에 넣은 닷새",
+    "tag": "26.10.09"
   }
 ]
