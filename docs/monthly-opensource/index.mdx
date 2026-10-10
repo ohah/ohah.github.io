@@ -289,7 +289,7 @@
 
 구현 범위와 검증 조건은 [Maru 3-8](./maru/development-8), [Hwpjs 3-10](./hwpjs/development-10), [ZNTC 3-22](./zts/development-22), [PDF 개발 과정](./pdf/development)에 정리했다. 개발기는 10월 4일까지를 다루며, 10월 5일 이후 활동은 다음 편에서 이어 다룬다.
 
-### 2026년 9월 말·10월 초 (9/26 저녁~10/6)
+### 2026년 9월 말·10월 초 (9/26 저녁~10/9)
 
 위 구간과 같이 한국 시간 기준이다. Maru·ZNTC·Spinon은 `main` 병합일, Hwpjs는 `main` 커밋일을 따른다. 9월 26일 행은 위 구간의 확인 시점 이후분만 담았다. Hwpjs는 10월 2일 이후 공개 커밋이 없고, 이 기간 새 GitHub 릴리스는 없다(ZNTC 최신 배포판은 여전히 v0.1.10).
 
@@ -330,5 +330,14 @@
 | 10-05 | [ohah/spinon](https://github.com/ohah/spinon) | HostDocument·V8 약한 wrapper 회수 병합, [문서 노드 16,384개 고정 상한 제거 #55](https://github.com/ohah/spinon/pull/55) |
 | 10-06 | [ohah/maru](https://github.com/ohah/maru) | [창 닫기 중 해제된 탭을 읽고 죽던 use-after-free 수정 #4186](https://github.com/ohah/maru/pull/4186), 재접속 중 abort 수정, 저장 헤더 v1 복원으로 빈 창 문제 해결, 권한 동의문 URL의 호스트 보존 |
 | 10-06 | [ohah/zntc](https://github.com/ohah/zntc) | ES5 클래스·생성자 본문에서 번들러 의미 그래프 유지 확대(PR 45개), [빈 ES5 클래스부터 #5124](https://github.com/ohah/zntc/pull/5124) |
+| 10-07 | [ohah/maru](https://github.com/ohah/maru) | [VS Code식 프로젝트 검색 구성과 ripgrep 번들 #4196](https://github.com/ohah/maru/pull/4196)·검색 worker, 언어 서버를 프로세스 그룹째 종료, 저장소 신뢰 시트(WT1) |
+| 10-07 | [ohah/zntc](https://github.com/ohah/zntc) | 단일 파일 런타임 helper 27종을 호출부와 같은 SymbolId 이름으로 출력([extends helper부터 #5177](https://github.com/ohah/zntc/pull/5177)), CJS 래퍼·런타임 factory 심볼화 |
+| 10-07 | [ohah/spinon](https://github.com/ohah/spinon) | [GPU fixture hit-test를 Android·iOS 입력에 연결 #61](https://github.com/ohah/spinon/pull/61)(S04.9), Android 실기기 첫 GPU 제출·readback, 메모리 압박 신호 |
+| 10-08 | [ohah/maru](https://github.com/ohah/maru) | [언어 서버 신뢰를 앱 전역 표 하나로 #4227](https://github.com/ohah/maru/pull/4227)(WT2a), 홈·저장소 밖 루트 제외, 철회·잊기, 잠자기 뒤 재접속 수정 |
+| 10-08 | [ohah/zntc](https://github.com/ohah/zntc) | [helper 출력 후 이름 재작성 제거 #5211](https://github.com/ohah/zntc/pull/5211), UMD·AMD·IIFE 외부 factory 매개변수 충돌 수정, 선택적 체이닝·ES5 연산 그래프 유지 |
+| 10-08 | [ohah/spinon](https://github.com/ohah/spinon) | JS 큐 [지속 유입·공정성 후보 비교 #67](https://github.com/ohah/spinon/pull/67)(R06), 입력→표시 신호 계측(R05.3), Android API별 수명주기 검증 |
+| 10-09 | [ohah/maru](https://github.com/ohah/maru) | [⇧⌘F 프로젝트 검색 도크 #4245](https://github.com/ohah/maru/pull/4245)와 결과 탭·바꾸기 미리보기, 사용자 셸 환경으로 언어 서버 찾기(WT3b) |
+| 10-09 | [ohah/zntc](https://github.com/ohah/zntc) | [SymbolId 기반 출력 이름 resolver #5272](https://github.com/ohah/zntc/pull/5272), ES5 optional call의 `this` 유실 수정, static 클래스 필드 그래프 유지 |
+| 10-09 | [ohah/spinon](https://github.com/ohah/spinon) | [런타임 CSS를 Taffy 레이아웃에 연결 #95](https://github.com/ohah/spinon/pull/95)(C04.9, 화면 표시 아님), Cascade Layers |
 
-구현 범위와 검증 조건은 [Maru 3-9](./maru/development-9), [Hwpjs 3-11](./hwpjs/development-11), [ZNTC 3-23](./zts/development-23), [Spinon 3-1](./spinon/development-1)에 정리했다. 개발기는 10월 4일까지를 다루며, 10월 5일 이후 활동은 다음 편에서 이어 다룬다.
+구현 범위와 검증 조건은 [Maru 3-9](./maru/development-9)·[3-10](./maru/development-10), [Hwpjs 3-11](./hwpjs/development-11), [ZNTC 3-23](./zts/development-23)·[3-24](./zts/development-24), [Spinon 3-1](./spinon/development-1)·[3-2](./spinon/development-2)에 정리했다. 개발기는 10월 9일까지를 다룬다.
