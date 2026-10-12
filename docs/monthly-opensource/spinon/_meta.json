@@ -27,5 +27,11 @@
     "name": "development-2",
     "label": "3-2. 지연을 쪼개 재고, CSS를 런타임에 넣은 닷새",
     "tag": "26.10.09"
+  },
+  {
+    "type": "file",
+    "name": "development-3",
+    "label": "3-3. CSS를 화면에 올리고, Block·Flex·위치 지정을 쌓은 이틀",
+    "tag": "26.10.12"
   }
 ]

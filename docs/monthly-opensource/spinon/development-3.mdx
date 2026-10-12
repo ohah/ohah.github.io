@@ -1,0 +1,133 @@
+---
+title: 3-3. CSS를 화면에 올리고, Block·Flex·위치 지정을 쌓은 이틀
+date: 2026-10-12
+---
+
+import { Badge } from '@theme';
+
+# 3-3. CSS를 화면에 올리고, Block·Flex·위치 지정을 쌓은 이틀 <Badge type="tip">2026-10-10 ~ 10-12</Badge>
+
+이 편은 10월 10일 00:00부터 10월 12일 23:59(한국 시간)까지 작성한 커밋 69개와, 그 사이에 병합된 PR #96\~#142(47개)를 다룬다. 날짜는 [3. 개발 과정](./development)과 같이 커밋 작성 시각을 한국 시간으로 바꿔 셌다. 10월 10일이 32개, 10월 11일이 37개이고, 10월 12일에는 작성한 커밋도 병합된 PR도 없다. 그래서 사실상 이틀 기록이다.
+
+경계는 [3-2](./development-2) 끝에 걸쳐 있다. [#96](https://github.com/ohah/spinon/pull/96)(C04.10)은 10월 9일 23:54에 열려 자정을 넘긴 10월 10일 00:01에 병합됐으므로 이 편에서 다룬다. 다만 작성 시각 기준이라 #96의 커밋 세 개 중 10월 9일 밤에 쓴 두 개는 3-2의 10월 9일 커밋 수에 이미 들어 있고, 여기서는 00:01에 쓴 나머지 하나만 센다.
+
+3-2의 마지막 날 CSS가 V8 런타임 세션 안으로 들어왔다면, 이 이틀은 그 경로 위에 CSS 기능을 하위 항목 단위로 하나씩 얹은 기간이다. 47개 PR이 모두 CSS 체크리스트(C04\~C12) 작업이었다. 제목 접두사로 나누면 `feat` 26개, `docs` 18개, `test` 2개, `fix` 1개다. `docs`가 많은 것은 일하는 순서 때문이다. 하위 항목 하나를 대개 다음 단계로 진행했다.
+
+1. **계획 PR** — 범위·실패 경계·완료 조건을 계획 문서에 먼저 적는다.
+2. **Chromium 사전 비교** — 구현 전에 고정 버전 Chrome 154에서 기준값(computed style과 상자 좌표)을 수집해 고정한다.
+3. **구현 PR** — Stylo → Taffy → WGPU 경로를 연결하고, Rust 비교와 모바일 앱 실행 근거를 붙인다. C07.3 무렵부터는 "병합 전"이라며 이 PR에서 공식 체크를 하지 않았다.
+4. **병합 상태 동기화 PR** — 리베이스 병합 뒤 상태 대장의 "검토 중" 문구를 고치고 체크한다.
+
+모든 단계가 PR로 남은 것은 아니지만(작은 항목은 구현 PR 하나로 끝났다), C09·C10·C12처럼 큰 항목은 거의 이 모양을 따랐다.
+
+## 10월 10일 자정: 계산 결과를 화면에 그리다
+
+[#96](https://github.com/ohah/spinon/pull/96)은 C04.9가 만든 CSS px frame snapshot을 실제 화면으로 잇는 단계다. 같은 `RuntimeSession`의 제한 CSS 계산 결과를 Rust 렌더 장면으로 바꿔 Android·iOS WGPU 표면에 표시한다. 이 PR로 WGPU 렌더러 크레이트 `spinon-render-wgpu`가 워크스페이스 구성원에 새로 들어왔다. 그전까지 wgpu는 실험 크레이트(`spikes/`)에만 있었다.
+
+[상태 대장](https://github.com/ohah/spinon/blob/975d3356/spec/STATUS.md)의 C04.10 항목에는 검증 내용이 길게 적혀 있다.
+
+- 표면 크기를 `301×100 → 341×128 → 301×100 → 341×128` CSS px로 왕복시키며 Android에서는 native window와 WGPU texture가 `790×263 → 895×336` pixel로 바뀌고, 렌더러를 다시 만든 뒤에도 CSS root frame과 화면이 맞는지 확인했다.
+- Java·Swift 쪽 render lane은 단일 생산자 100,000건, 동시 생산자 8×10,000건에서 drain 상한과 최신 상태 반영을 봤다.
+- 합성한 draw 오류(`-11`) 다음 draw가 같은 환경 revision으로 회복하는 것도 확인했다.
+
+실행 환경은 Android API 37 에뮬레이터와 iPhone 17 Pro / iOS 26.2 시뮬레이터다. 에뮬레이터에서는 Vulkan을 강제하면 adapter 초기화가 실패해, GLES 위의 ANGLE/SwiftShader 소프트웨어 렌더러를 썼다. PR은 "실기기·하드웨어 GPU 및 성능 검증은 하지 않았습니다"라고 적고, Android 데모의 `dispose`가 Activity UI 스레드에서 런타임·렌더 drain을 동기로 기다린다는 점을 임의 JS를 붙이기 전에 풀어야 할 숙제로 남긴다. 텍스트, 이미지, 테두리 선, 그림자, transform, clipping, 스크롤, 접근성, hit test는 여기서도 미지원이다.
+
+## 10월 10일 새벽: 스타일 입력을 넓히고, 다시 계산을 줄이다
+
+00:49부터 04:44까지 PR 다섯 개가 병합됐다. 앞의 셋은 런타임 cascade에 들어가는 입력을 넓혔다.
+
+- **C05.1 사용자 지정 속성**([#97](https://github.com/ohah/spinon/pull/97)) — DOM `style` 속성의 `--*` 선언과 `var()` 대체를 제한 Flex layout과 `background-color`까지 연결했다. 부모 값 수정, 노드 이동·분리·재삽입 뒤에도 계산값과 frame이 새 문서 revision을 따르는지 봤다.
+- **C04.11 author stylesheet**([#98](https://github.com/ohah/spinon/pull/98)) — 문서에 연결된 HTML `<style>` 본문을 DOM 순서대로 모아 Stylo author origin에 넘긴다. 외부 stylesheet 로딩, 일반 `@import`, CSSOM은 지원하지 않는다.
+- **C05.2 `@property` 등록**([#99](https://github.com/ohah/spinon/pull/99)) — `<length>`·`<color>`·`<number>` 문법, `inherits`, `initial-value`, 잘못된 typed 값과 모르는 descriptor 처리를 확인했다. `CSS.registerProperty()`는 범위 밖이다.
+
+뒤의 둘은 같은 결과를 덜 계산하는 쪽이다.
+
+- **C05.3 결과 재사용**([#100](https://github.com/ohah/spinon/pull/100)) — 문서 revision만 바뀌고 연결된 트리·스타일·환경이 같으면(예: 분리된 노드만 바뀐 경우) 이전 cascade·layout 결과를 그대로 다시 낸다. [측정 기록](https://github.com/ohah/spinon/blob/975d3356/spec/internal/evidence/c05-runtime-result-cache-implementation-review-2026-10-10.md)을 보면 연결 노드 2,048개 장면에서 세 프로세스의 miss p50은 12.65\~12.67ms, hit p50은 9.1\~10.6µs였다. 이 값은 Mac 호스트의 Rust release worker 지연이고, 기록은 이를 Android·iOS 성능으로 일반화하지 않는다고 적는다.
+- **C05.4 하위 트리 재계산**([#101](https://github.com/ohah/spinon/pull/101)) — 연결된 root가 하나이고 author stylesheet가 없을 때 `style` 속성만 바뀌면, 바뀐 하위 트리와 상속 문맥만 Stylo로 다시 계산한다. PR 본문의 M4 Max 측정에서 2,048개 장면은 Stylo 재계산 2개·재사용 2,046개로 요청 p50이 12,926.9µs에서 11,959.1µs로 줄었지만, 16개 장면에서는 이득이 없었다. PR은 snapshot 비교, Taffy layout, 장면 생성이 여전히 전체 트리를 처리한다고 덧붙인다.
+
+다섯 PR 모두 Android API 37 에뮬레이터와 iOS 26.2 시뮬레이터에서 실제 V8 → HostDocument → Stylo → Taffy → WGPU 경로를 실행했다.
+
+## 10월 10일 오전: 값·단위와 상자
+
+10시 45분에 병합된 [#102](https://github.com/ohah/spinon/pull/102)는 한 PR에 하위 항목 일곱 개를 담았다. percentage 크기·여백(C06.1·C06.2), 절대 길이 단위(C06.3), `em`·`rem`(C06.4), 제한된 `calc()`·`min()`·`max()`·`clamp()`(C06.5), viewport 단위(C06.6a), 물리 축 min/max 크기(C07.1)다. Stylo가 계산한 typed 값을 타입을 유지한 채 layout 입력과 Taffy까지 전달하는 것이 공통점이다(예: percentage를 미리 px로 바꾸지 않는다). C07.1은 Chrome 기준 35개 노드의 모든 frame 값이 DPR 1·2에서 오차 0 CSS px였다. container 단위(`cqw` 등, C06.6b)는 성공 경로에서 명시적으로 거부하고 C21로 미뤘다.
+
+> 상태 대장에서 C06.3\~C06.5 줄은 체크돼 있지만 본문은 "현재 작업 브랜치 구현·검증 완료, 미병합"이라는 브랜치 시절 문구를 그대로 두고 있다. 세 항목은 #102로 병합됐다.
+
+이어서 상자 모델을 마저 채웠다.
+
+- **C07.2 테두리 폭**([#103](https://github.com/ohah/spinon/pull/103)) — 네 면의 테두리 폭을 layout 입력으로 Taffy에 넘긴다. 50개 노드 Chrome 비교. 테두리 선을 그리는 것은 C22 범위라, 화면에는 아직 선이 없다.
+- **C07.3 종횡비**([#104](https://github.com/ohah/spinon/pull/104)) — Chrome 35개 노드 중 지원하는 30개의 frame이 허용치 0.5 CSS px 안에 들었다. 검증 중 Taffy leaf가 두 축 크기가 모두 정해져 있어도 비율을 높이 하한처럼 적용해 Chrome과 달라지는 경우를 찾아, 그 경우 호출용 스타일 복제본에서만 비율을 끄도록 했다. 현재 Taffy 계산이 Chrome과 다른 min/max·종횡비 다섯 조합과, 의미를 보존할 수 없는 `auto <ratio>`는 오류로 거부한다. 이 때문에 상위 C07은 미완료다.
+
+## 10월 10일 오후: Block
+
+오후에는 기존 Flex profile과 별도로 Block 흐름용 profile을 열었다.
+
+- **C08.1 Block 흐름·배경**([#105](https://github.com/ohah/spinon/pull/105)) — 별도 `RuntimeBlockPaintV1` profile로 기본 Block 흐름, `display:none`, 단색 배경을 WGPU까지 연결했다. 보이는 텍스트 노드, Block 밖 display 값, 부분 투명도는 조용히 근사하지 않고 오류로 처리한다.
+- **C09 사전 비교**([#106](https://github.com/ohah/spinon/pull/106)) — 구현 전에 Chrome 기준 23개 case·76개 노드를 먼저 고정했다. 이후 C09.2에서 기준 파일이 v2로 갱신돼 지금은 30개 case·103개 노드다.
+- **C09.1 일반 Block 흐름**([#107](https://github.com/ohah/spinon/pull/107)) — `auto` 폭, 좌우 `auto` margin, 포함 블록, auto 높이. 검증 중 Stylo의 `display` fallback 때문에 지원하지 않는 레이아웃이 `block`처럼 통과하던 문제를 찾아, 원문 선언을 검사해 실패시키도록 고쳤다.
+- **C09.2 세로 margin collapse**([#109](https://github.com/ohah/spinon/pull/109)) — 형제·부모-자식·빈 상자의 collapse를 16개 case·57개 노드로 비교했다. Taffy 0.14.0의 기존 Block 알고리즘이 그대로 맞아 별도 collapse 구현은 넣지 않았다.
+- **C09.3 `flow-root`**([#111](https://github.com/ohah/spinon/pull/111)) — 독립 Block formatting context의 안쪽 margin 격리와 바깥 margin collapse를 나눠 검증했다.
+
+#108·#110·#112는 각 구현 PR이 병합된 뒤 상태 대장의 문구를 맞춘 동기화 PR이다. shrink-to-fit(C09.4)은 float(C26)·인라인(C15)·내재 크기(C14) 같은 선행 항목이 있어야 해서 미구현이고, 상위 C09도 미완료다.
+
+## 10월 10일 저녁: Flexbox
+
+17시께부터 22시 52분까지는 C10 Flexbox였다. 여기도 계획([#113](https://github.com/ohah/spinon/pull/113)·[#115](https://github.com/ohah/spinon/pull/115)·[#118](https://github.com/ohah/spinon/pull/118))과 구현이 번갈아 들어갔다.
+
+| PR | 상태 ID | 내용 | Chrome 기준 |
+| --- | --- | --- | --- |
+| [#114](https://github.com/ohah/spinon/pull/114) | C10.1 | `flex-wrap: nowrap`·`wrap` 줄 수집 | 12개 case, 노드 44개 |
+| [#116](https://github.com/ohah/spinon/pull/116) | C10.2 | flex basis·grow·shrink 배분과 min/max freeze | 27개 case, 노드 92개 |
+| [#119](https://github.com/ohah/spinon/pull/119) | C10.3.1 | `row-reverse`·`column-reverse`·`wrap-reverse` | 17개 case, 노드 64개 |
+| [#120](https://github.com/ohah/spinon/pull/120) | C10.3.2 | in-flow `order`와 paint 순서 | 11개 case, 노드 48개 |
+
+C10.2에서는 Taffy가 이미 Chrome 기준과 일치해 Flex 배분 알고리즘을 따로 만들지 않았다. C10.3.1·C10.3.2는 계산·그리기 순서만 바꾸고 HostDocument의 원래 자식 순서와 NodeId는 그대로 둔다. 역방향과 `direction: rtl`이 겹치는 입력은 거부한다. 네 PR 모두 Android API 37 에뮬레이터와 iOS 26.2 시뮬레이터에서 앱을 다시 빌드해 frame과 WGPU 상자 제출을 확인했다.
+
+## 10월 11일 새벽: 정렬·baseline, 그리고 실기기
+
+10월 11일 새벽 2시 30분, 고 DPR에서 소수 테두리 폭이 Stylo 직렬화 과정에서 사라지는 문제를 고쳤다([#121](https://github.com/ohah/spinon/pull/121)). 이 PR은 Rust와 Chrome 기준 검사까지만 했고, 모바일 앱에서 이 경계를 실행했다고는 주장하지 않는다.
+
+3시 17분에 병합된 [#122](https://github.com/ohah/spinon/pull/122)(C10.3.3, `align-*`·`place-*` 정렬)부터 Android 검증 기기가 바뀌었다. 10월 10일까지 런타임 CSS 경로의 Android 근거는 모두 에뮬레이터였는데, 이 PR부터 [Samsung SM-S731N 실기기](https://github.com/ohah/spinon/blob/975d3356/spec/internal/evidence/c10-3-3-android-2026-10-11/c1033-android-physical-2026-10-11.md)(Android 16/API 36, Xclipse 940/Vulkan)에서 V8 → Stylo → Taffy → WGPU를 실행했다. iOS는 계속 iPhone 17 Pro / iOS 26.2 시뮬레이터다. C10.3.3의 Chrome 기준은 50개 case·134개 노드지만, 모바일에서 실행한 것은 노드 8개짜리 fixture다. 검증 중 Taffy 0.14.0이 교차축 여유 공간이 음수일 때 cross-start `auto` margin을 음수로 기록하는 차이를 찾아, LTR row/column의 제한된 조건에서만 최종 frame을 보정했다.
+
+이어서 baseline 정렬을 계획 두 번([#123](https://github.com/ohah/spinon/pull/123)·[#124](https://github.com/ohah/spinon/pull/124), 앞 절과 하위 단계 사이의 범위 모순 정리)에 걸쳐 다듬은 뒤 [#125](https://github.com/ohah/spinon/pull/125)(C10.3.4)로 구현했다. first/last baseline과 중첩 Flex 전파를 Chrome 18개 case·73개 노드와 비교했고, 실기기와 시뮬레이터에서 상자 12개를 제출했다. 다만 텍스트가 없으니 성공 범위는 고정 크기 빈 상자의 baseline이다. 그래서 C10.3.1\~C10.3.5가 모두 체크된 지금도 상위 C10.3은 "실제 text baseline을 C15 shaping·line layout에 연결하는 작업이 남아 있어" 미완료다.
+
+## 10월 11일 아침: 위치 지정
+
+5시 23분 [C12 계획](https://github.com/ohah/spinon/blob/975d3356/plan/c12-positioning.md)([#126](https://github.com/ohah/spinon/pull/126))이 static/relative → Block absolute → Flex absolute 자식 → fixed → stacking → sticky 순서를 정했고, 정오까지 그중 넷을 병합했다.
+
+- **C12.1 static·relative**([#128](https://github.com/ohah/spinon/pull/128)) — `position`과 물리 inset. 흐름상 frame과 relative로 옮긴 시각 frame을 분리했다. Android 실기기에서 앱을 종료했다 다시 여는 실행 3회 모두 같은 결과를 냈고, 두 플랫폼에서 fixture 요소 47개의 좌표 오차가 0 CSS px였다. 검증 중 Android에서 Surface 크기가 정해지기 전에 fixture가 시작돼 첫 장면이 `-12`로 끝나는 경합을 찾아 시작 시점을 옮겼다.
+- **C12.2 Block absolute**([#130](https://github.com/ohah/spinon/pull/130)) — HostDocument의 원래 부모 관계는 두고 계산 트리에서만 포함 블록 쪽으로 다시 잇는다. Chrome 23개 case·82개 노드를 Android 실기기와 iOS 시뮬레이터 런타임이 모두 82/82로 맞췄다(최대 오차 0.0125 CSS px). iOS의 `viewDidLayoutSubviews`가 viewport를 320×240으로 덮어쓰던 결함도 이때 찾았다.
+- **C10.3.5 위치 지정 Flex 자식**([#132](https://github.com/ohah/spinon/pull/132)) — Flex 안 absolute 자식의 static position과 그리기 단계. Chrome 기준은 20개 case·70개 노드, 모바일 실행은 3개 case·15개 노드로 양쪽 오차 0 CSS px였다. 모바일 입력의 `background` shorthand를 같은 색의 `background-color`로 바꿔 넣었으므로 shorthand 파싱은 검증하지 않았다고 상태 대장에 적혀 있다.
+- **C12.3 viewport fixed**([#136](https://github.com/ohah/spinon/pull/136)) — 사전 비교([#135](https://github.com/ohah/spinon/pull/135))에서 두 viewport와 DPR 1·2·2.625·3 행렬로 22개 case·79개 노드를 고정했다. 런타임 실행은 그중 부모까지 닫힌 28개 노드 부분집합을 13개 viewport/DPR/resize 상태로 돌려 364개 frame을 비교했고, [실행 근거](https://github.com/ohah/spinon/blob/975d3356/spec/internal/evidence/c12-3-fixed-positioning/README.md) 기준 Android 실기기·iOS 시뮬레이터 모두 최대 오차 0.009375 CSS px였다. 스크롤이 없으므로 "스크롤해도 제자리"라는 fixed의 핵심 동작은 아직 검증 대상이 아니다.
+
+11시 23분의 [#137](https://github.com/ohah/spinon/pull/137)은 전날 시뮬레이터로만 확인한 C07.2(테두리 폭)를 같은 실기기에서 다시 돌린 smoke 근거다. 개별 자식 frame의 Chrome 대조는 하지 않았다.
+
+## 10월 11일 낮부터 밤: 쌓임 맥락은 미완료로
+
+마지막 단계는 C12.4 stacking context와 `z-index`다. 계획과 [내부 계약 0058](https://github.com/ohah/spinon/blob/975d3356/spec/internal/0058-c12-4-stacking-context.md)([#139](https://github.com/ohah/spinon/pull/139)), Chrome 사전 비교([#140](https://github.com/ohah/spinon/pull/140))가 정오 무렵 들어왔고, 구현은 밤 10시 27분에 [#141](https://github.com/ohah/spinon/pull/141)로 병합됐다. 섞인 Block/Flex와 위치 지정 상자를 한 번의 cascade·layout으로 처리하고, 기존 단색 상자 paint-list에 쌓임 순서를 반영한다.
+
+검증은 이 이틀 중 가장 넓었다.
+
+- 26개 장면 행렬: 지원 21개는 `ready`, 미지원 5개(`visibility` 둘, `opacity`·`showModal`·`content` 각 하나)는 기대한 진단으로 거부해 26/26 일치. Android API 37 에뮬레이터와 iOS 26.2 시뮬레이터 양쪽에서 지원 노드 64개의 frame 오차는 0 CSS px.
+- 픽셀: Android `PixelCopy`로 지원 장면 21/21·표본 22/22, iOS 시뮬레이터 Metal 표면 표본 8/8이 Chrome과 채널 오차 0으로 일치.
+- 깊이: 앱 worker에서 문서 깊이 1,024는 성공, 1,025는 거부, 이후 같은 worker가 얕은 revision으로 복구.
+
+다만 [런타임 근거](https://github.com/ohah/spinon/blob/975d3356/spec/internal/evidence/c12-4-stacking-runtime-2026-10-11/README.md)를 보면 SM-S731N 실기기에서는 기본 10노드 장면만 돌렸고, 행렬·픽셀·깊이 시험은 실기기가 연결되지 않은 상태에서 AVD로 했다. PR 본문도 "두 플랫폼 모두 시뮬레이터 검증이며 실기기 검증은 포함하지 않습니다"라고 적는다. 기본 Rust 테스트 스레드에서는 깊이 256에서 스택 오버플로가 나는 문제가 미해결로 남았고, 역방향 Flex의 그리기 순서는 W3C Flexbox 설명이 아니라 Chrome 154 관찰에 맞춘 제한 예외다. 상태 대장은 C12.4를 체크하지 않았다. [#142](https://github.com/ohah/spinon/pull/142)는 같은 검증을 새 실행 ID로 재현하고 동시 세션 0·1·2·4·8개의 프로세스 메모리를 단계마다 3회 잰 근거를 더한 뒤, 10월 11일 22:47에 이 편의 마지막 병합이 됐다.
+
+## 이틀 뒤의 위치
+
+| 영역 | 10월 9일 | 10월 11일 |
+| --- | --- | --- |
+| 화면 | 런타임 CSS → Taffy frame JSON까지 | 런타임 CSS → WGPU 화면(C04.10) |
+| 스타일 입력 | 내장 UA, 제한 inline CSS | `<style>` author stylesheet, 사용자 지정 속성, `@property`, 결과 재사용·하위 트리 재계산 |
+| 값·상자 | 고정 fixture 위 margin | percentage·절대·글꼴·viewport 단위, CSS math, min/max, 테두리 폭, 종횡비 |
+| 레이아웃 | 제한 Flex | Block 흐름·margin collapse·`flow-root`, Flex wrap·배분·역방향·order·정렬·baseline, static·relative·absolute·fixed |
+| 쌓임 | 없음 | C12.4 제한 구현, 미완료 |
+| Android 검증 기기 | 런타임 CSS는 에뮬레이터 | 10월 11일 PR 대부분은 SM-S731N 실기기, C12.4 행렬은 에뮬레이터 |
+| 공개 API·프레임워크 어댑터 | 없음 | 없음 |
+
+상태 대장에서 10월 9일([e1ba2a09](https://github.com/ohah/spinon/blob/e1ba2a09/spec/STATUS.md))과 10월 11일([975d3356](https://github.com/ohah/spinon/blob/975d3356/spec/STATUS.md))의 체크를 비교하면, 새로 체크된 줄은 C04.10부터 C12.3까지 모두 CSS 체크리스트의 하위 항목이다. C04\~C12 상위 항목은 하나도 체크되지 않았고, 대장이 "78개 상위 항목"이라고 부르는 R·S·U·E·X·D 항목의 체크 상태도 바뀌지 않았다. 대장 첫 줄의 기준일은 2026-10-11로 바뀌었지만 "현재 제품 지원 완료: 없음"은 그대로다. 텍스트와 이미지는 여전히 그리지 않고, iOS 실기기 검증도 없다.
+
+:::info 1줄 요약
+자정에 CSS 계산 결과가 모바일 WGPU 화면에 올라간 뒤, 이틀 동안 계획 → Chromium 기준 → 구현 → 상태 동기화 순서로 PR 47개를 병합해 사용자 지정 속성·단위·상자 모델·Block·Flexbox·위치 지정을 제한 profile로 쌓았다. 10월 11일부터는 Android 실기기에서도 검증했지만, 모두 하위 항목 단위의 내부 구현이고 상태 대장의 제품 지원 완료는 여전히 없다.
+:::
