@@ -1,0 +1,89 @@
+---
+title: 3-11. 여러 파일 바꾸기와 Chromium 탭의 합류
+date: 2026-10-12
+---
+
+# 3-11. 여러 파일 바꾸기와 Chromium 탭의 합류 (10/10 \~ 10/12)
+
+앞 편의 프로젝트 검색이 찾기와 미리 보기에서 멈췄다면, 이번 사흘은 **찾은 것을 실제로 바꾸는** 시간이었다. 열린 문서 하나에서 시작한 바꾸기가 닫힌 파일과 파일·일치 단위 선택까지 넓어졌고, 여러 문서에 걸친 변경을 한 번에 되돌릴 수 있게 됐다. 언어 서버에서 시작한 저장소 신뢰는 git의 읽기·쓰기와 원격 저장소까지 넓어져 계획의 모든 단계를 닫았고, 결정마다 감사 기록이 남는다. 신뢰가 서자 `⌘S`는 언어 서버의 포맷과 code action을 먼저 적용한다. 10월 12일 아침에는 9월 23일부터 열려 있던 Chromium 웹 백엔드 브랜치가 280여 커밋째로 `main`에 들어왔다.
+
+이 편은 공개 `main`에 한국 시간 10월 12일까지 병합된 마지막 PR [#4389](https://github.com/ohah/maru/pull/4389)의 커밋 [`a6995c6e`](https://github.com/ohah/maru/commit/a6995c6e0e5d7f847245c7831a38213d56f22f39)를 기준으로 썼다. 3-10의 기준점 `f6c74f97` 이후 커밋은 413개이고, 그중 282개는 [#3867](https://github.com/ohah/maru/pull/3867)이 `main` 위로 옮겨 온 웹 패널 브랜치의 커밋이다. 3-10의 마지막 PR #4264 이후 `main`을 대상으로 병합된 PR은 #3867을 포함해 108개다. 날짜는 앞 편과 같이 한국 시간의 병합 시각이며, 10월 13일 0시 이후 병합분은 다음 편으로 넘겼다. 같은 기간 개발 브랜치를 대상으로 병합된 PR 9개는 병합 당시 `main` 밖의 작업이라 Chromium 절에 따로 적었다.
+
+## 프로젝트 전체를 바꾼다 (10/10 \~ 10/12)
+
+10월 10일 아침, 바꾸기 미리보기에서 고른 열린 문서에 변경을 실제로 적용하고 자동 저장하는 길이 먼저 들어왔다. 파일 행은 그 파일의 일치 전체, 일치 행은 그 하나를 바꾸고 한 번의 Undo로 돌아간다. 같은 날 오후에는 열지 않은 로컬 파일 하나를 다시 검증한 뒤 바꾸는 길이 이어졌다. [열린 문서 적용 #4266](https://github.com/ohah/maru/pull/4266), [디스크 단일 파일 #4273](https://github.com/ohah/maru/pull/4273).
+
+여러 파일은 정책부터 정했다. 마지막 파일의 원문이 달라졌으면 첫 파일도 바꾸지 않고, 저장이 하나 실패해도 다음 파일은 저장하며 실패한 문서의 편집과 Undo는 남긴다. 여러 문서를 한 작업으로 되돌리려면 문서별 Undo만으로는 부족해서, 모든 역편집을 미리 준비한 뒤 함께 바꾸는 코어를 두었다. 여러 문서에 걸친 변경 뒤 `⌘Z`를 누르면 모든 문서·현재 문서·취소 중 하나를 고른다. [배치 정책 #4281](https://github.com/ohah/maru/pull/4281), [처리 순서 보완 #4282](https://github.com/ohah/maru/pull/4282), [Undo 사전 준비 #4284](https://github.com/ohah/maru/pull/4284), [연결 Undo #4287](https://github.com/ohah/maru/pull/4287), [배치 적용과 CAS 저장 #4295](https://github.com/ohah/maru/pull/4295).
+
+| 병합일 | 프로젝트 바꾸기에서 달라진 것 |
+|------|------|
+| 10/10 | 열린 문서·디스크 단일 파일 적용과 자동 저장, 배치 정책 문서, 연결 Undo, 선택 명세와 전체 계획 준비, 열린 문서 배치 적용 |
+| 10/11 | 열린 문서 배치 UI, 닫힌 파일의 물리 신원 검증과 비활성 준비, 혼합 worker, 결과 전체 바꾸기 UI, 저장 실패 파일 재시도 |
+| 10/12 | 파일·일치 선택, 적용·저장 실측 기준선, 로컬 저장의 단계 분리와 저장 worker 기반 |
+
+10월 11일 아침에는 열린 문서 전체를 미리 보고 함께 적용하는 버튼이 붙었고, 저녁에는 닫힌 파일까지 포함해 검색 결과 전체를 바꾸게 됐다. 닫힌 파일은 검색 당시의 원문과 실제 파일의 장치·inode, BOM을 포함한 원본 해시를 함께 대조해, 같은 내용의 다른 파일로 바뀐 경우도 거절한다. 일부 파일만 저장에 실패하면 치환을 다시 하지 않고 그 파일의 현재 본문만 다시 저장하는 버튼이 생겼다. 10월 12일에는 파일이나 일치를 골라 일부만 바꿀 수 있게 됐다. PR은 실제 물리 한글 입력과 VoiceOver를 이 하네스로 증명하지 않았다고 적었다. [열린 문서 배치 UI #4304](https://github.com/ohah/maru/pull/4304), [물리 신원 검증 #4311](https://github.com/ohah/maru/pull/4311), [혼합 적용 #4322](https://github.com/ohah/maru/pull/4322), [결과 전체 바꾸기 #4331](https://github.com/ohah/maru/pull/4331), [저장 재시도 #4335](https://github.com/ohah/maru/pull/4335), [파일·일치 선택 #4347](https://github.com/ohah/maru/pull/4347).
+
+바꾸는 파일이 많을 때 화면이 막히는지는 최적화 전에 먼저 쟀다. 파일 수·본문 크기·느린 저장을 나눈 표본으로 기준선을 남긴 뒤, 로컬 저장을 자료 준비·쓰기·완료 세 단계로 나누고 쓰기를 UI 밖에서 돌릴 worker를 놓았다. 사용자 저장은 아직 동기이고, PR은 응답 지연 개선을 주장하지 않는다고 적었다. [실측 기준선 #4351](https://github.com/ohah/maru/pull/4351), [저장 단계 분리 #4360](https://github.com/ohah/maru/pull/4360), [저장 worker #4372](https://github.com/ohah/maru/pull/4372).
+
+## 신뢰가 git과 원격까지 (10/10 \~ 10/12)
+
+3-10에서 git 읽기가 서명 검증 프로그램을 돌리지 않게 막은 뒤에도, 신뢰하지 않은 저장소가 **폴더를 연 것만으로** 명령을 실행할 길이 남아 있었다. partial clone에서 아직 받지 않은 blob을 읽으면 git이 원격에서 가져오며 저장소 config가 정한 `core.sshCommand` 같은 프로그램을 실행했고, 작업트리를 읽는 `status`·`diff`는 저장소가 정한 파일 필터를 돌렸다. 이제 신뢰 전 저장소와 원격 저장소에서는 지연 가져오기를 하지 않고, 저장소가 정의한 필터와 submodule 안을 돌리지 않는다. 읽을 수 없는 부분은 틀린 답 대신 줄여서 보인다. 원격 감시자의 5초 주기 폴링에도 같은 규칙을 넣었다. [지연 가져오기 WT6b-1a #4265](https://github.com/ohah/maru/pull/4265), [필터·submodule #4275](https://github.com/ohah/maru/pull/4275), [원격 감시자 #4279](https://github.com/ohah/maru/pull/4279).
+
+쓰기도 막았다. stage는 저장소의 fsmonitor와 필터를, commit은 훅과 서명을 돌리는데 신뢰와 무관하게 바로 실행됐다. 소스 컨트롤 도크 맨 위에 신뢰 전이라는 줄을 두고, 신뢰 전 로컬 저장소의 쓰기는 신뢰 시트부터 띄운 뒤 허용하면 누른 쓰기를 이어 한다. 신뢰를 물을 수 없던 원격 저장소와 홈 폴더 저장소의 쓰기는 앱이 실행하지 않고 그 터미널에 명령을 넣는다. 그런데 원격 pane은 셸 상태를 알리지 않는 일이 많아, 원격에서 claude가 돌고 있으면 `git -C … add` 같은 명령이 그 입력창에 글자로 들어갔다. 터미널이 무엇을 돌리는지 모르면 넣지 않고 클립보드로 준다. [도크 머리 줄 #4290](https://github.com/ohah/maru/pull/4290), [쓰기 관문 #4297](https://github.com/ohah/maru/pull/4297), [터미널로 건네기 #4301](https://github.com/ohah/maru/pull/4301), [모르면 클립보드 #4305](https://github.com/ohah/maru/pull/4305).
+
+| 병합일 | 저장소 신뢰에서 달라진 것 |
+|------|------|
+| 10/10 | 신뢰 전·원격 git 읽기의 지연 가져오기·필터·submodule 차단(WT6b-1), 도크의 신뢰 줄과 시트(WT6b-2a) |
+| 10/11 | 쓰기 관문과 터미널 주입(WT6b-2b), 모르면 클립보드, 원격 신뢰 키·묻기·쓰기·턴 스냅샷(WT7a\~WT7c-2), 저장소 셸 환경(WT5b-2), 설정 파일 표시(WT5b-3), WT3b 종료 |
+| 10/12 | 신뢰 감사 기록과 목록 표시(TA1), `maru editor lsp trust log`와 컨트롤 상대 기록(TA2) |
+
+원격 저장소도 신뢰할 수 있게 됐다. 신뢰 키는 VS Code와 같은 (목적지, 원격 실제 경로)로 정했고, 도크 줄과 팔레트로 묻는다. 신뢰한 원격은 신뢰 전 규칙 없이 읽고, stage·커밋을 그 원격에서 직접 실행하며, WT6 이후 멈춰 있던 원격의 에이전트 턴 스냅샷을 다시 찍는다. fetch·push·pull은 여전히 터미널로 건넨다. [원격 키 WT7a #4307](https://github.com/ohah/maru/pull/4307), [원격 묻기 WT7b #4312](https://github.com/ohah/maru/pull/4312), [원격 쓰기 WT7c-1 #4314](https://github.com/ohah/maru/pull/4314), [턴 스냅샷 WT7c-2 #4321](https://github.com/ohah/maru/pull/4321).
+
+언어 서버 쪽 남은 단계도 닫혔다. 신뢰한 저장소의 서버는 그 저장소로 `cd` 한 로그인 셸의 환경으로 찾고 띄워, direnv·mise 같은 저장소별 환경이 터미널과 같게 적용된다(기본 켬). 신뢰 시트와 `Show Server Info`에는 서버가 읽는 자리에 있는 `build.zig` 같은 저장소 설정 파일을 보인다. 같은 자리에 다시 받은 저장소는 신뢰가 이어진다는 결정도 적었다. 마지막 종료 조건이던 Dock 실측에서는 짧은 PATH로 뜬 앱이 셸 환경에만 보이는 TS 서버를 찾아 신뢰를 물었고, PR은 이로써 신뢰 계획의 모든 단계가 끝난다고 적었다. [저장소 셸 환경 WT5b-2 #4329](https://github.com/ohah/maru/pull/4329), [설정 파일 WT5b-3 #4336](https://github.com/ohah/maru/pull/4336), [다시 받은 저장소 #4338](https://github.com/ohah/maru/pull/4338), [WT3b 종료 #4341](https://github.com/ohah/maru/pull/4341).
+
+10월 12일에는 감사 기록이 붙었다. 3-10에서 컨트롤 연결이 확인 없이 철회·잊기를 부를 수 있게 하면서 "에이전트가 잊기를 부른 뒤 허용 클릭을 유도할 여지"를 받아들였는데, 그 일이 일어났는지 볼 길이 없었다. 이제 결정이 바뀔 때마다 시각·출처를 따로 남기고, 신뢰 목록 행에 마지막 변경을 보인다. 전체 기록은 `maru editor lsp trust log`로 보고, 컨트롤로 부른 철회·잊기에는 소켓 상대 프로세스가 남는다. 기록을 고치거나 지우는 메서드는 없다. [감사 기록 TA1 #4362](https://github.com/ohah/maru/pull/4362), [조회와 상대 TA2 #4369](https://github.com/ohah/maru/pull/4369).
+
+## `⌘S`가 먼저 고친다 (10/10 \~ 10/12)
+
+저장 시 포맷은 도구 실행 신뢰가 먼저라며 미뤄 둔 기능이었다. 신뢰 계획이 끝나 서버가 신뢰한 저장소에서만 뜨게 되자, `⌘S`가 언어 서버의 문서 포맷을 먼저 적용하고 저장하게 했다. 기본은 켬이고, 1초 안에 답이 없으면 포맷 없이 저장하고 알리며, 사용자의 `⌘S`에만 적용한다. 이튿날에는 `source.organizeImports` 같은 code action을 저장 전에 적용하는 설정이 붙었다(기본 끔). 두 PR 모두 실제 서버의 응답 시간과 모양은 자동 검증하지 못했다고 적었다. 외부 포매터 Prettier를 쓰는 EF1은 10월 13일에 병합돼 다음 편으로 넘긴다. [저장 시 포맷 #4342](https://github.com/ohah/maru/pull/4342), [저장 시 code action #4350](https://github.com/ohah/maru/pull/4350).
+
+자동완성 목록은 디자인 시스템의 촘촘한 패널로 다시 그렸다. 한 글자였던 kind는 아이콘이 되고, 친 글자가 맞춘 부분을 강조한다. 멀티 커서에서 완성을 확정하면 다른 커서가 사라지고 한 곳에만 들어가던 것을 커서마다 넣게 했다. 찾기 막대와 우클릭 메뉴가 함께 뜨면 메뉴 글자가 6px 위로, 찾기 글자가 3px 왼쪽으로 밀리던 것도 오버레이마다 격자를 따로 내려 고쳤다. [완성 목록 #4276](https://github.com/ohah/maru/pull/4276), [멀티 커서 완성 #4294](https://github.com/ohah/maru/pull/4294), [오버레이 격자 #4269](https://github.com/ohah/maru/pull/4269), [찾기 막대와 헬퍼 #4270](https://github.com/ohah/maru/pull/4270).
+
+## 편집 판정과 그리기 규칙을 한 자리로 (10/11 \~ 10/12)
+
+10월 11일, macOS 폴더의 편집기 코드 약 23.6k줄을 재 보니 줄 연산·입력 조합·복사 같은 순수 편집 판정이 계약이 정한 L2가 아닌 L4에 쓰여 있었다. 사용자는 이것을 단계별로 옮기기로 결정했다. 옮기기 전에 결함부터 잡았는데, 판정자가 대부분 커서 하나만 재고 있어서 **여러 커서**에서 caret이 엉뚱한 줄로 가거나 편집이 아예 안 먹거나 복사하지 않은 글자가 지워지는 결함 열 개가 나왔다. 이동 단계에서 셋이 더 나왔고(붙여넣기 조각이 한 칸씩 밀리는 것 등), primary가 아닌 커서를 `⌥클릭`으로 지울 때 primary가 바뀌던 것도 고쳤다. 선택이 있을 때 `←`/`→`는 선택 끝으로 접히게 바꿨다. [이식 측정과 D1 #4316](https://github.com/ohah/maru/pull/4316), [결함 열 #4319](https://github.com/ohah/maru/pull/4319), [LSP 재요청 #4320](https://github.com/ohah/maru/pull/4320), [이동 단계 5 #4333](https://github.com/ohah/maru/pull/4333), [커서 판정 #4337](https://github.com/ohah/maru/pull/4337).
+
+같은 날 밤에는 "호스트 사이에 규칙을 옮겨 적지 않는다"는 규칙을 편집기 밖까지 넓혔다. 위치를 글자로 재는 판정자는 세우지 않기로 했다. macOS와 Windows가 따로 들고 있던 마우스 수정자 규칙, 키 변환표, 문법 이름 매핑, 사이드바 세로 자리 계산을 중립 한 곳으로 모았고, Metal 렌더러가 codepoint로 아이콘과 합성 글리프를 다시 고르던 자리도 Zig가 넘기는 역할로 바꿨다. 사본이 갈라져 생긴 실제 결함도 고쳤다. macOS 사이드바 카드의 ✕는 오른쪽 절반을 누르면 닫히지 않고 카드 전환이 됐고, Windows는 도크 divider를 10px 막대로 그렸다. 셸이 화면 갱신을 보류하는 동안 사이드바를 스크롤하면 글자만 움직이고 배경 띠가 남던 것도 이 흐름에서 찾았다. [규칙 문서 #4344](https://github.com/ohah/maru/pull/4344), [사본 셋 #4352](https://github.com/ohah/maru/pull/4352), [문법 매핑 #4354](https://github.com/ohah/maru/pull/4354), [사이드바 ✕ #4363](https://github.com/ohah/maru/pull/4363), [세로 자리 #4366](https://github.com/ohah/maru/pull/4366), [divider #4381](https://github.com/ohah/maru/pull/4381), [보류 중 스크롤 #4370](https://github.com/ohah/maru/pull/4370), [합성 글리프 #4389](https://github.com/ohah/maru/pull/4389).
+
+## 앱이 죽거나 기록을 잃던 자리 (10/10 \~ 10/12)
+
+10월 12일 오후, **쓰이는 중인 파일을 읽다가 앱이 죽을 수 있는** 결함을 고쳤다. Zig 표준 라이브러리의 파일 읽기는 크기를 한 번 재 두고 남은 양을 빼서 세는데, 그사이 파일이 커지면 뺄셈이 넘쳐 Debug·ReleaseSafe에서는 잡을 수 없는 panic이 난다. 제품 코드 50곳 중 파일 감시가 방금 바뀐 파일을 해시하는 워커와 파일 패널 미리보기 두 곳이 해당했다. 같은 원인으로 판정자 하나가 5% 확률로 죽던 것도 같은 날 고쳤다. [자라는 파일 #4376](https://github.com/ohah/maru/pull/4376), [판정자 #4367](https://github.com/ohah/maru/pull/4367).
+
+터미널 출력이 한 칸에 결합 부호를 끝없이 붙이면 메모리가 제곱으로 늘고, 4096 코드포인트를 넘는 cluster는 세션 호스트의 업그레이드를 막을 수 있었다. 한 칸에 붙는 0폭 코드포인트를 64개로 자른다. PR은 store 전체의 상한에 닿는 길은 문턱이 약 200배 올랐을 뿐 닫히지 않았다고 적었다. 에이전트 쪽에서는 `agent-events`의 출력 소비자가 사라지면 아직 보내지 않은 로그를 0바이트로 비울 수 있던 것과, Codex가 `transcript_path`를 null로 보내면 프롬프트·도구·완료 이벤트가 통째로 버려지던 것을 고쳤다. [결합 부호 상한 #4285](https://github.com/ohah/maru/pull/4285), [로그 절단 #4298](https://github.com/ohah/maru/pull/4298), [native 훅 기본 #4355](https://github.com/ohah/maru/pull/4355).
+
+## 에이전트 로그와 CLI (10/10 \~ 10/12)
+
+에이전트 훅 로그는 이름과 offset만으로 이어 읽었다. 그래서 같은 크기 이상으로 교체된 로그는 같은 파일로 보고 새 이벤트를 건너뛸 수 있었다. 10월 11일 새벽 128비트 세대 ID와 payload offset을 함께 쓰는 계약을 세우고, 같은 날 codec, 공유 잠금을 쓰는 native 기록기(`maru agent-hooks record`), 재접속에도 세대를 보존하는 길, 로컬 읽기와 회전을 이었다. 10월 12일에는 호스트 재접속·업그레이드에도 확정한 형식을 지키게 한 뒤, 준비가 끝난 새 로컬 runtime부터 native 훅을 기본으로 켰다. 이미 돌고 있는 v1 터미널과 SSH는 그대로 두었다가, 오후에는 SSH도 기존 세션을 유지한 채 새 프로세스부터 v2로 옮기고 실제 연결 중단·자동 재접속 검증을 붙였다. [세대 계약 #4303](https://github.com/ohah/maru/pull/4303), [native 기록 #4310](https://github.com/ohah/maru/pull/4310), [기록 CLI #4318](https://github.com/ohah/maru/pull/4318), [재접속·업그레이드 #4348](https://github.com/ohah/maru/pull/4348), [native 훅 기본 #4355](https://github.com/ohah/maru/pull/4355), [SSH 점진 이행 #4368](https://github.com/ohah/maru/pull/4368), [자동 재접속 검증 #4379](https://github.com/ohah/maru/pull/4379).
+
+CLI 결함도 3-10의 #4264에 이어 계속 고쳤다. 같은 옵션을 두 번 주면 마지막 값으로 조용히 바뀌던 동작을 하나씩 거절로 바꿨다. `--surface`, `--window`, `--volume`, 훅 설치의 `--provider`·`--dir`, `agent-events`의 `--resume` 등이다. 도움말 요청은 부작용 없이 종료 코드 0으로 끝나고, CI는 코드가 바뀔 때마다 실제 CLI 프로세스의 종료 코드와 요청 전 부작용을 검사한다. [surface 중복 #4267](https://github.com/ohah/maru/pull/4267), [도움말 #4271](https://github.com/ohah/maru/pull/4271), [창·볼륨 중복 #4272](https://github.com/ohah/maru/pull/4272), [훅 옵션 #4286](https://github.com/ohah/maru/pull/4286), [resume 중복 #4296](https://github.com/ohah/maru/pull/4296), [CI 프로세스 검사 #4278](https://github.com/ohah/maru/pull/4278).
+
+## 터미널 브라우저의 멈칫 (10/10 \~ 10/12)
+
+터미널 브라우저를 쓰는 동안 앱 전체가 1\~1.5초마다 60\~80ms씩 멈칫했다. 10월 10일 밤 넣은 진단 한 줄이 원인을 확정했다. 브라우저 이미지 한 프레임(RGBA 8.47MB)이 큐가 비어 있는데도 스트림의 연성 상한 8MiB를 혼자 넘어, 스트림이 무효화되고 1초 뒤 이미지를 담은 전체 스냅샷으로 다시 맞추기를 되풀이했다. 상한을 올리는 것은 기준선만 옮긴다(4K pane 이미지는 약 33MB). 그래서 이미지 픽셀을 소켓이 아니라 연결마다 하나 있는 **이미지 채널**의 공유 메모리로 넘기기로 하고 계약을 썼다. [진단 #4292](https://github.com/ohah/maru/pull/4292), [이미지 채널 계약 #4309](https://github.com/ohah/maru/pull/4309).
+
+구현은 IC1부터 차례로 들어왔다. 참조 레코드와 세그먼트 원장, host가 보조 연결을 받는 쪽과 앱이 채널을 묶는 쪽, 조립기의 해석, 앱이 받은 세그먼트 fd를 쥐는 표까지다. 적대적 검증은 공유 메모리가 아닌 fd를 받으면 앱이 죽을 수 있는 경로를 찾아 고쳤는데, 이 표가 아직 제품 경로에서 불리지 않아 사용자에게 닿은 적은 없다. 앱과 host 모두 채널 제공을 꺼 둔 상태라 **이 범위에서 제품 동작은 바뀌지 않았고, 멈칫도 아직 그대로다.** GUI 적용 자리를 잇는 IC3b-2a는 10월 13일에 병합됐고, 그 뒤의 IC3b-2b-1([#4375](https://github.com/ohah/maru/pull/4375))과 IC4a([#4383](https://github.com/ohah/maru/pull/4383))는 열린 채 **미병합**이다. IC3b-2b-2([#4380](https://github.com/ohah/maru/pull/4380))는 `main`이 아니라 #4375의 브랜치 `feat/image-channel-ic3b2b`를 대상으로 열려 있다. [IC1 #4317](https://github.com/ohah/maru/pull/4317), [IC2a #4328](https://github.com/ohah/maru/pull/4328), [IC2b #4339](https://github.com/ohah/maru/pull/4339), [IC3a #4349](https://github.com/ohah/maru/pull/4349), [IC3b-1 #4356](https://github.com/ohah/maru/pull/4356), [fd 해석 #4365](https://github.com/ohah/maru/pull/4365).
+
+## Chromium 탭이 main으로 (10/10 \~ 10/12)
+
+10월 10일과 11일에는 개발 브랜치 `docs/web-panel-osr-backend`를 대상으로 PR 9개가 병합됐다. 이 시점에는 `main`에 없던 작업이다.
+
+- 컨트롤 플레인 pane 신원(1g): 클라이언트가 pane 번호를 대기만 하면 그 pane으로 행세할 수 있었고, 실측으로 pane 밖 프로세스가 기억된 브라우저 허가를 모달 없이 탔다. 서버가 연결한 프로세스의 조상에서 pane을 스스로 찾는다. [1g #4268](https://github.com/ohah/maru/pull/4268).
+- 에이전트용 Chromium 탭 제어(W9): 탭마다 엔진과 할 수 있는 명령을 알리고 못 하는 명령은 확인 모달 전에 답한다. 프로세스 안 DevTools로 진짜 클릭·키 입력·포인터 이동과 snapshot·type·scroll·wait를 하고, 역할·이름·보이는 글·라벨로 요소를 가리킨다. [W9-0a #4274](https://github.com/ohah/maru/pull/4274), [W9-0b #4277](https://github.com/ohah/maru/pull/4277), [W9b①a #4280](https://github.com/ohah/maru/pull/4280), [덮임 검사 #4283](https://github.com/ohah/maru/pull/4283), [W9b①b-1 #4293](https://github.com/ohah/maru/pull/4293), [W9b①b-2 #4302](https://github.com/ohah/maru/pull/4302), [W9b②-1 #4308](https://github.com/ohah/maru/pull/4308), [W9b②-2 #4315](https://github.com/ohah/maru/pull/4315).
+
+10월 11일 사용자는 이 브랜치를 `main` 위로 rebase해 병합하기로 정했다. 약 280개 커밋을 옮기며 중간 커밋도 빌드되게 맞췄고, 손으로 합친 종료 처리에서 Dock 다시 열기가 두 번 정의돼 창이 0개인 앱에서 새 창이 열리지 않는 등의 결함을 적대 리뷰 다섯 회차로 찾아 고쳤다. 그리고 10월 12일 07:06, 9월 23일에 열린 [통합 PR #3867](https://github.com/ohah/maru/pull/3867)이 병합됐다. 이로써 3-10에서 개발 브랜치의 일로 적었던 다운로드(W10), 팝업·우클릭·끌어 놓기, 종료할 때 앱이 `proof_loss`로 죽던 세션 호스트 결함의 수정, 위의 1g·W9가 함께 `main`에 들어왔다. 같은 날 오후에는 로케이터로 요소가 보일 때까지 기다리는 W9b②-3이 `main`에 직접 병합됐다. [W9b②-3 #4364](https://github.com/ohah/maru/pull/4364).
+
+다만 기본 동작은 바뀌지 않는다. 계획 문서에 따르면 CEF는 빌드 opt-in(`-Dcef-sdk`)이고 별도 Homebrew formula `maru-chromium`으로 설치하며, 브라우저 탭의 기본 백엔드는 WKWebView 그대로다(D2). 기본값을 Chromium으로 바꾸는 것은 VoiceOver를 다루는 W8 뒤에 다시 정한다.
+
+## 10월 12일 시점
+
+이 사흘 동안 프로젝트 검색은 찾기에서 여러 파일 바꾸기와 되돌리기까지 이어졌고, 저장소 신뢰는 언어 서버·git·원격 저장소를 하나의 표와 감사 기록으로 묶었다. Chromium 웹 백엔드도 `main`에 들어왔지만 선택형이다. 남은 것도 분명하다. 저장은 아직 동기이고, 비동기 저장 연결([#4391](https://github.com/ohah/maru/pull/4391))과 외부 포매터 EF2([#4388](https://github.com/ohah/maru/pull/4388))는 열린 채 **미병합**이다. 터미널 브라우저의 멈칫을 없앨 이미지 채널은 제공을 꺼 둔 기반까지만 `main`에 있다. Markdown 이관 검토안과 Windows 보완 PR도 여전히 **미병합**이다. [Markdown 이관 검토 #3967](https://github.com/ohah/maru/pull/3967), [Windows 보완 #4084](https://github.com/ohah/maru/pull/4084).

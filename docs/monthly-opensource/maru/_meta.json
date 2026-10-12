@@ -75,5 +75,11 @@
     "name": "development-10",
     "label": "3-10. 프로젝트 검색과 저장소 신뢰",
     "tag": "26.10.09"
+  },
+  {
+    "type": "file",
+    "name": "development-11",
+    "label": "3-11. 여러 파일 바꾸기와 Chromium 탭의 합류",
+    "tag": "26.10.12"
   }
 ]
