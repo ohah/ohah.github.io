@@ -159,5 +159,11 @@
     "name": "development-24",
     "label": "3-24. 이름으로 되찾지 않는다 — 런타임 helper의 심볼화와 그래프 유지 확대",
     "tag": "26.10.09"
+  },
+  {
+    "type": "file",
+    "name": "development-25",
+    "label": "3-25. 적색 CI를 풀고, CI를 껐다 — 회귀 10건 추적과 함수 이름·TLA 결함",
+    "tag": "26.10.12"
   }
 ]
